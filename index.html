@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система управления персоналом</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --admin: #8e44ad;
+            --owner: #e67e22;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Header Styles */
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 1.5rem;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+        
+        nav ul li a:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-role {
+            background-color: var(--secondary);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin-right: 1rem;
+        }
+        
+        .role-owner { background-color: var(--owner); }
+        .role-admin { background-color: var(--admin); }
+        .role-manager { background-color: var(--warning); }
+        .role-senior { background-color: var(--success); }
+        .role-junior { background-color: var(--secondary); }
+        
+        .auth-buttons button {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .auth-buttons button:hover {
+            background: white;
+            color: var(--primary);
+        }
+        
+        /* Main Content */
+        .main-content {
+            padding: 2rem 0;
+            min-height: calc(100vh - 140px);
+        }
+        
+        .page {
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        /* Card Styles */
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #1a252f;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #219653;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .btn-warning:hover {
+            background-color: #e67e22;
+        }
+        
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        table th, table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        /* Dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        /* Task Styles */
+        .task-item {
+            padding: 1rem;
+            border-left: 4px solid var(--secondary);
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .task-item.completed {
+            border-left-color: var(--success);
+        }
+        
+        .task-item.pending {
+            border-left-color: var(--warning);
+        }
+        
+        .task-item.rejected {
+            border-left-color: var(--danger);
+        }
+        
+        .task-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Balance */
+        .balance {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--success);
+            margin: 1rem 0;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: 2rem;
+        }
+        
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .mt-1 { margin-top: 1rem; }
+        .mt-2 { margin-top: 2rem; }
+        .mb-1 { margin-bottom: 1rem; }
+        .mb-2 { margin-bottom: 2rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">WorkFlow System</div>
+                <nav>
+                    <ul>
+                        <li><a href="#" data-page="home">Главная</a></li>
+                        <li><a href="#" data-page="tasks">Задачи</a></li>
+                        <li><a href="#" data-page="profile" class="user-only">Профиль</a></li>
+                        <li><a href="#" data-page="admin" class="admin-only">Админ-панель</a></li>
+                        <li><a href="#" data-page="users" class="admin-only">Пользователи</a></li>
+                    </ul>
+                </nav>
+                <div class="user-info">
+                    <div id="user-role" class="user-role hidden"></div>
+                    <div class="auth-buttons">
+                        <button id="login-btn">Войти</button>
+                        <button id="logout-btn" class="hidden">Выйти</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <!-- Страница входа -->
+            <div id="login-page" class="page active">
+                <div class="card" style="max-width: 400px; margin: 2rem auto;">
+                    <div class="card-header">
+                        <h2>Вход в систему</h2>
+                    </div>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="username">Логин</label>
+                            <input type="text" id="username" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Пароль</label>
+                            <input type="password" id="password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Войти</button>
+                    </form>
+                    <div id="login-error" class="hidden" style="color: var(--danger); margin-top: 1rem; text-align: center;">
+                        Неверный логин или пароль
+                    </div>
+                </div>
+            </div>
+
+            <!-- Главная страница -->
+            <div id="home-page" class="page">
+                <h1>Добро пожаловать в WorkFlow System</h1>
+                <div class="dashboard-grid mt-2">
+                    <div class="card stat-card">
+                        <h3 id="user-balance">0</h3>
+                        <p>Ваш баланс</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="user-tasks-count">0</h3>
+                        <p>Ваши задачи</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="user-completed-tasks">0</h3>
+                        <p>Выполненные задачи</p>
+                    </div>
+                </div>
+                
+                <div class="card mt-2">
+                    <div class="card-header">
+                        <h2>Последние задачи</h2>
+                    </div>
+                    <div id="recent-tasks">
+                        <!-- Задачи будут загружаться здесь -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Страница задач -->
+            <div id="tasks-page" class="page">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Система задач</h2>
+                        <button id="add-task-btn" class="btn btn-primary admin-only">Создать задачу</button>
+                    </div>
+                    
+                    <div class="tabs">
+                        <div class="tab active" data-tab="my-tasks">Мои задачи</div>
+                        <div class="tab" data-tab="all-tasks">Все задачи</div>
+                        <div class="tab admin-only" data-tab="pending-approval">На подтверждении</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="my-tasks-content">
+                        <div id="my-tasks-list">
+                            <!-- Мои задачи будут загружаться здесь -->
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="all-tasks-content">
+                        <div id="all-tasks-list">
+                            <!-- Все задачи будут загружаться здесь -->
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="pending-approval-content">
+                        <div id="pending-tasks-list">
+                            <!-- Задачи на подтверждении будут загружаться здесь -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Страница профиля -->
+            <div id="profile-page" class="page">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Личный кабинет</h2>
+                    </div>
+                    <div id="profile-info">
+                        <!-- Информация о пользователе будет загружаться здесь -->
+                    </div>
+                </div>
+                
+                <div class="card mt-2">
+                    <div class="card-header">
+                        <h2>История начислений</h2>
+                    </div>
+                    <table id="balance-history">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Сумма</th>
+                                <th>Причина</th>
+                                <th>Кто начислил</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- История начислений будет загружаться здесь -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Админ-панель -->
+            <div id="admin-page" class="page">
+                <h1>Панель управления</h1>
+                
+                <div class="dashboard-grid mt-2">
+                    <div class="card stat-card">
+                        <h3 id="total-users">0</h3>
+                        <p>Всего пользователей</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="total-tasks">0</h3>
+                        <p>Всего задач</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="pending-tasks">0</h3>
+                        <p>Задач на подтверждении</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="total-balance">0</h3>
+                        <p>Общий баланс системы</p>
+                    </div>
+                </div>
+                
+                <div class="card mt-2">
+                    <div class="card-header">
+                        <h2>Быстрые действия</h2>
+                    </div>
+                    <div style="display: flex; gap: 1rem;">
+                        <button id="admin-add-user" class="btn btn-primary">Добавить пользователя</button>
+                        <button id="admin-add-task" class="btn btn-success">Создать задачу</button>
+                        <button id="admin-manage-balance" class="btn btn-warning">Управление балансами</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Страница пользователей -->
+            <div id="users-page" class="page">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Управление пользователями</h2>
+                        <button id="add-user-btn" class="btn btn-primary">Добавить пользователя</button>
+                    </div>
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Логин</th>
+                                <th>Имя</th>
+                                <th>Роль</th>
+                                <th>Баланс</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Пользователи будут загружаться здесь -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна -->
+    <div id="add-task-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Создание задачи</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-task-form">
+                <div class="form-group">
+                    <label for="task-title">Название задачи</label>
+                    <input type="text" id="task-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Описание</label>
+                    <textarea id="task-description" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-assignee">Назначить сотруднику</label>
+                    <select id="task-assignee" class="form-control" required>
+                        <!-- Опции будут заполнены из базы данных -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-reward">Награда (баллы)</label>
+                    <input type="number" id="task-reward" class="form-control" min="1" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-deadline">Срок выполнения</label>
+                    <input type="date" id="task-deadline" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Создать задачу</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавление пользователя</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label for="new-user-login">Логин</label>
+                    <input type="text" id="new-user-login" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-user-password">Пароль</label>
+                    <input type="password" id="new-user-password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-user-name">Имя</label>
+                    <input type="text" id="new-user-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-user-role">Роль</label>
+                    <select id="new-user-role" class="form-control" required>
+                        <option value="junior">Младший сотрудник</option>
+                        <option value="senior">Старший сотрудник</option>
+                        <option value="manager">Менеджер</option>
+                        <option value="admin">Администратор</option>
+                        <option value="owner">Владелец</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Добавить пользователя</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="manage-balance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Управление балансами</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="balance-user">Пользователь</label>
+                <select id="balance-user" class="form-control" required>
+                    <!-- Опции будут заполнены из базы данных -->
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="balance-amount">Сумма</label>
+                <input type="number" id="balance-amount" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="balance-reason">Причина</label>
+                <input type="text" id="balance-reason" class="form-control" required>
+            </div>
+            <button id="add-balance-btn" class="btn btn-success">Начислить баллы</button>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>WorkFlow System &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script>
+        // База данных (в реальном приложении это было бы на сервере)
+        let database = {
+            users: [
+                { id: 1, login: "admin", password: "admin123", name: "Администратор", role: "admin", balance: 0 },
+                { id: 2, login: "owner", password: "owner123", name: "Владелец", role: "owner", balance: 0 },
+                { id: 3, login: "manager", password: "manager123", name: "Менеджер Петр", role: "manager", balance: 150 },
+                { id: 4, login: "senior", password: "senior123", name: "Старший сотрудник", role: "senior", balance: 80 },
+                { id: 5, login: "junior", password: "junior123", name: "Младший сотрудник", role: "junior", balance: 30 }
+            ],
+            tasks: [
+                { id: 1, title: "Обучение новых сотрудников", description: "Провести обучение для новых сотрудников отдела", assignee: 3, createdBy: 1, reward: 50, deadline: "2023-12-20", status: "pending", createdAt: "2023-11-15" },
+                { id: 2, title: "Подготовка квартального отчета", description: "Подготовить детальный отчет за последний квартал", assignee: 4, createdBy: 2, reward: 30, deadline: "2023-12-10", status: "completed", createdAt: "2023-11-10" },
+                { id: 3, title: "Анализ рынка", description: "Провести анализ конкурентов и представить результаты", assignee: 5, createdBy: 3, reward: 20, deadline: "2023-12-05", status: "in-progress", createdAt: "2023-11-05" },
+                { id: 4, title: "Оптимизация процессов", description: "Предложить идеи по оптимизации рабочих процессов", assignee: 4, createdBy: 1, reward: 40, deadline: "2023-12-15", status: "pending-approval", createdAt: "2023-11-01" }
+            ],
+            balanceHistory: [
+                { id: 1, userId: 3, amount: 50, reason: "Выполнение задачи #2", createdBy: 1, createdAt: "2023-11-12" },
+                { id: 2, userId: 4, amount: 30, reason: "Бонус за инициативу", createdBy: 2, createdAt: "2023-11-08" },
+                { id: 3, userId: 5, amount: 20, reason: "Выполнение задачи #3", createdBy: 3, createdAt: "2023-11-06" }
+            ]
+        };
+
+        // Текущий пользователь
+        let currentUser = null;
+
+        // Инициализация при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            // Проверяем, есть ли сохраненный пользователь в localStorage
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                updateUI();
+            }
+            
+            // Назначаем обработчики событий
+            initEventListeners();
+        });
+
+        // Функция инициализации обработчиков событий
+        function initEventListeners() {
+            // Навигация
+            document.querySelectorAll('nav a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const page = this.getAttribute('data-page');
+                    showPage(page);
+                });
+            });
+            
+            // Вход в систему
+            document.getElementById('login-form').addEventListener('submit', handleLogin);
+            document.getElementById('logout-btn').addEventListener('click', handleLogout);
+            
+            // Модальные окна
+            document.querySelectorAll('.close-modal').forEach(button => {
+                button.addEventListener('click', closeAllModals);
+            });
+            
+            // Создание задачи
+            document.getElementById('add-task-btn').addEventListener('click', () => {
+                openModal('add-task-modal');
+                populateUserSelect('task-assignee');
+            });
+            
+            document.getElementById('add-task-form').addEventListener('submit', handleAddTask);
+            
+            // Создание пользователя
+            document.getElementById('add-user-btn').addEventListener('click', () => {
+                openModal('add-user-modal');
+            });
+            
+            document.getElementById('admin-add-user').addEventListener('click', () => {
+                openModal('add-user-modal');
+            });
+            
+            document.getElementById('add-user-form').addEventListener('submit', handleAddUser);
+            
+            // Управление балансами
+            document.getElementById('admin-manage-balance').addEventListener('click', () => {
+                openModal('manage-balance-modal');
+                populateUserSelect('balance-user');
+            });
+            
+            document.getElementById('add-balance-btn').addEventListener('click', handleAddBalance);
+            
+            // Вкладки на странице задач
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
+            
+            // Быстрое создание задачи из админ-панели
+            document.getElementById('admin-add-task').addEventListener('click', () => {
+                openModal('add-task-modal');
+                populateUserSelect('task-assignee');
+            });
+        }
+
+        // Функции для работы с аутентификацией
+        function handleLogin(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const user = database.users.find(u => u.login === username && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                document.getElementById('login-error').classList.add('hidden');
+                updateUI();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            currentUser = null;
+            localStorage.removeItem('currentUser');
+            updateUI();
+        }
+
+        // Функции для работы с интерфейсом
+        function updateUI() {
+            if (currentUser) {
+                // Показываем элементы для вошедших пользователей
+                document.querySelectorAll('.user-only').forEach(el => {
+                    el.classList.remove('hidden');
+                });
+                
+                // Показываем элементы для администраторов
+                if (['admin', 'owner'].includes(currentUser.role)) {
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.classList.remove('hidden');
+                    });
+                } else {
+                    document.querySelectorAll('.admin-only').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                }
+                
+                // Обновляем информацию о пользователе
+                document.getElementById('user-role').textContent = getRoleName(currentUser.role);
+                document.getElementById('user-role').className = `user-role role-${currentUser.role}`;
+                document.getElementById('user-role').classList.remove('hidden');
+                
+                // Переключаем кнопки входа/выхода
+                document.getElementById('login-btn').classList.add('hidden');
+                document.getElementById('logout-btn').classList.remove('hidden');
+                
+                // Показываем главную страницу
+                showPage('home');
+                
+                // Обновляем данные на страницах
+                updateHomePage();
+                updateTasksPage();
+                updateProfilePage();
+                updateAdminPage();
+                updateUsersPage();
+            } else {
+                // Скрываем элементы для вошедших пользователей
+                document.querySelectorAll('.user-only').forEach(el => {
+                    el.classList.add('hidden');
+                });
+                
+                document.querySelectorAll('.admin-only').forEach(el => {
+                    el.classList.add('hidden');
+                });
+                
+                document.getElementById('user-role').classList.add('hidden');
+                
+                // Переключаем кнопки входа/выхода
+                document.getElementById('login-btn').classList.remove('hidden');
+                document.getElementById('logout-btn').classList.add('hidden');
+                
+                // Показываем страницу входа
+                showPage('login-page');
+            }
+        }
+
+        function showPage(pageId) {
+            // Скрываем все страницы
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Показываем выбранную страницу
+            document.getElementById(`${pageId}-page`).classList.add('active');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeAllModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+
+        function switchTab(tabId) {
+            // Деактивируем все вкладки
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Активируем выбранную вкладку
+            document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+            
+            // Скрываем все содержимое вкладок
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Показываем выбранное содержимое
+            document.getElementById(`${tabId}-content`).classList.add('active');
+        }
+
+        function populateUserSelect(selectId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '';
+            
+            database.users.forEach(user => {
+                // Администраторы не могут назначать задачи владельцам и другим администраторам
+                if (currentUser.role === 'admin' && ['owner', 'admin'].includes(user.role)) {
+                    return;
+                }
+                
+                // Владельцы могут назначать задачи всем
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.name} (${getRoleName(user.role)})`;
+                select.appendChild(option);
+            });
+        }
+
+        // Функции для работы с задачами
+        function handleAddTask(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-description').value;
+            const assignee = parseInt(document.getElementById('task-assignee').value);
+            const reward = parseInt(document.getElementById('task-reward').value);
+            const deadline = document.getElementById('task-deadline').value;
+            
+            const newTask = {
+                id: database.tasks.length > 0 ? Math.max(...database.tasks.map(t => t.id)) + 1 : 1,
+                title,
+                description,
+                assignee,
+                createdBy: currentUser.id,
+                reward,
+                deadline,
+                status: 'pending',
+                createdAt: new Date().toISOString().split('T')[0]
+            };
+            
+            database.tasks.push(newTask);
+            updateTasksPage();
+            updateHomePage();
+            updateAdminPage();
+            closeAllModals();
+            document.getElementById('add-task-form').reset();
+            
+            alert('Задача успешно создана!');
+        }
+
+        function completeTask(taskId) {
+            const task = database.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'pending-approval';
+                updateTasksPage();
+                updateHomePage();
+                updateAdminPage();
+                
+                alert('Задача отправлена на подтверждение!');
+            }
+        }
+
+        function approveTask(taskId) {
+            const task = database.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'completed';
+                
+                // Начисляем баллы исполнителю
+                const user = database.users.find(u => u.id === task.assignee);
+                if (user) {
+                    user.balance += task.reward;
+                    
+                    // Добавляем запись в историю баланса
+                    const balanceRecord = {
+                        id: database.balanceHistory.length > 0 ? Math.max(...database.balanceHistory.map(b => b.id)) + 1 : 1,
+                        userId: user.id,
+                        amount: task.reward,
+                        reason: `Выполнение задачи: ${task.title}`,
+                        createdBy: currentUser.id,
+                        createdAt: new Date().toISOString().split('T')[0]
+                    };
+                    
+                    database.balanceHistory.push(balanceRecord);
+                }
+                
+                updateTasksPage();
+                updateHomePage();
+                updateAdminPage();
+                updateProfilePage();
+                updateUsersPage();
+                
+                alert('Задача подтверждена! Баллы начислены исполнителю.');
+            }
+        }
+
+        function rejectTask(taskId) {
+            const task = database.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'rejected';
+                updateTasksPage();
+                updateHomePage();
+                updateAdminPage();
+                
+                alert('Задача отклонена!');
+            }
+        }
+
+        // Функции для работы с пользователями
+        function handleAddUser(e) {
+            e.preventDefault();
+            
+            const login = document.getElementById('new-user-login').value;
+            const password = document.getElementById('new-user-password').value;
+            const name = document.getElementById('new-user-name').value;
+            const role = document.getElementById('new-user-role').value;
+            
+            // Проверяем, нет ли уже пользователя с таким логином
+            if (database.users.find(user => user.login === login)) {
+                alert('Пользователь с таким логином уже существует!');
+                return;
+            }
+            
+            const newUser = {
+                id: database.users.length > 0 ? Math.max(...database.users.map(u => u.id)) + 1 : 1,
+                login,
+                password,
+                name,
+                role,
+                balance: 0
+            };
+            
+            database.users.push(newUser);
+            updateUsersPage();
+            updateAdminPage();
+            closeAllModals();
+            document.getElementById('add-user-form').reset();
+            
+            alert('Пользователь успешно создан!');
+        }
+
+        function handleAddBalance() {
+            const userId = parseInt(document.getElementById('balance-user').value);
+            const amount = parseInt(document.getElementById('balance-amount').value);
+            const reason = document.getElementById('balance-reason').value;
+            
+            if (!userId || !amount || !reason) {
+                alert('Заполните все поля!');
+                return;
+            }
+            
+            const user = database.users.find(u => u.id === userId);
+            if (user) {
+                user.balance += amount;
+                
+                // Добавляем запись в историю баланса
+                const balanceRecord = {
+                    id: database.balanceHistory.length > 0 ? Math.max(...database.balanceHistory.map(b => b.id)) + 1 : 1,
+                    userId: user.id,
+                    amount: amount,
+                    reason: reason,
+                    createdBy: currentUser.id,
+                    createdAt: new Date().toISOString().split('T')[0]
+                };
+                
+                database.balanceHistory.push(balanceRecord);
+                
+                updateUsersPage();
+                updateAdminPage();
+                updateProfilePage();
+                closeAllModals();
+                
+                alert('Баллы успешно начислены!');
+            }
+        }
+
+        // Функции обновления страниц
+        function updateHomePage() {
+            if (!currentUser) return;
+            
+            // Обновляем баланс
+            document.getElementById('user-balance').textContent = currentUser.balance;
+            
+            // Обновляем счетчики задач
+            const userTasks = database.tasks.filter(task => task.assignee === currentUser.id);
+            const completedTasks = userTasks.filter(task => task.status === 'completed').length;
+            
+            document.getElementById('user-tasks-count').textContent = userTasks.length;
+            document.getElementById('user-completed-tasks').textContent = completedTasks;
+            
+            // Обновляем список последних задач
+            const recentTasksContainer = document.getElementById('recent-tasks');
+            recentTasksContainer.innerHTML = '';
+            
+            const recentTasks = userTasks.slice(0, 5); // Показываем последние 5 задач
+            
+            if (recentTasks.length === 0) {
+                recentTasksContainer.innerHTML = '<p>У вас пока нет задач</p>';
+                return;
+            }
+            
+            recentTasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.status}`;
+                
+                taskElement.innerHTML = `
+                    <h3>${task.title}</h3>
+                    <p>${task.description}</p>
+                    <p><strong>Награда:</strong> ${task.reward} баллов</p>
+                    <p><strong>Срок:</strong> ${formatDate(task.deadline)}</p>
+                    <p><strong>Статус:</strong> ${getTaskStatusText(task.status)}</p>
+                    ${task.status === 'pending' || task.status === 'in-progress' ? 
+                        `<button class="btn btn-success complete-task-btn" data-task-id="${task.id}">Завершить</button>` : ''}
+                `;
+                
+                recentTasksContainer.appendChild(taskElement);
+            });
+            
+            // Добавляем обработчики для кнопок завершения задач
+            document.querySelectorAll('.complete-task-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-task-id'));
+                    completeTask(taskId);
+                });
+            });
+        }
+
+        function updateTasksPage() {
+            if (!currentUser) return;
+            
+            // Обновляем список моих задач
+            const myTasksContainer = document.getElementById('my-tasks-list');
+            myTasksContainer.innerHTML = '';
+            
+            const myTasks = database.tasks.filter(task => task.assignee === currentUser.id);
+            
+            if (myTasks.length === 0) {
+                myTasksContainer.innerHTML = '<p>У вас пока нет задач</p>';
+            } else {
+                myTasks.forEach(task => {
+                    const taskElement = createTaskElement(task);
+                    myTasksContainer.appendChild(taskElement);
+                });
+            }
+            
+            // Обновляем список всех задач (для администраторов)
+            const allTasksContainer = document.getElementById('all-tasks-list');
+            allTasksContainer.innerHTML = '';
+            
+            if (['admin', 'owner', 'manager'].includes(currentUser.role)) {
+                const allTasks = database.tasks;
+                
+                if (allTasks.length === 0) {
+                    allTasksContainer.innerHTML = '<p>Задач пока нет</p>';
+                } else {
+                    allTasks.forEach(task => {
+                        const taskElement = createTaskElement(task, true);
+                        allTasksContainer.appendChild(taskElement);
+                    });
+                }
+            }
+            
+            // Обновляем список задач на подтверждении (для администраторов)
+            const pendingTasksContainer = document.getElementById('pending-tasks-list');
+            pendingTasksContainer.innerHTML = '';
+            
+            if (['admin', 'owner', 'manager'].includes(currentUser.role)) {
+                const pendingTasks = database.tasks.filter(task => task.status === 'pending-approval');
+                
+                if (pendingTasks.length === 0) {
+                    pendingTasksContainer.innerHTML = '<p>Нет задач на подтверждении</p>';
+                } else {
+                    pendingTasks.forEach(task => {
+                        const taskElement = createTaskElement(task, true);
+                        
+                        // Добавляем кнопки подтверждения/отклонения
+                        const actionsDiv = document.createElement('div');
+                        actionsDiv.className = 'task-actions';
+                        actionsDiv.innerHTML = `
+                            <button class="btn btn-success approve-task-btn" data-task-id="${task.id}">Подтвердить</button>
+                            <button class="btn btn-danger reject-task-btn" data-task-id="${task.id}">Отклонить</button>
+                        `;
+                        
+                        taskElement.appendChild(actionsDiv);
+                        pendingTasksContainer.appendChild(taskElement);
+                    });
+                    
+                    // Добавляем обработчики для кнопок подтверждения/отклонения
+                    document.querySelectorAll('.approve-task-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const taskId = parseInt(this.getAttribute('data-task-id'));
+                            approveTask(taskId);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.reject-task-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const taskId = parseInt(this.getAttribute('data-task-id'));
+                            rejectTask(taskId);
+                        });
+                    });
+                }
+            }
+        }
+
+        function updateProfilePage() {
+            if (!currentUser) return;
+            
+            const profileInfo = document.getElementById('profile-info');
+            profileInfo.innerHTML = `
+                <div class="form-group">
+                    <label>Логин</label>
+                    <p>${currentUser.login}</p>
+                </div>
+                <div class="form-group">
+                    <label>Имя</label>
+                    <p>${currentUser.name}</p>
+                </div>
+                <div class="form-group">
+                    <label>Роль</label>
+                    <p>${getRoleName(currentUser.role)}</p>
+                </div>
+                <div class="form-group">
+                    <label>Баланс</label>
+                    <p class="balance">${currentUser.balance} баллов</p>
+                </div>
+            `;
+            
+            // Обновляем историю баланса
+            const balanceHistory = document.getElementById('balance-history').querySelector('tbody');
+            balanceHistory.innerHTML = '';
+            
+            const userBalanceHistory = database.balanceHistory
+                .filter(record => record.userId === currentUser.id)
+                .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            if (userBalanceHistory.length === 0) {
+                balanceHistory.innerHTML = '<tr><td colspan="4" class="text-center">История начислений пуста</td></tr>';
+            } else {
+                userBalanceHistory.forEach(record => {
+                    const createdByUser = database.users.find(u => u.id === record.createdBy);
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${formatDate(record.createdAt)}</td>
+                        <td>+${record.amount} баллов</td>
+                        <td>${record.reason}</td>
+                        <td>${createdByUser ? createdByUser.name : 'Система'}</td>
+                    `;
+                    balanceHistory.appendChild(row);
+                });
+            }
+        }
+
+        function updateAdminPage() {
+            if (!currentUser || !['admin', 'owner'].includes(currentUser.role)) return;
+            
+            // Обновляем статистику
+            document.getElementById('total-users').textContent = database.users.length;
+            document.getElementById('total-tasks').textContent = database.tasks.length;
+            document.getElementById('pending-tasks').textContent = database.tasks.filter(task => task.status === 'pending-approval').length;
+            
+            const totalBalance = database.users.reduce((sum, user) => sum + user.balance, 0);
+            document.getElementById('total-balance').textContent = totalBalance;
+        }
+
+        function updateUsersPage() {
+            if (!currentUser || !['admin', 'owner'].includes(currentUser.role)) return;
+            
+            const usersTable = document.getElementById('users-table').querySelector('tbody');
+            usersTable.innerHTML = '';
+            
+            database.users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.login}</td>
+                    <td>${user.name}</td>
+                    <td><span class="user-role role-${user.role}">${getRoleName(user.role)}</span></td>
+                    <td>${user.balance} баллов</td>
+                    <td>
+                        ${user.id !== currentUser.id ? 
+                            `<button class="btn btn-warning edit-user-btn" data-user-id="${user.id}">Изменить</button>
+                             <button class="btn btn-danger delete-user-btn" data-user-id="${user.id}">Удалить</button>` : 
+                            '<span>Текущий пользователь</span>'}
+                    </td>
+                `;
+                usersTable.appendChild(row);
+            });
+            
+            // Добавляем обработчики для кнопок (упрощенно)
+            document.querySelectorAll('.delete-user-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = parseInt(this.getAttribute('data-user-id'));
+                    if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
+                        // В реальном приложении здесь был бы запрос к серверу
+                        alert('Функция удаления пользователя отключена в демо-версии');
+                    }
+                });
+            });
+        }
+
+        // Вспомогательные функции
+        function createTaskElement(task, showAssignee = false) {
+            const taskElement = document.createElement('div');
+            taskElement.className = `task-item ${task.status}`;
+            
+            const assignee = database.users.find(user => user.id === task.assignee);
+            const creator = database.users.find(user => user.id === task.createdBy);
+            
+            let actionsHTML = '';
+            if (task.assignee === currentUser.id && (task.status === 'pending' || task.status === 'in-progress')) {
+                actionsHTML = `<button class="btn btn-success complete-task-btn" data-task-id="${task.id}">Завершить</button>`;
+            }
+            
+            taskElement.innerHTML = `
+                <h3>${task.title} <span class="user-role role-${getTaskPriority(task.reward)}">${task.reward} баллов</span></h3>
+                <p>${task.description}</p>
+                <p><strong>Срок:</strong> ${formatDate(task.deadline)}</p>
+                <p><strong>Статус:</strong> ${getTaskStatusText(task.status)}</p>
+                ${showAssignee ? `<p><strong>Исполнитель:</strong> ${assignee.name}</p>` : ''}
+                ${showAssignee ? `<p><strong>Создал:</strong> ${creator.name}</p>` : ''}
+                <div class="task-actions">
+                    ${actionsHTML}
+                </div>
+            `;
+            
+            // Добавляем обработчики для кнопок
+            const completeBtn = taskElement.querySelector('.complete-task-btn');
+            if (completeBtn) {
+                completeBtn.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-task-id'));
+                    completeTask(taskId);
+                });
+            }
+            
+            return taskElement;
+        }
+
+        function getRoleName(role) {
+            const roles = {
+                'owner': 'Владелец',
+                'admin': 'Администратор',
+                'manager': 'Менеджер',
+                'senior': 'Старший сотрудник',
+                'junior': 'Младший сотрудник'
+            };
+            
+            return roles[role] || role;
+        }
+
+        function getTaskStatusText(status) {
+            const statuses = {
+                'pending': 'Ожидает выполнения',
+                'in-progress': 'В работе',
+                'pending-approval': 'На подтверждении',
+                'completed': 'Выполнена',
+                'rejected': 'Отклонена'
+            };
+            
+            return statuses[status] || status;
+        }
+
+        function getTaskPriority(reward) {
+            if (reward >= 40) return 'owner';
+            if (reward >= 30) return 'admin';
+            if (reward >= 20) return 'manager';
+            if (reward >= 10) return 'senior';
+            return 'junior';
+        }
+
+        function formatDate(dateString) {
+            const options = { day: '2-digit', month: '2-digit', year: 'numeric' };
+            return new Date(dateString).toLocaleDateString('ru-RU', options);
+        }
+    </script>
+</body>
+</html>
