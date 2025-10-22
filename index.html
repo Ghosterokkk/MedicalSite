@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Медицинский портал</title>
+    <style>
+        :root {
+            --primary: #2c7fb8;
+            --secondary: #7fcdbb;
+            --accent: #edf8b1;
+            --dark: #253237;
+            --light: #f8f9fa;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+        
+        nav ul li {
+            margin-left: 1.5rem;
+        }
+        
+        nav ul li a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+        
+        nav ul li a:hover {
+            opacity: 0.8;
+        }
+        
+        .auth-buttons button {
+            background: transparent;
+            border: 1px solid white;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .auth-buttons button:hover {
+            background: white;
+            color: var(--primary);
+        }
+        
+        .main-content {
+            padding: 2rem 0;
+            min-height: calc(100vh - 140px);
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header {
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #236699;
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        table th, table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 2rem auto;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+        
+        .task-item {
+            padding: 1rem;
+            border-left: 4px solid var(--primary);
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+        }
+        
+        .task-item.completed {
+            border-left-color: var(--success);
+            opacity: 0.7;
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 1rem 0;
+            margin-top: 2rem;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 1rem;
+        }
+        
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .user-role {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .role-admin {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .role-staff {
+            background-color: var(--secondary);
+            color: var(--dark);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-completed {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .status-pending {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .status-overdue {
+            background-color: var(--danger);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">Медицинский портал</div>
+                <nav>
+                    <ul>
+                        <li><a href="#" id="nav-home">Главная</a></li>
+                        <li><a href="#" id="nav-tasks">Задачи</a></li>
+                        <li><a href="#" id="nav-staff" class="admin-only hidden">Сотрудники</a></li>
+                        <li><a href="#" id="nav-admin" class="admin-only hidden">Админ-панель</a></li>
+                    </ul>
+                </nav>
+                <div class="auth-buttons">
+                    <button id="login-btn">Войти</button>
+                    <button id="logout-btn" class="hidden">Выйти</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="container">
+            <!-- Страница входа -->
+            <div id="login-page" class="login-container">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Вход в систему</h2>
+                    </div>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="username">Логин</label>
+                            <input type="text" id="username" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Пароль</label>
+                            <input type="password" id="password" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width: 100%;">Войти</button>
+                    </form>
+                    <div id="login-error" class="hidden" style="color: var(--danger); margin-top: 1rem;">
+                        Неверный логин или пароль
+                    </div>
+                </div>
+            </div>
+
+            <!-- Главная страница -->
+            <div id="home-page" class="hidden">
+                <h1>Добро пожаловать в медицинский портал</h1>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Ваши задачи</h2>
+                    </div>
+                    <div id="user-tasks">
+                        <!-- Задачи будут загружаться здесь -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Страница задач -->
+            <div id="tasks-page" class="hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Все задачи</h2>
+                        <button id="add-task-btn" class="btn btn-primary admin-only hidden">Добавить задачу</button>
+                    </div>
+                    <div id="all-tasks">
+                        <!-- Все задачи будут загружаться здесь -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Страница сотрудников -->
+            <div id="staff-page" class="hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Сотрудники</h2>
+                        <button id="add-staff-btn" class="btn btn-primary">Добавить сотрудника</button>
+                    </div>
+                    <table id="staff-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>ФИО</th>
+                                <th>Должность</th>
+                                <th>Роль</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Данные сотрудников будут загружаться здесь -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Админ-панель -->
+            <div id="admin-page" class="hidden">
+                <h1>Административная панель</h1>
+                <div class="dashboard-grid">
+                    <div class="card stat-card">
+                        <h3 id="total-staff">0</h3>
+                        <p>Всего сотрудников</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="total-tasks">0</h3>
+                        <p>Всего задач</p>
+                    </div>
+                    <div class="card stat-card">
+                        <h3 id="completed-tasks">0</h3>
+                        <p>Выполненных задач</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Статистика по задачам</h2>
+                    </div>
+                    <div id="task-stats">
+                        <!-- Статистика будет загружаться здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления сотрудника -->
+    <div id="add-staff-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить сотрудника</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-staff-form">
+                <div class="form-group">
+                    <label for="staff-name">ФИО</label>
+                    <input type="text" id="staff-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="staff-position">Должность</label>
+                    <input type="text" id="staff-position" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="staff-role">Роль</label>
+                    <select id="staff-role" class="form-control" required>
+                        <option value="staff">Сотрудник</option>
+                        <option value="admin">Администратор</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="staff-login">Логин</label>
+                    <input type="text" id="staff-login" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="staff-password">Пароль</label>
+                    <input type="password" id="staff-password" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Добавить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления задачи -->
+    <div id="add-task-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Добавить задачу</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="add-task-form">
+                <div class="form-group">
+                    <label for="task-title">Название задачи</label>
+                    <input type="text" id="task-title" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="task-description">Описание</label>
+                    <textarea id="task-description" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="task-assignee">Назначить сотруднику</label>
+                    <select id="task-assignee" class="form-control" required>
+                        <!-- Опции будут заполнены из базы данных -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="task-deadline">Срок выполнения</label>
+                    <input type="date" id="task-deadline" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Создать задачу</button>
+            </form>
+        </div>
+    </div>
+
+    <footer>
+        <div class="container">
+            <p>Медицинский портал &copy; 2023</p>
+        </div>
+    </footer>
+
+    <script>
+        // База данных (в реальном приложении это было бы на сервере)
+        let database = {
+            users: [
+                { id: 1, name: "Администратор", position: "Главный администратор", role: "admin", login: "admin", password: "admin123" },
+                { id: 2, name: "Иванов Иван", position: "Врач-терапевт", role: "staff", login: "ivanov", password: "pass123" },
+                { id: 3, name: "Петрова Мария", position: "Медсестра", role: "staff", login: "petrova", password: "pass123" }
+            ],
+            tasks: [
+                { id: 1, title: "Обход пациентов", description: "Провести ежедневный обход пациентов в отделении", assignee: 2, createdBy: 1, deadline: "2023-12-15", status: "pending" },
+                { id: 2, title: "Составление отчетов", description: "Подготовить ежемесячные отчеты по отделению", assignee: 3, createdBy: 1, deadline: "2023-12-10", status: "completed" },
+                { id: 3, title: "Проверка оборудования", description: "Проверить работоспособность медицинского оборудования", assignee: 2, createdBy: 1, deadline: "2023-12-05", status: "overdue" }
+            ]
+        };
+
+        // Текущий пользователь
+        let currentUser = null;
+
+        // DOM элементы
+        const loginPage = document.getElementById('login-page');
+        const homePage = document.getElementById('home-page');
+        const tasksPage = document.getElementById('tasks-page');
+        const staffPage = document.getElementById('staff-page');
+        const adminPage = document.getElementById('admin-page');
+        
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginBtn = document.getElementById('login-btn');
+        
+        const navHome = document.getElementById('nav-home');
+        const navTasks = document.getElementById('nav-tasks');
+        const navStaff = document.getElementById('nav-staff');
+        const navAdmin = document.getElementById('nav-admin');
+        
+        const adminOnlyElements = document.querySelectorAll('.admin-only');
+        
+        const addStaffBtn = document.getElementById('add-staff-btn');
+        const addStaffModal = document.getElementById('add-staff-modal');
+        const addStaffForm = document.getElementById('add-staff-form');
+        
+        const addTaskBtn = document.getElementById('add-task-btn');
+        const addTaskModal = document.getElementById('add-task-modal');
+        const addTaskForm = document.getElementById('add-task-form');
+        
+        const closeModalButtons = document.querySelectorAll('.close-modal');
+        
+        const staffTable = document.getElementById('staff-table').querySelector('tbody');
+        const userTasksContainer = document.getElementById('user-tasks');
+        const allTasksContainer = document.getElementById('all-tasks');
+        
+        const totalStaffElement = document.getElementById('total-staff');
+        const totalTasksElement = document.getElementById('total-tasks');
+        const completedTasksElement = document.getElementById('completed-tasks');
+        const taskStatsContainer = document.getElementById('task-stats');
+
+        // Функции для работы с интерфейсом
+        function showPage(page) {
+            loginPage.classList.add('hidden');
+            homePage.classList.add('hidden');
+            tasksPage.classList.add('hidden');
+            staffPage.classList.add('hidden');
+            adminPage.classList.add('hidden');
+            
+            page.classList.remove('hidden');
+        }
+
+        function showAdminElements(show) {
+            adminOnlyElements.forEach(el => {
+                if (show) {
+                    el.classList.remove('hidden');
+                } else {
+                    el.classList.add('hidden');
+                }
+            });
+        }
+
+        function updateUI() {
+            if (currentUser) {
+                loginBtn.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                showPage(homePage);
+                
+                if (currentUser.role === 'admin') {
+                    showAdminElements(true);
+                } else {
+                    showAdminElements(false);
+                }
+                
+                loadUserTasks();
+                loadAllTasks();
+                loadStaffTable();
+                updateAdminStats();
+            } else {
+                loginBtn.classList.remove('hidden');
+                logoutBtn.classList.add('hidden');
+                showPage(loginPage);
+                showAdminElements(false);
+            }
+        }
+
+        // Функции для работы с задачами
+        function loadUserTasks() {
+            if (!currentUser) return;
+            
+            userTasksContainer.innerHTML = '';
+            
+            const userTasks = database.tasks.filter(task => 
+                task.assignee === currentUser.id || currentUser.role === 'admin'
+            );
+            
+            if (userTasks.length === 0) {
+                userTasksContainer.innerHTML = '<p>У вас нет задач</p>';
+                return;
+            }
+            
+            userTasks.forEach(task => {
+                const assignee = database.users.find(user => user.id === task.assignee);
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.status === 'completed' ? 'completed' : ''}`;
+                
+                let statusBadge = '';
+                if (task.status === 'completed') {
+                    statusBadge = '<span class="status-badge status-completed">Выполнено</span>';
+                } else if (task.status === 'overdue') {
+                    statusBadge = '<span class="status-badge status-overdue">Просрочено</span>';
+                } else {
+                    statusBadge = '<span class="status-badge status-pending">В работе</span>';
+                }
+                
+                taskElement.innerHTML = `
+                    <h3>${task.title} ${statusBadge}</h3>
+                    <p>${task.description}</p>
+                    <p><strong>Срок:</strong> ${new Date(task.deadline).toLocaleDateString('ru-RU')}</p>
+                    ${currentUser.role === 'admin' ? `<p><strong>Исполнитель:</strong> ${assignee.name}</p>` : ''}
+                    ${task.status !== 'completed' && currentUser.id === task.assignee ? 
+                        `<button class="btn btn-success complete-task" data-task-id="${task.id}">Выполнить</button>` : ''}
+                `;
+                
+                userTasksContainer.appendChild(taskElement);
+            });
+            
+            // Добавляем обработчики для кнопок выполнения задач
+            document.querySelectorAll('.complete-task').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-task-id'));
+                    completeTask(taskId);
+                });
+            });
+        }
+
+        function loadAllTasks() {
+            allTasksContainer.innerHTML = '';
+            
+            if (database.tasks.length === 0) {
+                allTasksContainer.innerHTML = '<p>Задач нет</p>';
+                return;
+            }
+            
+            database.tasks.forEach(task => {
+                const assignee = database.users.find(user => user.id === task.assignee);
+                const creator = database.users.find(user => user.id === task.createdBy);
+                const taskElement = document.createElement('div');
+                taskElement.className = `task-item ${task.status === 'completed' ? 'completed' : ''}`;
+                
+                let statusBadge = '';
+                if (task.status === 'completed') {
+                    statusBadge = '<span class="status-badge status-completed">Выполнено</span>';
+                } else if (task.status === 'overdue') {
+                    statusBadge = '<span class="status-badge status-overdue">Просрочено</span>';
+                } else {
+                    statusBadge = '<span class="status-badge status-pending">В работе</span>';
+                }
+                
+                taskElement.innerHTML = `
+                    <h3>${task.title} ${statusBadge}</h3>
+                    <p>${task.description}</p>
+                    <p><strong>Срок:</strong> ${new Date(task.deadline).toLocaleDateString('ru-RU')}</p>
+                    <p><strong>Исполнитель:</strong> ${assignee.name}</p>
+                    <p><strong>Создал:</strong> ${creator.name}</p>
+                    ${task.status !== 'completed' ? 
+                        `<button class="btn btn-success complete-task" data-task-id="${task.id}">Отметить выполненной</button>` : ''}
+                    ${currentUser.role === 'admin' ? 
+                        `<button class="btn btn-danger delete-task" data-task-id="${task.id}">Удалить</button>` : ''}
+                `;
+                
+                allTasksContainer.appendChild(taskElement);
+            });
+            
+            // Добавляем обработчики для кнопок
+            document.querySelectorAll('.complete-task').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-task-id'));
+                    completeTask(taskId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-task').forEach(button => {
+                button.addEventListener('click', function() {
+                    const taskId = parseInt(this.getAttribute('data-task-id'));
+                    deleteTask(taskId);
+                });
+            });
+        }
+
+        function completeTask(taskId) {
+            const task = database.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.status = 'completed';
+                loadUserTasks();
+                loadAllTasks();
+                updateAdminStats();
+            }
+        }
+
+        function deleteTask(taskId) {
+            database.tasks = database.tasks.filter(t => t.id !== taskId);
+            loadUserTasks();
+            loadAllTasks();
+            updateAdminStats();
+        }
+
+        // Функции для работы с сотрудниками
+        function loadStaffTable() {
+            staffTable.innerHTML = '';
+            
+            database.users.forEach(user => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.position}</td>
+                    <td><span class="user-role ${user.role === 'admin' ? 'role-admin' : 'role-staff'}">${user.role === 'admin' ? 'Администратор' : 'Сотрудник'}</span></td>
+                    <td>
+                        ${user.id !== currentUser.id ? `<button class="btn btn-danger delete-staff" data-user-id="${user.id}">Удалить</button>` : ''}
+                    </td>
+                `;
+                staffTable.appendChild(row);
+            });
+            
+            // Добавляем обработчики для кнопок удаления
+            document.querySelectorAll('.delete-staff').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = parseInt(this.getAttribute('data-user-id'));
+                    deleteStaff(userId);
+                });
+            });
+        }
+
+        function deleteStaff(userId) {
+            if (userId === currentUser.id) {
+                alert('Вы не можете удалить себя');
+                return;
+            }
+            
+            database.users = database.users.filter(user => user.id !== userId);
+            loadStaffTable();
+            updateAdminStats();
+        }
+
+        // Функции для админ-панели
+        function updateAdminStats() {
+            if (currentUser && currentUser.role === 'admin') {
+                totalStaffElement.textContent = database.users.length;
+                totalTasksElement.textContent = database.tasks.length;
+                completedTasksElement.textContent = database.tasks.filter(task => task.status === 'completed').length;
+                
+                // Обновляем статистику по задачам
+                taskStatsContainer.innerHTML = '';
+                
+                const statusCounts = {
+                    pending: database.tasks.filter(task => task.status === 'pending').length,
+                    completed: database.tasks.filter(task => task.status === 'completed').length,
+                    overdue: database.tasks.filter(task => task.status === 'overdue').length
+                };
+                
+                for (const status in statusCounts) {
+                    const statItem = document.createElement('div');
+                    statItem.className = 'form-group';
+                    statItem.innerHTML = `
+                        <label>${getStatusLabel(status)}:</label>
+                        <span>${statusCounts[status]}</span>
+                    `;
+                    taskStatsContainer.appendChild(statItem);
+                }
+            }
+        }
+
+        function getStatusLabel(status) {
+            switch(status) {
+                case 'pending': return 'В работе';
+                case 'completed': return 'Выполнено';
+                case 'overdue': return 'Просрочено';
+                default: return status;
+            }
+        }
+
+        // Обработчики событий
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const user = database.users.find(u => u.login === username && u.password === password);
+            
+            if (user) {
+                currentUser = user;
+                loginError.classList.add('hidden');
+                updateUI();
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        });
+
+        logoutBtn.addEventListener('click', function() {
+            currentUser = null;
+            updateUI();
+        });
+
+        navHome.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentUser) {
+                showPage(homePage);
+            }
+        });
+
+        navTasks.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentUser) {
+                showPage(tasksPage);
+            }
+        });
+
+        navStaff.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentUser && currentUser.role === 'admin') {
+                showPage(staffPage);
+            }
+        });
+
+        navAdmin.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (currentUser && currentUser.role === 'admin') {
+                showPage(adminPage);
+            }
+        });
+
+        addStaffBtn.addEventListener('click', function() {
+            addStaffModal.classList.remove('hidden');
+        });
+
+        addTaskBtn.addEventListener('click', function() {
+            // Заполняем список сотрудников для назначения задачи
+            const assigneeSelect = document.getElementById('task-assignee');
+            assigneeSelect.innerHTML = '';
+            
+            database.users.forEach(user => {
+                if (user.role === 'staff') {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.name;
+                    assigneeSelect.appendChild(option);
+                }
+            });
+            
+            addTaskModal.classList.remove('hidden');
+        });
+
+        closeModalButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                addStaffModal.classList.add('hidden');
+                addTaskModal.classList.add('hidden');
+            });
+        });
+
+        addStaffForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('staff-name').value;
+            const position = document.getElementById('staff-position').value;
+            const role = document.getElementById('staff-role').value;
+            const login = document.getElementById('staff-login').value;
+            const password = document.getElementById('staff-password').value;
+            
+            // Проверяем, нет ли уже пользователя с таким логином
+            if (database.users.find(user => user.login === login)) {
+                alert('Пользователь с таким логином уже существует');
+                return;
+            }
+            
+            // Создаем нового пользователя
+            const newUser = {
+                id: database.users.length > 0 ? Math.max(...database.users.map(u => u.id)) + 1 : 1,
+                name,
+                position,
+                role,
+                login,
+                password
+            };
+            
+            database.users.push(newUser);
+            loadStaffTable();
+            updateAdminStats();
+            addStaffModal.classList.add('hidden');
+            addStaffForm.reset();
+        });
+
+        addTaskForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('task-title').value;
+            const description = document.getElementById('task-description').value;
+            const assignee = parseInt(document.getElementById('task-assignee').value);
+            const deadline = document.getElementById('task-deadline').value;
+            
+            // Создаем новую задачу
+            const newTask = {
+                id: database.tasks.length > 0 ? Math.max(...database.tasks.map(t => t.id)) + 1 : 1,
+                title,
+                description,
+                assignee,
+                createdBy: currentUser.id,
+                deadline,
+                status: 'pending'
+            };
+            
+            database.tasks.push(newTask);
+            loadUserTasks();
+            loadAllTasks();
+            updateAdminStats();
+            addTaskModal.classList.add('hidden');
+            addTaskForm.reset();
+        });
+
+        // Инициализация при загрузке страницы
+        updateUI();
+    </script>
+</body>
+</html>
