@@ -71,10 +71,20 @@
             transition: opacity 0.3s;
             padding: 0.5rem 1rem;
             border-radius: 4px;
+            cursor: pointer;
         }
         
         nav ul li a:hover {
             background-color: rgba(255,255,255,0.1);
+        }
+        
+        nav ul li a.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        nav ul li a.disabled:hover {
+            background-color: transparent;
         }
         
         .user-info {
@@ -207,6 +217,15 @@
             background-color: #e67e22;
         }
         
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn:disabled:hover {
+            background-color: inherit;
+        }
+        
         /* Table Styles */
         table {
             width: 100%;
@@ -331,6 +350,10 @@
             font-weight: 600;
         }
         
+        .tab:not(.active) {
+            opacity: 0.6;
+        }
+        
         .tab-content {
             display: none;
         }
@@ -378,6 +401,51 @@
         .show-for-super-admin {
             display: block !important;
         }
+        
+        /* Overlay для неавторизованных действий */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            border-radius: 8px;
+        }
+        
+        .overlay-content {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .overlay-content h3 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        /* Стили для заблокированного контента */
+        .locked-content {
+            position: relative;
+        }
+        
+        .page-locked {
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .page-locked h2 {
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+        
+        .page-locked p {
+            margin-bottom: 2rem;
+            color: var(--gray);
+        }
     </style>
 </head>
 <body>
@@ -387,11 +455,11 @@
                 <div class="logo">WorkFlow System</div>
                 <nav>
                     <ul>
-                        <li><a href="#" data-page="home">Главная</a></li>
-                        <li><a href="#" data-page="tasks">Задачи</a></li>
-                        <li><a href="#" data-page="profile" class="user-only">Профиль</a></li>
-                        <li><a href="#" data-page="admin" class="super-admin-only">Админ-панель</a></li>
-                        <li><a href="#" data-page="users" class="super-admin-only">Пользователи</a></li>
+                        <li><a href="#" data-page="home" class="nav-link">Главная</a></li>
+                        <li><a href="#" data-page="tasks" class="nav-link">Задачи</a></li>
+                        <li><a href="#" data-page="profile" class="nav-link">Профиль</a></li>
+                        <li><a href="#" data-page="admin" class="nav-link super-admin-only">Админ-панель</a></li>
+                        <li><a href="#" data-page="users" class="nav-link super-admin-only">Пользователи</a></li>
                     </ul>
                 </nav>
                 <div class="user-info">
@@ -432,61 +500,79 @@
 
             <!-- Главная страница -->
             <div id="home-page" class="page">
-                <h1>Добро пожаловать в WorkFlow System</h1>
-                <div class="dashboard-grid mt-2">
-                    <div class="card stat-card">
-                        <h3 id="user-balance">0</h3>
-                        <p>Ваш баланс</p>
+                <div class="locked-content">
+                    <div class="overlay" id="home-overlay">
+                        <div class="overlay-content">
+                            <h3>Доступ ограничен</h3>
+                            <p>Для просмотра этой страницы необходимо войти в систему</p>
+                            <button class="btn btn-primary" onclick="showPage('login-page')">Войти</button>
+                        </div>
                     </div>
-                    <div class="card stat-card">
-                        <h3 id="user-tasks-count">0</h3>
-                        <p>Ваши задачи</p>
+                    <h1>Добро пожаловать в WorkFlow System</h1>
+                    <div class="dashboard-grid mt-2">
+                        <div class="card stat-card">
+                            <h3 id="user-balance">0</h3>
+                            <p>Ваш баланс</p>
+                        </div>
+                        <div class="card stat-card">
+                            <h3 id="user-tasks-count">0</h3>
+                            <p>Ваши задачи</p>
+                        </div>
+                        <div class="card stat-card">
+                            <h3 id="user-completed-tasks">0</h3>
+                            <p>Выполненные задачи</p>
+                        </div>
                     </div>
-                    <div class="card stat-card">
-                        <h3 id="user-completed-tasks">0</h3>
-                        <p>Выполненные задачи</p>
-                    </div>
-                </div>
-                
-                <div class="card mt-2">
-                    <div class="card-header">
-                        <h2>Последние задачи</h2>
-                    </div>
-                    <div id="recent-tasks">
-                        <!-- Задачи будут загружаться здесь -->
+                    
+                    <div class="card mt-2">
+                        <div class="card-header">
+                            <h2>Последние задачи</h2>
+                        </div>
+                        <div id="recent-tasks">
+                            <!-- Задачи будут загружаться здесь -->
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Страница задач -->
             <div id="tasks-page" class="page">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Система задач</h2>
-                        <button id="add-task-btn" class="btn btn-primary admin-only">Создать задачу</button>
-                    </div>
-                    
-                    <div class="tabs">
-                        <div class="tab active" data-tab="my-tasks">Мои задачи</div>
-                        <div class="tab" data-tab="all-tasks">Все задачи</div>
-                        <div class="tab admin-only" data-tab="pending-approval">На подтверждении</div>
-                    </div>
-                    
-                    <div class="tab-content active" id="my-tasks-content">
-                        <div id="my-tasks-list">
-                            <!-- Мои задачи будут загружаться здесь -->
+                <div class="locked-content">
+                    <div class="overlay" id="tasks-overlay">
+                        <div class="overlay-content">
+                            <h3>Доступ ограничен</h3>
+                            <p>Для просмотра задач необходимо войти в систему</p>
+                            <button class="btn btn-primary" onclick="showPage('login-page')">Войти</button>
                         </div>
                     </div>
-                    
-                    <div class="tab-content" id="all-tasks-content">
-                        <div id="all-tasks-list">
-                            <!-- Все задачи будут загружаться здесь -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Система задач</h2>
+                            <button id="add-task-btn" class="btn btn-primary admin-only" disabled>Создать задачу</button>
                         </div>
-                    </div>
-                    
-                    <div class="tab-content" id="pending-approval-content">
-                        <div id="pending-tasks-list">
-                            <!-- Задачи на подтверждении будут загружаться здесь -->
+                        
+                        <div class="tabs">
+                            <div class="tab active" data-tab="my-tasks">Мои задачи</div>
+                            <div class="tab" data-tab="all-tasks">Все задачи</div>
+                            <div class="tab admin-only" data-tab="pending-approval">На подтверждении</div>
+                        </div>
+                        
+                        <div class="tab-content active" id="my-tasks-content">
+                            <div id="my-tasks-list">
+                                <!-- Мои задачи будут загружаться здесь -->
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="all-tasks-content">
+                            <div id="all-tasks-list">
+                                <!-- Все задачи будут загружаться здесь -->
+                            </div>
+                        </div>
+                        
+                        <div class="tab-content" id="pending-approval-content">
+                            <div id="pending-tasks-list">
+                                <!-- Задачи на подтверждении будут загружаться здесь -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -494,92 +580,119 @@
 
             <!-- Страница профиля -->
             <div id="profile-page" class="page">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Личный кабинет</h2>
+                <div class="locked-content">
+                    <div class="overlay" id="profile-overlay">
+                        <div class="overlay-content">
+                            <h3>Доступ ограничен</h3>
+                            <p>Для просмотра профиля необходимо войти в систему</p>
+                            <button class="btn btn-primary" onclick="showPage('login-page')">Войти</button>
+                        </div>
                     </div>
-                    <div id="profile-info">
-                        <!-- Информация о пользователе будет загружаться здесь -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Личный кабинет</h2>
+                        </div>
+                        <div id="profile-info">
+                            <!-- Информация о пользователе будет загружаться здесь -->
+                        </div>
                     </div>
-                </div>
-                
-                <div class="card mt-2">
-                    <div class="card-header">
-                        <h2>История начислений</h2>
+                    
+                    <div class="card mt-2">
+                        <div class="card-header">
+                            <h2>История начислений</h2>
+                        </div>
+                        <table id="balance-history">
+                            <thead>
+                                <tr>
+                                    <th>Дата</th>
+                                    <th>Сумма</th>
+                                    <th>Причина</th>
+                                    <th>Кто начислил</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- История начислений будет загружаться здесь -->
+                            </tbody>
+                        </table>
                     </div>
-                    <table id="balance-history">
-                        <thead>
-                            <tr>
-                                <th>Дата</th>
-                                <th>Сумма</th>
-                                <th>Причина</th>
-                                <th>Кто начислил</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- История начислений будет загружаться здесь -->
-                        </tbody>
-                    </table>
                 </div>
             </div>
 
             <!-- Админ-панель -->
             <div id="admin-page" class="page">
-                <h1>Панель управления</h1>
-                
-                <div class="dashboard-grid mt-2">
-                    <div class="card stat-card">
-                        <h3 id="total-users">0</h3>
-                        <p>Всего пользователей</p>
+                <div class="locked-content">
+                    <div class="overlay" id="admin-overlay">
+                        <div class="overlay-content">
+                            <h3>Доступ ограничен</h3>
+                            <p>Для доступа к админ-панели необходимо войти в систему с правами администратора</p>
+                            <button class="btn btn-primary" onclick="showPage('login-page')">Войти</button>
+                        </div>
                     </div>
-                    <div class="card stat-card">
-                        <h3 id="total-tasks">0</h3>
-                        <p>Всего задач</p>
+                    <h1>Панель управления</h1>
+                    
+                    <div class="dashboard-grid mt-2">
+                        <div class="card stat-card">
+                            <h3 id="total-users">0</h3>
+                            <p>Всего пользователей</p>
+                        </div>
+                        <div class="card stat-card">
+                            <h3 id="total-tasks">0</h3>
+                            <p>Всего задач</p>
+                        </div>
+                        <div class="card stat-card">
+                            <h3 id="pending-tasks">0</h3>
+                            <p>Задач на подтверждении</p>
+                        </div>
+                        <div class="card stat-card">
+                            <h3 id="total-balance">0</h3>
+                            <p>Общий баланс системы</p>
+                        </div>
                     </div>
-                    <div class="card stat-card">
-                        <h3 id="pending-tasks">0</h3>
-                        <p>Задач на подтверждении</p>
-                    </div>
-                    <div class="card stat-card">
-                        <h3 id="total-balance">0</h3>
-                        <p>Общий баланс системы</p>
-                    </div>
-                </div>
-                
-                <div class="card mt-2">
-                    <div class="card-header">
-                        <h2>Быстрые действия</h2>
-                    </div>
-                    <div style="display: flex; gap: 1rem;">
-                        <button id="admin-add-user" class="btn btn-primary">Добавить пользователя</button>
-                        <button id="admin-add-task" class="btn btn-success">Создать задачу</button>
-                        <button id="admin-manage-balance" class="btn btn-warning">Управление балансами</button>
+                    
+                    <div class="card mt-2">
+                        <div class="card-header">
+                            <h2>Быстрые действия</h2>
+                        </div>
+                        <div style="display: flex; gap: 1rem;">
+                            <button id="admin-add-user" class="btn btn-primary" disabled>Добавить пользователя</button>
+                            <button id="admin-add-task" class="btn btn-success" disabled>Создать задачу</button>
+                            <button id="admin-manage-balance" class="btn btn-warning" disabled>Управление балансами</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Страница пользователей -->
             <div id="users-page" class="page">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Управление пользователями</h2>
-                        <button id="add-user-btn" class="btn btn-primary">Добавить пользователя</button>
+                <div class="locked-content">
+                    <div class="overlay" id="users-overlay">
+                        <div class="overlay-content">
+                            <h3>Доступ ограничен</h3>
+                            <p>Для управления пользователями необходимо войти в систему с правами администратора</p>
+                            <button class="btn btn-primary" onclick="showPage('login-page')">Войти</button>
+                        </div>
                     </div>
-                    <table id="users-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Логин</th>
-                                <th>Имя</th>
-                                <th>Роль</th>
-                                <th>Баланс</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Пользователи будут загружаться здесь -->
-                        </tbody>
-                    </table>
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>Управление пользователями</h2>
+                            <button id="add-user-btn" class="btn btn-primary" disabled>Добавить пользователя</button>
+                        </div>
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Логин</th>
+                                    <th>Имя</th>
+                                    <th>Роль</th>
+                                    <th>Баланс</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Пользователи будут загружаться здесь -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -595,27 +708,27 @@
             <form id="add-task-form">
                 <div class="form-group">
                     <label for="task-title">Название задачи</label>
-                    <input type="text" id="task-title" class="form-control" required>
+                    <input type="text" id="task-title" class="form-control" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="task-description">Описание</label>
-                    <textarea id="task-description" class="form-control" rows="3" required></textarea>
+                    <textarea id="task-description" class="form-control" rows="3" required disabled></textarea>
                 </div>
                 <div class="form-group">
                     <label for="task-assignee">Назначить сотруднику</label>
-                    <select id="task-assignee" class="form-control" required>
+                    <select id="task-assignee" class="form-control" required disabled>
                         <!-- Опции будут заполнены из базы данных -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label for="task-reward">Награда (баллы)</label>
-                    <input type="number" id="task-reward" class="form-control" min="1" required>
+                    <input type="number" id="task-reward" class="form-control" min="1" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="task-deadline">Срок выполнения</label>
-                    <input type="date" id="task-deadline" class="form-control" required>
+                    <input type="date" id="task-deadline" class="form-control" required disabled>
                 </div>
-                <button type="submit" class="btn btn-primary">Создать задачу</button>
+                <button type="submit" class="btn btn-primary" disabled>Создать задачу</button>
             </form>
         </div>
     </div>
@@ -629,19 +742,19 @@
             <form id="add-user-form">
                 <div class="form-group">
                     <label for="new-user-login">Логин</label>
-                    <input type="text" id="new-user-login" class="form-control" required>
+                    <input type="text" id="new-user-login" class="form-control" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="new-user-password">Пароль</label>
-                    <input type="password" id="new-user-password" class="form-control" required>
+                    <input type="password" id="new-user-password" class="form-control" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="new-user-name">Имя</label>
-                    <input type="text" id="new-user-name" class="form-control" required>
+                    <input type="text" id="new-user-name" class="form-control" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="new-user-role">Роль</label>
-                    <select id="new-user-role" class="form-control" required>
+                    <select id="new-user-role" class="form-control" required disabled>
                         <option value="junior">Младший сотрудник</option>
                         <option value="senior">Старший сотрудник</option>
                         <option value="manager">Менеджер</option>
@@ -649,7 +762,7 @@
                         <option value="owner">Владелец</option>
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary">Добавить пользователя</button>
+                <button type="submit" class="btn btn-primary" disabled>Добавить пользователя</button>
             </form>
         </div>
     </div>
@@ -662,19 +775,19 @@
             </div>
             <div class="form-group">
                 <label for="balance-user">Пользователь</label>
-                <select id="balance-user" class="form-control" required>
+                <select id="balance-user" class="form-control" required disabled>
                     <!-- Опции будут заполнены из базы данных -->
                 </select>
             </div>
             <div class="form-group">
                 <label for="balance-amount">Сумма</label>
-                <input type="number" id="balance-amount" class="form-control" required>
+                <input type="number" id="balance-amount" class="form-control" required disabled>
             </div>
             <div class="form-group">
                 <label for="balance-reason">Причина</label>
-                <input type="text" id="balance-reason" class="form-control" required>
+                <input type="text" id="balance-reason" class="form-control" required disabled>
             </div>
-            <button id="add-balance-btn" class="btn btn-success">Начислить баллы</button>
+            <button id="add-balance-btn" class="btn btn-success" disabled>Начислить баллы</button>
         </div>
     </div>
 
@@ -688,15 +801,15 @@
                 <input type="hidden" id="edit-user-id">
                 <div class="form-group">
                     <label for="edit-user-login">Логин</label>
-                    <input type="text" id="edit-user-login" class="form-control" required>
+                    <input type="text" id="edit-user-login" class="form-control" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="edit-user-name">Имя</label>
-                    <input type="text" id="edit-user-name" class="form-control" required>
+                    <input type="text" id="edit-user-name" class="form-control" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="edit-user-role">Роль</label>
-                    <select id="edit-user-role" class="form-control" required>
+                    <select id="edit-user-role" class="form-control" required disabled>
                         <option value="junior">Младший сотрудник</option>
                         <option value="senior">Старший сотрудник</option>
                         <option value="manager">Менеджер</option>
@@ -706,9 +819,9 @@
                 </div>
                 <div class="form-group">
                     <label for="edit-user-balance">Баланс</label>
-                    <input type="number" id="edit-user-balance" class="form-control" required>
+                    <input type="number" id="edit-user-balance" class="form-control" required disabled>
                 </div>
-                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                <button type="submit" class="btn btn-primary" disabled>Сохранить изменения</button>
             </form>
         </div>
     </div>
@@ -752,18 +865,76 @@
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 updateUI();
+            } else {
+                // Если пользователь не авторизован, блокируем весь функционал
+                lockAllFunctionality();
             }
             
             // Назначаем обработчики событий
             initEventListeners();
         });
 
+        // Функция блокировки всего функционала для неавторизованных пользователей
+        function lockAllFunctionality() {
+            // Блокируем все кнопки
+            document.querySelectorAll('.btn').forEach(btn => {
+                if (btn.id !== 'login-btn') {
+                    btn.disabled = true;
+                }
+            });
+            
+            // Блокируем все формы
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                if (input.id !== 'username' && input.id !== 'password') {
+                    input.disabled = true;
+                }
+            });
+            
+            // Блокируем навигацию
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.add('disabled');
+            });
+            
+            // Показываем оверлеи на всех страницах
+            document.querySelectorAll('.overlay').forEach(overlay => {
+                overlay.style.display = 'flex';
+            });
+        }
+
+        // Функция разблокировки функционала для авторизованных пользователей
+        function unlockFunctionality() {
+            // Разблокируем кнопки
+            document.querySelectorAll('.btn').forEach(btn => {
+                btn.disabled = false;
+            });
+            
+            // Разблокируем формы
+            document.querySelectorAll('input, select, textarea').forEach(input => {
+                input.disabled = false;
+            });
+            
+            // Разблокируем навигацию
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('disabled');
+            });
+            
+            // Скрываем оверлеи
+            document.querySelectorAll('.overlay').forEach(overlay => {
+                overlay.style.display = 'none';
+            });
+        }
+
         // Функция инициализации обработчиков событий
         function initEventListeners() {
             // Навигация
-            document.querySelectorAll('nav a').forEach(link => {
+            document.querySelectorAll('.nav-link').forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
+                    if (this.classList.contains('disabled')) {
+                        alert('Для доступа к этой странице необходимо войти в систему');
+                        showPage('login-page');
+                        return;
+                    }
                     const page = this.getAttribute('data-page');
                     showPage(page);
                 });
@@ -780,6 +951,11 @@
             
             // Создание задачи
             document.getElementById('add-task-btn').addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('Для создания задач необходимо войти в систему');
+                    showPage('login-page');
+                    return;
+                }
                 openModal('add-task-modal');
                 populateUserSelect('task-assignee');
             });
@@ -788,10 +964,20 @@
             
             // Создание пользователя
             document.getElementById('add-user-btn').addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('Для управления пользователями необходимо войти в систему');
+                    showPage('login-page');
+                    return;
+                }
                 openModal('add-user-modal');
             });
             
             document.getElementById('admin-add-user').addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('Для управления пользователями необходимо войти в систему');
+                    showPage('login-page');
+                    return;
+                }
                 openModal('add-user-modal');
             });
             
@@ -799,6 +985,11 @@
             
             // Управление балансами
             document.getElementById('admin-manage-balance').addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('Для управления балансами необходимо войти в систему');
+                    showPage('login-page');
+                    return;
+                }
                 openModal('manage-balance-modal');
                 populateUserSelect('balance-user');
             });
@@ -811,6 +1002,11 @@
             // Вкладки на странице задач
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
+                    if (!currentUser) {
+                        alert('Для работы с задачами необходимо войти в систему');
+                        showPage('login-page');
+                        return;
+                    }
                     const tabId = this.getAttribute('data-tab');
                     switchTab(tabId);
                 });
@@ -818,6 +1014,11 @@
             
             // Быстрое создание задачи из админ-панели
             document.getElementById('admin-add-task').addEventListener('click', () => {
+                if (!currentUser) {
+                    alert('Для создания задач необходимо войти в систему');
+                    showPage('login-page');
+                    return;
+                }
                 openModal('add-task-modal');
                 populateUserSelect('task-assignee');
             });
@@ -837,6 +1038,7 @@
                 localStorage.setItem('currentUser', JSON.stringify(user));
                 document.getElementById('login-error').classList.add('hidden');
                 updateUI();
+                unlockFunctionality();
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
             }
@@ -846,6 +1048,8 @@
             currentUser = null;
             localStorage.removeItem('currentUser');
             updateUI();
+            lockAllFunctionality();
+            showPage('login-page');
         }
 
         // Функции для работы с интерфейсом
@@ -986,6 +1190,12 @@
         function handleAddTask(e) {
             e.preventDefault();
             
+            if (!currentUser) {
+                alert('Для создания задач необходимо войти в систему');
+                showPage('login-page');
+                return;
+            }
+            
             const title = document.getElementById('task-title').value;
             const description = document.getElementById('task-description').value;
             const assignee = parseInt(document.getElementById('task-assignee').value);
@@ -1015,6 +1225,12 @@
         }
 
         function completeTask(taskId) {
+            if (!currentUser) {
+                alert('Для работы с задачами необходимо войти в систему');
+                showPage('login-page');
+                return;
+            }
+            
             const task = database.tasks.find(t => t.id === taskId);
             if (task) {
                 task.status = 'pending-approval';
@@ -1027,6 +1243,12 @@
         }
 
         function approveTask(taskId) {
+            if (!currentUser) {
+                alert('Для подтверждения задач необходимо войти в систему');
+                showPage('login-page');
+                return;
+            }
+            
             const task = database.tasks.find(t => t.id === taskId);
             if (task) {
                 task.status = 'completed';
@@ -1060,6 +1282,12 @@
         }
 
         function rejectTask(taskId) {
+            if (!currentUser) {
+                alert('Для работы с задачами необходимо войти в систему');
+                showPage('login-page');
+                return;
+            }
+            
             const task = database.tasks.find(t => t.id === taskId);
             if (task) {
                 task.status = 'rejected';
