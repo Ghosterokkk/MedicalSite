@@ -369,6 +369,15 @@
         .mt-2 { margin-top: 2rem; }
         .mb-1 { margin-bottom: 1rem; }
         .mb-2 { margin-bottom: 2rem; }
+        
+        /* Специальные классы для ограничения прав */
+        .super-admin-only {
+            display: none;
+        }
+        
+        .show-for-super-admin {
+            display: block !important;
+        }
     </style>
 </head>
 <body>
@@ -381,8 +390,8 @@
                         <li><a href="#" data-page="home">Главная</a></li>
                         <li><a href="#" data-page="tasks">Задачи</a></li>
                         <li><a href="#" data-page="profile" class="user-only">Профиль</a></li>
-                        <li><a href="#" data-page="admin" class="admin-only">Админ-панель</a></li>
-                        <li><a href="#" data-page="users" class="admin-only">Пользователи</a></li>
+                        <li><a href="#" data-page="admin" class="super-admin-only">Админ-панель</a></li>
+                        <li><a href="#" data-page="users" class="super-admin-only">Пользователи</a></li>
                     </ul>
                 </nav>
                 <div class="user-info">
@@ -669,6 +678,41 @@
         </div>
     </div>
 
+    <div id="edit-user-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Редактирование пользователя</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group">
+                    <label for="edit-user-login">Логин</label>
+                    <input type="text" id="edit-user-login" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-name">Имя</label>
+                    <input type="text" id="edit-user-name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-role">Роль</label>
+                    <select id="edit-user-role" class="form-control" required>
+                        <option value="junior">Младший сотрудник</option>
+                        <option value="senior">Старший сотрудник</option>
+                        <option value="manager">Менеджер</option>
+                        <option value="admin">Администратор</option>
+                        <option value="owner">Владелец</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-balance">Баланс</label>
+                    <input type="number" id="edit-user-balance" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+
     <footer>
         <div class="container">
             <p>WorkFlow System &copy; 2023</p>
@@ -761,6 +805,9 @@
             
             document.getElementById('add-balance-btn').addEventListener('click', handleAddBalance);
             
+            // Редактирование пользователя
+            document.getElementById('edit-user-form').addEventListener('submit', handleEditUser);
+            
             // Вкладки на странице задач
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -809,12 +856,18 @@
                     el.classList.remove('hidden');
                 });
                 
-                // Показываем элементы для администраторов
-                if (['admin', 'owner'].includes(currentUser.role)) {
+                // Показываем элементы для администраторов и владельцев
+                if (isSuperAdmin()) {
+                    document.querySelectorAll('.super-admin-only').forEach(el => {
+                        el.classList.add('show-for-super-admin');
+                    });
                     document.querySelectorAll('.admin-only').forEach(el => {
                         el.classList.remove('hidden');
                     });
                 } else {
+                    document.querySelectorAll('.super-admin-only').forEach(el => {
+                        el.classList.remove('show-for-super-admin');
+                    });
                     document.querySelectorAll('.admin-only').forEach(el => {
                         el.classList.add('hidden');
                     });
@@ -848,6 +901,10 @@
                     el.classList.add('hidden');
                 });
                 
+                document.querySelectorAll('.super-admin-only').forEach(el => {
+                    el.classList.remove('show-for-super-admin');
+                });
+                
                 document.getElementById('user-role').classList.add('hidden');
                 
                 // Переключаем кнопки входа/выхода
@@ -857,6 +914,10 @@
                 // Показываем страницу входа
                 showPage('login-page');
             }
+        }
+
+        function isSuperAdmin() {
+            return currentUser && (currentUser.role === 'admin' || currentUser.role === 'owner');
         }
 
         function showPage(pageId) {
@@ -870,6 +931,12 @@
         }
 
         function openModal(modalId) {
+            // Проверяем права доступа для определенных модальных окон
+            if ((modalId === 'add-user-modal' || modalId === 'manage-balance-modal' || modalId === 'edit-user-modal') && !isSuperAdmin()) {
+                alert('У вас недостаточно прав для выполнения этого действия!');
+                return;
+            }
+            
             document.getElementById(modalId).classList.add('active');
         }
 
@@ -1008,6 +1075,12 @@
         function handleAddUser(e) {
             e.preventDefault();
             
+            // Проверяем права доступа
+            if (!isSuperAdmin()) {
+                alert('У вас недостаточно прав для создания пользователей!');
+                return;
+            }
+            
             const login = document.getElementById('new-user-login').value;
             const password = document.getElementById('new-user-password').value;
             const name = document.getElementById('new-user-name').value;
@@ -1037,7 +1110,79 @@
             alert('Пользователь успешно создан!');
         }
 
+        function handleEditUser(e) {
+            e.preventDefault();
+            
+            // Проверяем права доступа
+            if (!isSuperAdmin()) {
+                alert('У вас недостаточно прав для редактирования пользователей!');
+                return;
+            }
+            
+            const userId = parseInt(document.getElementById('edit-user-id').value);
+            const login = document.getElementById('edit-user-login').value;
+            const name = document.getElementById('edit-user-name').value;
+            const role = document.getElementById('edit-user-role').value;
+            const balance = parseInt(document.getElementById('edit-user-balance').value);
+            
+            const user = database.users.find(u => u.id === userId);
+            if (user) {
+                user.login = login;
+                user.name = name;
+                user.role = role;
+                
+                // Если баланс изменился, добавляем запись в историю
+                if (user.balance !== balance) {
+                    const difference = balance - user.balance;
+                    user.balance = balance;
+                    
+                    const balanceRecord = {
+                        id: database.balanceHistory.length > 0 ? Math.max(...database.balanceHistory.map(b => b.id)) + 1 : 1,
+                        userId: user.id,
+                        amount: difference,
+                        reason: `Корректировка баланса администратором`,
+                        createdBy: currentUser.id,
+                        createdAt: new Date().toISOString().split('T')[0]
+                    };
+                    
+                    database.balanceHistory.push(balanceRecord);
+                }
+                
+                updateUsersPage();
+                updateAdminPage();
+                updateProfilePage();
+                closeAllModals();
+                
+                alert('Данные пользователя успешно обновлены!');
+            }
+        }
+
+        function openEditUserModal(userId) {
+            // Проверяем права доступа
+            if (!isSuperAdmin()) {
+                alert('У вас недостаточно прав для редактирования пользователей!');
+                return;
+            }
+            
+            const user = database.users.find(u => u.id === userId);
+            if (user) {
+                document.getElementById('edit-user-id').value = user.id;
+                document.getElementById('edit-user-login').value = user.login;
+                document.getElementById('edit-user-name').value = user.name;
+                document.getElementById('edit-user-role').value = user.role;
+                document.getElementById('edit-user-balance').value = user.balance;
+                
+                openModal('edit-user-modal');
+            }
+        }
+
         function handleAddBalance() {
+            // Проверяем права доступа
+            if (!isSuperAdmin()) {
+                alert('У вас недостаточно прав для управления балансами!');
+                return;
+            }
+            
             const userId = parseInt(document.getElementById('balance-user').value);
             const amount = parseInt(document.getElementById('balance-amount').value);
             const reason = document.getElementById('balance-reason').value;
@@ -1250,7 +1395,7 @@
         }
 
         function updateAdminPage() {
-            if (!currentUser || !['admin', 'owner'].includes(currentUser.role)) return;
+            if (!currentUser || !isSuperAdmin()) return;
             
             // Обновляем статистику
             document.getElementById('total-users').textContent = database.users.length;
@@ -1262,7 +1407,7 @@
         }
 
         function updateUsersPage() {
-            if (!currentUser || !['admin', 'owner'].includes(currentUser.role)) return;
+            if (!currentUser || !isSuperAdmin()) return;
             
             const usersTable = document.getElementById('users-table').querySelector('tbody');
             usersTable.innerHTML = '';
@@ -1285,7 +1430,14 @@
                 usersTable.appendChild(row);
             });
             
-            // Добавляем обработчики для кнопок (упрощенно)
+            // Добавляем обработчики для кнопок
+            document.querySelectorAll('.edit-user-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = parseInt(this.getAttribute('data-user-id'));
+                    openEditUserModal(userId);
+                });
+            });
+            
             document.querySelectorAll('.delete-user-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const userId = parseInt(this.getAttribute('data-user-id'));
