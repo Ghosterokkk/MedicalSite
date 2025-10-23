@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Симулятор СВО</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a3a, #0d1b2a);
+            color: #e0e0e0;
+            overflow: hidden;
+        }
+        
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        #sidebar {
+            width: 300px;
+            background: rgba(13, 27, 42, 0.8);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #2a4a6a;
+        }
+        
+        #viewer {
+            flex: 1;
+            position: relative;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #4dabf7;
+            text-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
+        }
+        
+        h2 {
+            margin: 15px 0 10px;
+            color: #74c0fc;
+            border-bottom: 1px solid #2a4a6a;
+            padding-bottom: 5px;
+        }
+        
+        .category {
+            margin-bottom: 20px;
+        }
+        
+        .unit {
+            background: rgba(42, 74, 106, 0.5);
+            border: 1px solid #3a5a7a;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .unit:hover {
+            background: rgba(58, 90, 122, 0.7);
+            transform: translateX(5px);
+        }
+        
+        .unit.active {
+            background: rgba(77, 171, 247, 0.3);
+            border-color: #4dabf7;
+        }
+        
+        .info-panel {
+            background: rgba(13, 27, 42, 0.9);
+            border: 1px solid #2a4a6a;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .info-panel.active {
+            display: block;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #4dabf7;
+        }
+        
+        .stat-label {
+            font-size: 0.8em;
+            color: #a0aec0;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        button {
+            background: #2a4a6a;
+            color: #e0e0e0;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #3a5a7a;
+        }
+        
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #4dabf7;
+            font-size: 1.5em;
+        }
+        
+        #directions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .direction {
+            background: rgba(42, 74, 106, 0.5);
+            border: 1px solid #3a5a7a;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .direction:hover {
+            background: rgba(58, 90, 122, 0.7);
+        }
+        
+        .direction.active {
+            background: rgba(77, 171, 247, 0.3);
+            border-color: #4dabf7;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="sidebar">
+            <h1>Симулятор СВО</h1>
+            
+            <div class="category">
+                <h2>Направления войны</h2>
+                <div id="directions">
+                    <div class="direction active" data-direction="donbass">Донбасс</div>
+                    <div class="direction" data-direction="kherson">Херсон</div>
+                    <div class="direction" data-direction="zaporozhye">Запорожье</div>
+                    <div class="direction" data-direction="kharkiv">Харьков</div>
+                </div>
+            </div>
+            
+            <div class="category">
+                <h2>Солдаты</h2>
+                <div class="unit" data-type="soldier" data-model="rifleman">
+                    <div class="unit-name">Стрелок</div>
+                </div>
+                <div class="unit" data-type="soldier" data-model="sniper">
+                    <div class="unit-name">Снайпер</div>
+                </div>
+                <div class="unit" data-type="soldier" data-model="machinegunner">
+                    <div class="unit-name">Пулемётчик</div>
+                </div>
+                <div class="unit" data-type="soldier" data-model="medic">
+                    <div class="unit-name">Медик</div>
+                </div>
+            </div>
+            
+            <div class="category">
+                <h2>Бронетехника</h2>
+                <div class="unit" data-type="vehicle" data-model="tank">
+                    <div class="unit-name">Танк Т-90</div>
+                </div>
+                <div class="unit" data-type="vehicle" data-model="bmp">
+                    <div class="unit-name">БМП-3</div>
+                </div>
+                <div class="unit" data-type="vehicle" data-model="btr">
+                    <div class="unit-name">БТР-82А</div>
+                </div>
+                <div class="unit" data-type="vehicle" data-model="mlrs">
+                    <div class="unit-name">РСЗО "Торнадо-С"</div>
+                </div>
+            </div>
+            
+            <div class="category">
+                <h2>Дроны</h2>
+                <div class="unit" data-type="drone" data-model="recon">
+                    <div class="unit-name">Разведывательный дрон</div>
+                </div>
+                <div class="unit" data-type="drone" data-model="kamikaze">
+                    <div class="unit-name">Ударный дрон "Ланцет"</div>
+                </div>
+                <div class="unit" data-type="drone" data-model="scout">
+                    <div class="unit-name">БПЛА "Орлан-10"</div>
+                </div>
+            </div>
+            
+            <div class="category">
+                <h2>Вертолёты</h2>
+                <div class="unit" data-type="helicopter" data-model="mi8">
+                    <div class="unit-name">Транспортный Ми-8</div>
+                </div>
+                <div class="unit" data-type="helicopter" data-model="ka52">
+                    <div class="unit-name">Ударный Ка-52 "Аллигатор"</div>
+                </div>
+                <div class="unit" data-type="helicopter" data-model="mi28">
+                    <div class="unit-name">Ударный Ми-28Н "Ночной охотник"</div>
+                </div>
+            </div>
+            
+            <div class="category">
+                <h2>Самолёты</h2>
+                <div class="unit" data-type="aircraft" data-model="su34">
+                    <div class="unit-name">Истребитель-бомбардировщик Су-34</div>
+                </div>
+                <div class="unit" data-type="aircraft" data-model="su35">
+                    <div class="unit-name">Истребитель Су-35С</div>
+                </div>
+                <div class="unit" data-type="aircraft" data-model="su57">
+                    <div class="unit-name">Истребитель 5-го поколения Су-57</div>
+                </div>
+            </div>
+            
+            <div class="info-panel" id="unit-info">
+                <h3 id="info-title">Информация о юните</h3>
+                <div id="info-description">Выберите юнит для просмотра информации</div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="stat-armor">-</div>
+                        <div class="stat-label">Броня</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="stat-firepower">-</div>
+                        <div class="stat-label">Огневая мощь</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="stat-mobility">-</div>
+                        <div class="stat-label">Мобильность</div>
+                    </div>
+                </div>
+                <div class="controls">
+                    <button id="deploy-btn">Развернуть</button>
+                    <button id="details-btn">Подробнее</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="viewer">
+            <div id="canvas-container"></div>
+            <div id="loading">Загрузка 3D сцены...</div>
+        </div>
+    </div>
+
+    <script>
+        // Основные переменные Three.js
+        let scene, camera, renderer, controls;
+        let currentModel = null;
+        
+        // Инициализация сцены
+        function init() {
+            // Создание сцены
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0d1b2a);
+            
+            // Создание камеры
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 10);
+            
+            // Создание рендерера
+            const container = document.getElementById('canvas-container');
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            container.appendChild(renderer.domElement);
+            
+            // Добавление OrbitControls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Добавление освещения
+            const ambientLight = new THREE.AmbientLight(0x404040, 1);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(10, 10, 5);
+            scene.add(directionalLight);
+            
+            // Создание базовой сцены с ландшафтом
+            createTerrain();
+            
+            // Скрытие загрузки
+            document.getElementById('loading').style.display = 'none';
+            
+            // Обработка изменения размера окна
+            window.addEventListener('resize', onWindowResize);
+            
+            // Запуск анимации
+            animate();
+            
+            // Инициализация обработчиков событий
+            initEventListeners();
+        }
+        
+        // Создание ландшафта
+        function createTerrain() {
+            // Простой ландшафт
+            const geometry = new THREE.PlaneGeometry(20, 20, 32, 32);
+            const material = new THREE.MeshLambertMaterial({ 
+                color: 0x3a5a40,
+                side: THREE.DoubleSide
+            });
+            const plane = new THREE.Mesh(geometry, material);
+            plane.rotation.x = -Math.PI / 2;
+            scene.add(plane);
+            
+            // Добавление сетки для лучшей ориентации
+            const gridHelper = new THREE.GridHelper(20, 20, 0x2a4a6a, 0x1a3a5a);
+            scene.add(gridHelper);
+        }
+        
+        // Создание простых 3D моделей
+        function createModel(type, model) {
+            // Удаление предыдущей модели
+            if (currentModel) {
+                scene.remove(currentModel);
+            }
+            
+            let geometry, material, mesh;
+            
+            // Создание моделей в зависимости от типа
+            switch(type) {
+                case 'soldier':
+                    geometry = new THREE.CylinderGeometry(0.3, 0.3, 1.8, 8);
+                    material = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    mesh = new THREE.Mesh(geometry, material);
+                    break;
+                    
+                case 'vehicle':
+                    if (model === 'tank') {
+                        // Корпус танка
+                        const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
+                        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x556b2f });
+                        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                        
+                        // Башня
+                        const turretGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.5, 8);
+                        const turretMaterial = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
+                        const turret = new THREE.Mesh(turretGeometry, turretMaterial);
+                        turret.position.y = 0.65;
+                        
+                        // Пушка
+                        const gunGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 8);
+                        const gunMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                        const gun = new THREE.Mesh(gunGeometry, gunMaterial);
+                        gun.position.y = 0.65;
+                        gun.position.z = -1;
+                        gun.rotation.x = Math.PI / 2;
+                        
+                        mesh = new THREE.Group();
+                        mesh.add(body);
+                        mesh.add(turret);
+                        mesh.add(gun);
+                    } else {
+                        geometry = new THREE.BoxGeometry(1.5, 0.8, 3);
+                        material = new THREE.MeshLambertMaterial({ color: 0x556b2f });
+                        mesh = new THREE.Mesh(geometry, material);
+                    }
+                    break;
+                    
+                case 'drone':
+                    geometry = new THREE.BoxGeometry(1, 0.2, 1);
+                    material = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    mesh = new THREE.Mesh(geometry, material);
+                    
+                    // Добавление "крыльев"
+                    const wingGeometry = new THREE.BoxGeometry(3, 0.1, 1);
+                    const wingMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const wing = new THREE.Mesh(wingGeometry, wingMaterial);
+                    mesh.add(wing);
+                    break;
+                    
+                case 'helicopter':
+                    // Фюзеляж
+                    const fuselageGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3, 8);
+                    const fuselageMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
+                    fuselage.rotation.z = Math.PI / 2;
+                    
+                    // Хвост
+                    const tailGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2, 8);
+                    const tailMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+                    tail.position.x = -1.5;
+                    tail.rotation.z = Math.PI / 2;
+                    
+                    // Винт
+                    const rotorGeometry = new THREE.BoxGeometry(4, 0.1, 0.3);
+                    const rotorMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const rotor = new THREE.Mesh(rotorGeometry, rotorMaterial);
+                    rotor.position.y = 0.6;
+                    
+                    mesh = new THREE.Group();
+                    mesh.add(fuselage);
+                    mesh.add(tail);
+                    mesh.add(rotor);
+                    break;
+                    
+                case 'aircraft':
+                    // Фюзеляж
+                    const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 4, 8);
+                    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                    body.rotation.z = Math.PI / 2;
+                    
+                    // Крылья
+                    const wingsGeometry = new THREE.BoxGeometry(6, 0.1, 1.5);
+                    const wingsMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const wings = new THREE.Mesh(wingsGeometry, wingsMaterial);
+                    
+                    mesh = new THREE.Group();
+                    mesh.add(body);
+                    mesh.add(wings);
+                    break;
+                    
+                default:
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshLambertMaterial({ color: 0x4dabf7 });
+                    mesh = new THREE.Mesh(geometry, material);
+            }
+            
+            scene.add(mesh);
+            currentModel = mesh;
+            
+            // Центрирование камеры на модели
+            controls.reset();
+        }
+        
+        // Обновление информации о юните
+        function updateUnitInfo(type, model) {
+            const infoPanel = document.getElementById('unit-info');
+            infoPanel.classList.add('active');
+            
+            let title, description, armor, firepower, mobility;
+            
+            switch(type) {
+                case 'soldier':
+                    if (model === 'rifleman') {
+                        title = 'Стрелок';
+                        description = 'Основная боевая единица с автоматом Калашникова. Обладает сбалансированными характеристиками.';
+                        armor = 3;
+                        firepower = 6;
+                        mobility = 8;
+                    } else if (model === 'sniper') {
+                        title = 'Снайпер';
+                        description = 'Специалист по точной стрельбе на большие дистанции. Вооружён снайперской винтовкой.';
+                        armor = 2;
+                        firepower = 8;
+                        mobility = 5;
+                    } else if (model === 'machinegunner') {
+                        title = 'Пулемётчик';
+                        description = 'Обеспечивает огневую поддержку с помощью пулемёта ПКП "Печенег".';
+                        armor = 4;
+                        firepower = 9;
+                        mobility = 4;
+                    } else if (model === 'medic') {
+                        title = 'Медик';
+                        description = 'Оказывает первую помощь на поле боя. Вооружён пистолетом для самообороны.';
+                        armor = 3;
+                        firepower = 3;
+                        mobility = 7;
+                    }
+                    break;
+                    
+                case 'vehicle':
+                    if (model === 'tank') {
+                        title = 'Танк Т-90';
+                        description = 'Основной боевой танк с мощным вооружением и защитой. Оснащён 125-мм пушкой.';
+                        armor = 9;
+                        firepower = 9;
+                        mobility = 6;
+                    } else if (model === 'bmp') {
+                        title = 'БМП-3';
+                        description = 'Боевая машина пехоты с мощным вооружением. Может перевозить до 7 солдат.';
+                        armor = 6;
+                        firepower = 7;
+                        mobility = 8;
+                    } else if (model === 'btr') {
+                        title = 'БТР-82А';
+                        description = 'Бронетранспортёр с 30-мм автоматической пушкой. Обеспечивает мобильность пехоты.';
+                        armor = 5;
+                        firepower = 6;
+                        mobility = 8;
+                    } else if (model === 'mlrs') {
+                        title = 'РСЗО "Торнадо-С"';
+                        description = 'Реактивная система залпового огня. Наносит массированные удары по площадным целям.';
+                        armor = 4;
+                        firepower = 10;
+                        mobility = 5;
+                    }
+                    break;
+                    
+                case 'drone':
+                    if (model === 'recon') {
+                        title = 'Разведывательный дрон';
+                        description = 'Беспилотник для ведения разведки и наблюдения. Оснащён камерами высокого разрешения.';
+                        armor = 1;
+                        firepower = 0;
+                        mobility = 9;
+                    } else if (model === 'kamikaze') {
+                        title = 'Ударный дрон "Ланцет"';
+                        description = 'Беспилотник-камикадзе для поражения бронированных целей. Несёт осколочно-фугасную боевую часть.';
+                        armor = 2;
+                        firepower = 8;
+                        mobility = 8;
+                    } else if (model === 'scout') {
+                        title = 'БПЛА "Орлан-10"';
+                        description = 'Многофункциональный беспилотник для разведки, наблюдения и целеуказания.';
+                        armor = 2;
+                        firepower = 0;
+                        mobility = 7;
+                    }
+                    break;
+                    
+                case 'helicopter':
+                    if (model === 'mi8') {
+                        title = 'Транспортный Ми-8';
+                        description = 'Многоцелевой вертолёт для переброски войск и грузов. Может нести до 24 солдат.';
+                        armor = 4;
+                        firepower = 5;
+                        mobility = 7;
+                    } else if (model === 'ka52') {
+                        title = 'Ударный Ка-52 "Аллигатор"';
+                        description = 'Двухместный ударный вертолёт. Оснащён ПТУР "Вихрь" и 30-мм пушкой.';
+                        armor = 7;
+                        firepower = 9;
+                        mobility = 8;
+                    } else if (model === 'mi28') {
+                        title = 'Ударный Ми-28Н "Ночной охотник"';
+                        description = 'Специализированный ударный вертолёт для работы в любое время суток.';
+                        armor = 8;
+                        firepower = 9;
+                        mobility = 7;
+                    }
+                    break;
+                    
+                case 'aircraft':
+                    if (model === 'su34') {
+                        title = 'Истребитель-бомбардировщик Су-34';
+                        description = 'Самолёт тактической авиации для поражения наземных и воздушных целей.';
+                        armor = 6;
+                        firepower = 9;
+                        mobility = 8;
+                    } else if (model === 'su35') {
+                        title = 'Истребитель Су-35С';
+                        description = 'Многофункциональный истребитель для завоевания превосходства в воздухе.';
+                        armor = 5;
+                        firepower = 8;
+                        mobility = 9;
+                    } else if (model === 'su57') {
+                        title = 'Истребитель 5-го поколения Су-57';
+                        description = 'Перспективный истребитель с технологией стелс и передовой авионикой.';
+                        armor = 7;
+                        firepower = 10;
+                        mobility = 9;
+                    }
+                    break;
+            }
+            
+            document.getElementById('info-title').textContent = title;
+            document.getElementById('info-description').textContent = description;
+            document.getElementById('stat-armor').textContent = armor;
+            document.getElementById('stat-firepower').textContent = firepower;
+            document.getElementById('stat-mobility').textContent = mobility;
+        }
+        
+        // Инициализация обработчиков событий
+        function initEventListeners() {
+            // Обработчики для юнитов
+            const units = document.querySelectorAll('.unit');
+            units.forEach(unit => {
+                unit.addEventListener('click', function() {
+                    // Удаление активного класса у всех юнитов
+                    units.forEach(u => u.classList.remove('active'));
+                    
+                    // Добавление активного класса к выбранному юниту
+                    this.classList.add('active');
+                    
+                    // Получение типа и модели
+                    const type = this.getAttribute('data-type');
+                    const model = this.getAttribute('data-model');
+                    
+                    // Создание 3D модели
+                    createModel(type, model);
+                    
+                    // Обновление информации
+                    updateUnitInfo(type, model);
+                });
+            });
+            
+            // Обработчики для направлений
+            const directions = document.querySelectorAll('.direction');
+            directions.forEach(direction => {
+                direction.addEventListener('click', function() {
+                    // Удаление активного класса у всех направлений
+                    directions.forEach(d => d.classList.remove('active'));
+                    
+                    // Добавление активного класса к выбранному направлению
+                    this.classList.add('active');
+                    
+                    // Здесь можно добавить логику изменения сцены в зависимости от направления
+                    const directionName = this.getAttribute('data-direction');
+                    console.log('Выбрано направление: ' + directionName);
+                });
+            });
+            
+            // Обработчики для кнопок
+            document.getElementById('deploy-btn').addEventListener('click', function() {
+                alert('Юнит развёрнут на поле боя!');
+            });
+            
+            document.getElementById('details-btn').addEventListener('click', function() {
+                alert('Подробная информация о юните будет отображена здесь.');
+            });
+        }
+        
+        // Обработка изменения размера окна
+        function onWindowResize() {
+            const container = document.getElementById('canvas-container');
+            camera.aspect = container.clientWidth / container.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+        
+        // Анимация
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Вращение текущей модели
+            if (currentModel) {
+                currentModel.rotation.y += 0.01;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        // Запуск приложения
+        window.onload = init;
+    </script>
+</body>
+</html>
