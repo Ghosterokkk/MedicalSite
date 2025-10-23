@@ -27,10 +27,11 @@
         
         #sidebar {
             width: 300px;
-            background: rgba(13, 27, 42, 0.8);
+            background: rgba(13, 27, 42, 0.9);
             padding: 20px;
             overflow-y: auto;
             border-right: 1px solid #2a4a6a;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
         }
         
         #viewer {
@@ -48,6 +49,7 @@
             margin-bottom: 20px;
             color: #4dabf7;
             text-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
+            font-size: 1.5em;
         }
         
         h2 {
@@ -55,6 +57,7 @@
             color: #74c0fc;
             border-bottom: 1px solid #2a4a6a;
             padding-bottom: 5px;
+            font-size: 1.1em;
         }
         
         .category {
@@ -79,6 +82,17 @@
         .unit.active {
             background: rgba(77, 171, 247, 0.3);
             border-color: #4dabf7;
+            box-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
+        }
+        
+        .unit-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .unit-desc {
+            font-size: 0.8em;
+            color: #a0aec0;
         }
         
         .info-panel {
@@ -87,11 +101,6 @@
             border-radius: 5px;
             padding: 15px;
             margin-top: 10px;
-            display: none;
-        }
-        
-        .info-panel.active {
-            display: block;
         }
         
         .stats {
@@ -102,6 +111,7 @@
         
         .stat {
             text-align: center;
+            flex: 1;
         }
         
         .stat-value {
@@ -129,10 +139,13 @@
             padding: 8px 15px;
             cursor: pointer;
             transition: all 0.3s;
+            flex: 1;
+            margin: 0 5px;
         }
         
         button:hover {
             background: #3a5a7a;
+            transform: translateY(-2px);
         }
         
         #loading {
@@ -142,6 +155,7 @@
             transform: translate(-50%, -50%);
             color: #4dabf7;
             font-size: 1.5em;
+            text-align: center;
         }
         
         #directions {
@@ -170,13 +184,50 @@
         .direction.active {
             background: rgba(77, 171, 247, 0.3);
             border-color: #4dabf7;
+            box-shadow: 0 0 10px rgba(77, 171, 247, 0.5);
+        }
+        
+        .progress-bar {
+            height: 5px;
+            background: #2a4a6a;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #4dabf7;
+            border-radius: 3px;
+        }
+        
+        .scene-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .scene-btn {
+            background: rgba(13, 27, 42, 0.7);
+            color: #e0e0e0;
+            border: 1px solid #2a4a6a;
+            border-radius: 5px;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .scene-btn:hover {
+            background: rgba(42, 74, 106, 0.7);
         }
     </style>
 </head>
 <body>
     <div id="container">
         <div id="sidebar">
-            <h1>Симулятор СВО</h1>
+            <h1>3D Симулятор Специальной Военной Операции</h1>
             
             <div class="category">
                 <h2>Направления войны</h2>
@@ -192,57 +243,83 @@
                 <h2>Солдаты</h2>
                 <div class="unit" data-type="soldier" data-model="rifleman">
                     <div class="unit-name">Стрелок</div>
+                    <div class="unit-desc">Основная боевая единица с АК-74М</div>
                 </div>
                 <div class="unit" data-type="soldier" data-model="sniper">
                     <div class="unit-name">Снайпер</div>
+                    <div class="unit-desc">Специалист по точной стрельбе</div>
                 </div>
                 <div class="unit" data-type="soldier" data-model="machinegunner">
                     <div class="unit-name">Пулемётчик</div>
+                    <div class="unit-desc">Огневая поддержка с ПКП "Печенег"</div>
                 </div>
                 <div class="unit" data-type="soldier" data-model="medic">
                     <div class="unit-name">Медик</div>
+                    <div class="unit-desc">Первая помощь на поле боя</div>
                 </div>
             </div>
             
             <div class="category">
                 <h2>Бронетехника</h2>
-                <div class="unit" data-type="vehicle" data-model="tank">
-                    <div class="unit-name">Танк Т-90</div>
+                <div class="unit" data-type="vehicle" data-model="t90">
+                    <div class="unit-name">Танк Т-90М "Прорыв"</div>
+                    <div class="unit-desc">Основной боевой танк</div>
                 </div>
-                <div class="unit" data-type="vehicle" data-model="bmp">
+                <div class="unit" data-type="vehicle" data-model="t14">
+                    <div class="unit-name">Танк Т-14 "Армата"</div>
+                    <div class="unit-desc">Танк нового поколения</div>
+                </div>
+                <div class="unit" data-type="vehicle" data-model="bmp3">
                     <div class="unit-name">БМП-3</div>
+                    <div class="unit-desc">Боевая машина пехоты</div>
                 </div>
-                <div class="unit" data-type="vehicle" data-model="btr">
+                <div class="unit" data-type="vehicle" data-model="btr82">
                     <div class="unit-name">БТР-82А</div>
+                    <div class="unit-desc">Бронетранспортёр</div>
                 </div>
-                <div class="unit" data-type="vehicle" data-model="mlrs">
+                <div class="unit" data-type="vehicle" data-model="tornado">
                     <div class="unit-name">РСЗО "Торнадо-С"</div>
+                    <div class="unit-desc">Реактивная система залпового огня</div>
                 </div>
             </div>
             
             <div class="category">
                 <h2>Дроны</h2>
-                <div class="unit" data-type="drone" data-model="recon">
-                    <div class="unit-name">Разведывательный дрон</div>
-                </div>
-                <div class="unit" data-type="drone" data-model="kamikaze">
-                    <div class="unit-name">Ударный дрон "Ланцет"</div>
-                </div>
-                <div class="unit" data-type="drone" data-model="scout">
+                <div class="unit" data-type="drone" data-model="orlan">
                     <div class="unit-name">БПЛА "Орлан-10"</div>
+                    <div class="unit-desc">Разведывательный беспилотник</div>
+                </div>
+                <div class="unit" data-type="drone" data-model="lancet">
+                    <div class="unit-name">Ударный дрон "Ланцет"</div>
+                    <div class="unit-desc">Беспилотник-камикадзе</div>
+                </div>
+                <div class="unit" data-type="drone" data-model="zala">
+                    <div class="unit-name">БПЛА "ZALA 421-16"</div>
+                    <div class="unit-desc">Разведывательный дрон</div>
+                </div>
+                <div class="unit" data-type="drone" data-model="kub">
+                    <div class="unit-name">Ударный дрон "Куб"</div>
+                    <div class="unit-desc">Беспилотник для поражения целей</div>
                 </div>
             </div>
             
             <div class="category">
                 <h2>Вертолёты</h2>
                 <div class="unit" data-type="helicopter" data-model="mi8">
-                    <div class="unit-name">Транспортный Ми-8</div>
+                    <div class="unit-name">Транспортный Ми-8АМТШ</div>
+                    <div class="unit-desc">Многоцелевой вертолёт</div>
                 </div>
                 <div class="unit" data-type="helicopter" data-model="ka52">
                     <div class="unit-name">Ударный Ка-52 "Аллигатор"</div>
+                    <div class="unit-desc">Разведывательно-ударный вертолёт</div>
                 </div>
                 <div class="unit" data-type="helicopter" data-model="mi28">
                     <div class="unit-name">Ударный Ми-28Н "Ночной охотник"</div>
+                    <div class="unit-desc">Вертолёт огневой поддержки</div>
+                </div>
+                <div class="unit" data-type="helicopter" data-model="mi26">
+                    <div class="unit-name">Тяжёлый транспортный Ми-26</div>
+                    <div class="unit-desc">Самый большой вертолёт в мире</div>
                 </div>
             </div>
             
@@ -250,30 +327,40 @@
                 <h2>Самолёты</h2>
                 <div class="unit" data-type="aircraft" data-model="su34">
                     <div class="unit-name">Истребитель-бомбардировщик Су-34</div>
+                    <div class="unit-desc">Самолёт тактической авиации</div>
                 </div>
                 <div class="unit" data-type="aircraft" data-model="su35">
                     <div class="unit-name">Истребитель Су-35С</div>
+                    <div class="unit-desc">Многофункциональный истребитель</div>
                 </div>
                 <div class="unit" data-type="aircraft" data-model="su57">
-                    <div class="unit-name">Истребитель 5-го поколения Су-57</div>
+                    <div class="unit-name">Истребитель Су-57</div>
+                    <div class="unit-desc">Самолёт 5-го поколения</div>
+                </div>
+                <div class="unit" data-type="aircraft" data-model="su25">
+                    <div class="unit-name">Штурмовик Су-25СМ</div>
+                    <div class="unit-desc">Самолёт непосредственной поддержки</div>
                 </div>
             </div>
             
-            <div class="info-panel" id="unit-info">
-                <h3 id="info-title">Информация о юните</h3>
-                <div id="info-description">Выберите юнит для просмотра информации</div>
+            <div class="info-panel">
+                <h3 id="info-title">Выберите технику</h3>
+                <div id="info-description">Для просмотра информации выберите юнит из списка</div>
                 <div class="stats">
                     <div class="stat">
                         <div class="stat-value" id="stat-armor">-</div>
                         <div class="stat-label">Броня</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progress-armor"></div></div>
                     </div>
                     <div class="stat">
                         <div class="stat-value" id="stat-firepower">-</div>
                         <div class="stat-label">Огневая мощь</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progress-firepower"></div></div>
                     </div>
                     <div class="stat">
                         <div class="stat-value" id="stat-mobility">-</div>
                         <div class="stat-label">Мобильность</div>
+                        <div class="progress-bar"><div class="progress-fill" id="progress-mobility"></div></div>
                     </div>
                 </div>
                 <div class="controls">
@@ -285,7 +372,15 @@
         
         <div id="viewer">
             <div id="canvas-container"></div>
-            <div id="loading">Загрузка 3D сцены...</div>
+            <div id="loading">
+                <div>Загрузка 3D сцены...</div>
+                <div style="font-size: 0.8em; margin-top: 10px;">Пожалуйста, подождите</div>
+            </div>
+            
+            <div class="scene-controls">
+                <button class="scene-btn" id="reset-view">Сброс вида</button>
+                <button class="scene-btn" id="toggle-grid">Сетка: ВКЛ</button>
+            </div>
         </div>
     </div>
 
@@ -293,12 +388,14 @@
         // Основные переменные Three.js
         let scene, camera, renderer, controls;
         let currentModel = null;
+        let gridVisible = true;
         
         // Инициализация сцены
         function init() {
             // Создание сцены
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x0d1b2a);
+            scene.fog = new THREE.Fog(0x0d1b2a, 10, 50);
             
             // Создание камеры
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -308,26 +405,35 @@
             const container = document.getElementById('canvas-container');
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             container.appendChild(renderer.domElement);
             
             // Добавление OrbitControls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
+            controls.minDistance = 3;
+            controls.maxDistance = 50;
             
             // Добавление освещения
-            const ambientLight = new THREE.AmbientLight(0x404040, 1);
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
             scene.add(ambientLight);
             
             const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-            directionalLight.position.set(10, 10, 5);
+            directionalLight.position.set(10, 15, 10);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
             scene.add(directionalLight);
             
             // Создание базовой сцены с ландшафтом
             createTerrain();
             
             // Скрытие загрузки
-            document.getElementById('loading').style.display = 'none';
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 1500);
             
             // Обработка изменения размера окна
             window.addEventListener('resize', onWindowResize);
@@ -342,135 +448,864 @@
         // Создание ландшафта
         function createTerrain() {
             // Простой ландшафт
-            const geometry = new THREE.PlaneGeometry(20, 20, 32, 32);
+            const geometry = new THREE.PlaneGeometry(30, 30, 32, 32);
             const material = new THREE.MeshLambertMaterial({ 
                 color: 0x3a5a40,
                 side: THREE.DoubleSide
             });
             const plane = new THREE.Mesh(geometry, material);
             plane.rotation.x = -Math.PI / 2;
+            plane.receiveShadow = true;
             scene.add(plane);
             
             // Добавление сетки для лучшей ориентации
-            const gridHelper = new THREE.GridHelper(20, 20, 0x2a4a6a, 0x1a3a5a);
+            const gridHelper = new THREE.GridHelper(30, 30, 0x2a4a6a, 0x1a3a5a);
+            gridHelper.position.y = 0.01;
             scene.add(gridHelper);
+            
+            // Добавление нескольких холмов для реалистичности
+            const hillGeometry = new THREE.SphereGeometry(5, 16, 16);
+            const hillMaterial = new THREE.MeshLambertMaterial({ color: 0x4a6a3a });
+            
+            const hill1 = new THREE.Mesh(hillGeometry, hillMaterial);
+            hill1.position.set(-8, 2.5, -8);
+            hill1.scale.set(1, 0.5, 1);
+            hill1.castShadow = true;
+            scene.add(hill1);
+            
+            const hill2 = new THREE.Mesh(hillGeometry, hillMaterial);
+            hill2.position.set(10, 3, 5);
+            hill2.scale.set(1.2, 0.6, 1.2);
+            hill2.castShadow = true;
+            scene.add(hill2);
         }
         
-        // Создание простых 3D моделей
+        // Создание детализированных 3D моделей
         function createModel(type, model) {
             // Удаление предыдущей модели
             if (currentModel) {
                 scene.remove(currentModel);
             }
             
-            let geometry, material, mesh;
+            let mesh;
             
             // Создание моделей в зависимости от типа
             switch(type) {
                 case 'soldier':
-                    geometry = new THREE.CylinderGeometry(0.3, 0.3, 1.8, 8);
-                    material = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
-                    mesh = new THREE.Mesh(geometry, material);
+                    mesh = createSoldierModel(model);
                     break;
                     
                 case 'vehicle':
-                    if (model === 'tank') {
-                        // Корпус танка
-                        const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
-                        const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x556b2f });
-                        const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-                        
-                        // Башня
-                        const turretGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.5, 8);
-                        const turretMaterial = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
-                        const turret = new THREE.Mesh(turretGeometry, turretMaterial);
-                        turret.position.y = 0.65;
-                        
-                        // Пушка
-                        const gunGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 8);
-                        const gunMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                        const gun = new THREE.Mesh(gunGeometry, gunMaterial);
-                        gun.position.y = 0.65;
-                        gun.position.z = -1;
-                        gun.rotation.x = Math.PI / 2;
-                        
-                        mesh = new THREE.Group();
-                        mesh.add(body);
-                        mesh.add(turret);
-                        mesh.add(gun);
-                    } else {
-                        geometry = new THREE.BoxGeometry(1.5, 0.8, 3);
-                        material = new THREE.MeshLambertMaterial({ color: 0x556b2f });
-                        mesh = new THREE.Mesh(geometry, material);
-                    }
+                    mesh = createVehicleModel(model);
                     break;
                     
                 case 'drone':
-                    geometry = new THREE.BoxGeometry(1, 0.2, 1);
-                    material = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                    mesh = new THREE.Mesh(geometry, material);
-                    
-                    // Добавление "крыльев"
-                    const wingGeometry = new THREE.BoxGeometry(3, 0.1, 1);
-                    const wingMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                    const wing = new THREE.Mesh(wingGeometry, wingMaterial);
-                    mesh.add(wing);
+                    mesh = createDroneModel(model);
                     break;
                     
                 case 'helicopter':
-                    // Фюзеляж
-                    const fuselageGeometry = new THREE.CylinderGeometry(0.5, 0.5, 3, 8);
-                    const fuselageMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                    const fuselage = new THREE.Mesh(fuselageGeometry, fuselageMaterial);
-                    fuselage.rotation.z = Math.PI / 2;
-                    
-                    // Хвост
-                    const tailGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2, 8);
-                    const tailMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                    const tail = new THREE.Mesh(tailGeometry, tailMaterial);
-                    tail.position.x = -1.5;
-                    tail.rotation.z = Math.PI / 2;
-                    
-                    // Винт
-                    const rotorGeometry = new THREE.BoxGeometry(4, 0.1, 0.3);
-                    const rotorMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
-                    const rotor = new THREE.Mesh(rotorGeometry, rotorMaterial);
-                    rotor.position.y = 0.6;
-                    
-                    mesh = new THREE.Group();
-                    mesh.add(fuselage);
-                    mesh.add(tail);
-                    mesh.add(rotor);
+                    mesh = createHelicopterModel(model);
                     break;
                     
                 case 'aircraft':
-                    // Фюзеляж
-                    const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 4, 8);
-                    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
-                    body.rotation.z = Math.PI / 2;
-                    
-                    // Крылья
-                    const wingsGeometry = new THREE.BoxGeometry(6, 0.1, 1.5);
-                    const wingsMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
-                    const wings = new THREE.Mesh(wingsGeometry, wingsMaterial);
-                    
-                    mesh = new THREE.Group();
-                    mesh.add(body);
-                    mesh.add(wings);
+                    mesh = createAircraftModel(model);
                     break;
                     
                 default:
-                    geometry = new THREE.BoxGeometry(1, 1, 1);
-                    material = new THREE.MeshLambertMaterial({ color: 0x4dabf7 });
-                    mesh = new THREE.Mesh(geometry, material);
+                    mesh = createDefaultModel();
             }
+            
+            // Настройка тени и добавление в сцену
+            mesh.traverse(function(child) {
+                if (child.isMesh) {
+                    child.castShadow = true;
+                    child.receiveShadow = true;
+                }
+            });
             
             scene.add(mesh);
             currentModel = mesh;
             
             // Центрирование камеры на модели
             controls.reset();
+        }
+        
+        // Создание модели солдата
+        function createSoldierModel(model) {
+            const group = new THREE.Group();
+            
+            // Тело
+            const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.2, 8);
+            const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 0.6;
+            group.add(body);
+            
+            // Голова
+            const headGeometry = new THREE.SphereGeometry(0.25, 8, 8);
+            const headMaterial = new THREE.MeshLambertMaterial({ color: 0xffdbac });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            head.position.y = 1.5;
+            group.add(head);
+            
+            // Ноги
+            const legGeometry = new THREE.BoxGeometry(0.15, 0.8, 0.15);
+            const legMaterial = new THREE.MeshLambertMaterial({ color: 0x2a2a2a });
+            
+            const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+            leftLeg.position.set(-0.1, 0.4, 0);
+            group.add(leftLeg);
+            
+            const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+            rightLeg.position.set(0.1, 0.4, 0);
+            group.add(rightLeg);
+            
+            // Оружие в зависимости от типа солдата
+            let weaponGeometry, weaponMaterial, weapon;
+            
+            switch(model) {
+                case 'rifleman':
+                    weaponGeometry = new THREE.BoxGeometry(1.2, 0.05, 0.1);
+                    weaponMaterial = new THREE.MeshLambertMaterial({ color: 0x5d5d5d });
+                    weapon = new THREE.Mesh(weaponGeometry, weaponMaterial);
+                    weapon.position.set(0.4, 1.1, 0);
+                    weapon.rotation.z = -0.2;
+                    group.add(weapon);
+                    break;
+                    
+                case 'sniper':
+                    weaponGeometry = new THREE.BoxGeometry(1.5, 0.05, 0.1);
+                    weaponMaterial = new THREE.MeshLambertMaterial({ color: 0x5d5d5d });
+                    weapon = new THREE.Mesh(weaponGeometry, weaponMaterial);
+                    weapon.position.set(0.5, 1.1, 0);
+                    weapon.rotation.z = -0.2;
+                    group.add(weapon);
+                    
+                    // Прицел
+                    const scopeGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.1, 8);
+                    const scopeMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    const scope = new THREE.Mesh(scopeGeometry, scopeMaterial);
+                    scope.position.set(0.8, 1.15, 0);
+                    scope.rotation.x = Math.PI / 2;
+                    group.add(scope);
+                    break;
+                    
+                case 'machinegunner':
+                    weaponGeometry = new THREE.BoxGeometry(1.0, 0.08, 0.15);
+                    weaponMaterial = new THREE.MeshLambertMaterial({ color: 0x5d5d5d });
+                    weapon = new THREE.Mesh(weaponGeometry, weaponMaterial);
+                    weapon.position.set(0.4, 1.1, 0);
+                    weapon.rotation.z = -0.2;
+                    group.add(weapon);
+                    
+                    // Сошки
+                    const bipodGeometry = new THREE.BoxGeometry(0.02, 0.3, 0.02);
+                    const bipodMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    const leftBipod = new THREE.Mesh(bipodGeometry, bipodMaterial);
+                    leftBipod.position.set(0.2, 0.85, 0.1);
+                    group.add(leftBipod);
+                    
+                    const rightBipod = new THREE.Mesh(bipodGeometry, bipodMaterial);
+                    rightBipod.position.set(0.2, 0.85, -0.1);
+                    group.add(rightBipod);
+                    break;
+                    
+                case 'medic':
+                    // Аптечка
+                    const medkitGeometry = new THREE.BoxGeometry(0.3, 0.2, 0.1);
+                    const medkitMaterial = new THREE.MeshLambertMaterial({ color: 0xff0000 });
+                    const medkit = new THREE.Mesh(medkitGeometry, medkitMaterial);
+                    medkit.position.set(0.3, 1.0, 0.2);
+                    group.add(medkit);
+                    break;
+            }
+            
+            return group;
+        }
+        
+        // Создание модели бронетехники
+        function createVehicleModel(model) {
+            const group = new THREE.Group();
+            
+            switch(model) {
+                case 't90':
+                    // Корпус
+                    const bodyGeometry = new THREE.BoxGeometry(3.5, 1.2, 7);
+                    const bodyMaterial = new THREE.MeshLambertMaterial({ color: 0x556b2f });
+                    const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                    group.add(body);
+                    
+                    // Башня
+                    const turretGeometry = new THREE.CylinderGeometry(1.2, 1.2, 0.8, 8);
+                    const turretMaterial = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
+                    const turret = new THREE.Mesh(turretGeometry, turretMaterial);
+                    turret.position.y = 1.0;
+                    group.add(turret);
+                    
+                    // Пушка
+                    const gunGeometry = new THREE.CylinderGeometry(0.15, 0.15, 4, 8);
+                    const gunMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const gun = new THREE.Mesh(gunGeometry, gunMaterial);
+                    gun.position.set(0, 1.0, -2.5);
+                    gun.rotation.x = Math.PI / 2;
+                    group.add(gun);
+                    
+                    // Динамическая защита
+                    const eraGeometry = new THREE.BoxGeometry(0.2, 0.3, 0.2);
+                    const eraMaterial = new THREE.MeshLambertMaterial({ color: 0x888888 });
+                    
+                    for (let i = 0; i < 8; i++) {
+                        const era = new THREE.Mesh(eraGeometry, eraMaterial);
+                        era.position.set(1.8, 0.8, -2 + i * 0.8);
+                        group.add(era);
+                        
+                        const era2 = new THREE.Mesh(eraGeometry, eraMaterial);
+                        era2.position.set(-1.8, 0.8, -2 + i * 0.8);
+                        group.add(era2);
+                    }
+                    break;
+                    
+                case 't14':
+                    // Корпус Арматы
+                    const armatBodyGeometry = new THREE.BoxGeometry(3.8, 1.5, 8);
+                    const armatBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4a5a3a });
+                    const armatBody = new THREE.Mesh(armatBodyGeometry, armatBodyMaterial);
+                    group.add(armatBody);
+                    
+                    // Необитаемая башня
+                    const armatTurretGeometry = new THREE.BoxGeometry(2.5, 0.8, 3);
+                    const armatTurretMaterial = new THREE.MeshLambertMaterial({ color: 0x5a6a43 });
+                    const armatTurret = new THREE.Mesh(armatTurretGeometry, armatTurretMaterial);
+                    armatTurret.position.y = 1.4;
+                    group.add(armatTurret);
+                    
+                    // Пушка
+                    const armatGunGeometry = new THREE.CylinderGeometry(0.12, 0.12, 5, 8);
+                    const armatGunMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const armatGun = new THREE.Mesh(armatGunGeometry, armatGunMaterial);
+                    armatGun.position.set(0, 1.4, -3);
+                    armatGun.rotation.x = Math.PI / 2;
+                    group.add(armatGun);
+                    
+                    // Радар
+                    const radarGeometry = new THREE.BoxGeometry(0.8, 0.3, 0.8);
+                    const radarMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    const radar = new THREE.Mesh(radarGeometry, radarMaterial);
+                    radar.position.set(0, 2.0, 0);
+                    group.add(radar);
+                    break;
+                    
+                case 'bmp3':
+                    // Корпус БМП
+                    const bmpBodyGeometry = new THREE.BoxGeometry(3.2, 1.5, 6.5);
+                    const bmpBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x556b2f });
+                    const bmpBody = new THREE.Mesh(bmpBodyGeometry, bmpBodyMaterial);
+                    group.add(bmpBody);
+                    
+                    // Башня
+                    const bmpTurretGeometry = new THREE.CylinderGeometry(0.8, 0.8, 0.6, 8);
+                    const bmpTurretMaterial = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
+                    const bmpTurret = new THREE.Mesh(bmpTurretGeometry, bmpTurretMaterial);
+                    bmpTurret.position.set(0, 1.3, -1);
+                    group.add(bmpTurret);
+                    
+                    // Пушка
+                    const bmpGunGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2.5, 8);
+                    const bmpGunMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const bmpGun = new THREE.Mesh(bmpGunGeometry, bmpGunMaterial);
+                    bmpGun.position.set(0, 1.3, -2.2);
+                    bmpGun.rotation.x = Math.PI / 2;
+                    group.add(bmpGun);
+                    
+                    // Люк
+                    const hatchGeometry = new THREE.CylinderGeometry(0.4, 0.4, 0.1, 8);
+                    const hatchMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+                    const hatch = new THREE.Mesh(hatchGeometry, hatchMaterial);
+                    hatch.position.set(0, 1.8, 1.5);
+                    group.add(hatch);
+                    break;
+                    
+                case 'btr82':
+                    // Корпус БТР
+                    const btrBodyGeometry = new THREE.BoxGeometry(2.8, 1.8, 7.5);
+                    const btrBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x556b2f });
+                    const btrBody = new THREE.Mesh(btrBodyGeometry, btrBodyMaterial);
+                    group.add(btrBody);
+                    
+                    // Башня
+                    const btrTurretGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.7, 8);
+                    const btrTurretMaterial = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
+                    const btrTurret = new THREE.Mesh(btrTurretGeometry, btrTurretMaterial);
+                    btrTurret.position.set(0, 1.9, -1);
+                    group.add(btrTurret);
+                    
+                    // Пушка
+                    const btrGunGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1.8, 8);
+                    const btrGunMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const btrGun = new THREE.Mesh(btrGunGeometry, btrGunMaterial);
+                    btrGun.position.set(0, 1.9, -1.8);
+                    btrGun.rotation.x = Math.PI / 2;
+                    group.add(btrGun);
+                    
+                    // Колеса
+                    const wheelGeometry = new THREE.CylinderGeometry(0.6, 0.6, 0.3, 16);
+                    const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x111111 });
+                    
+                    for (let i = 0; i < 8; i++) {
+                        const wheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                        wheel.position.set(1.6, 0.6, -3 + i * 0.9);
+                        wheel.rotation.z = Math.PI / 2;
+                        group.add(wheel);
+                        
+                        const wheel2 = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                        wheel2.position.set(-1.6, 0.6, -3 + i * 0.9);
+                        wheel2.rotation.z = Math.PI / 2;
+                        group.add(wheel2);
+                    }
+                    break;
+                    
+                case 'tornado':
+                    // Шасси
+                    const tornadoChassisGeometry = new THREE.BoxGeometry(2.5, 1.2, 8);
+                    const tornadoChassisMaterial = new THREE.MeshLambertMaterial({ color: 0x556b2f });
+                    const tornadoChassis = new THREE.Mesh(tornadoChassisGeometry, tornadoChassisMaterial);
+                    group.add(tornadoChassis);
+                    
+                    // Кабина
+                    const tornadoCabGeometry = new THREE.BoxGeometry(2.2, 1.5, 2);
+                    const tornadoCabMaterial = new THREE.MeshLambertMaterial({ color: 0x6b8e23 });
+                    const tornadoCab = new THREE.Mesh(tornadoCabGeometry, tornadoCabMaterial);
+                    tornadoCab.position.set(0, 1.35, 2.5);
+                    group.add(tornadoCab);
+                    
+                    // Пусковая установка
+                    const launcherGeometry = new THREE.BoxGeometry(2, 0.8, 4);
+                    const launcherMaterial = new THREE.MeshLambertMaterial({ color: 0x444444 });
+                    const launcher = new THREE.Mesh(launcherGeometry, launcherMaterial);
+                    launcher.position.set(0, 1.8, -1.5);
+                    launcher.rotation.x = Math.PI / 6;
+                    group.add(launcher);
+                    
+                    // Трубы РСЗО
+                    const tubeGeometry = new THREE.CylinderGeometry(0.15, 0.15, 3, 8);
+                    const tubeMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    
+                    for (let i = 0; i < 4; i++) {
+                        for (let j = 0; j < 4; j++) {
+                            const tube = new THREE.Mesh(tubeGeometry, tubeMaterial);
+                            tube.position.set(-0.8 + i * 0.5, 2.1, -2.5 + j * 0.6);
+                            tube.rotation.x = Math.PI / 2;
+                            group.add(tube);
+                        }
+                    }
+                    break;
+            }
+            
+            return group;
+        }
+        
+        // Создание модели дрона
+        function createDroneModel(model) {
+            const group = new THREE.Group();
+            
+            switch(model) {
+                case 'orlan':
+                    // Фюзеляж Орлана
+                    const orlanBodyGeometry = new THREE.CylinderGeometry(0.2, 0.2, 1.2, 8);
+                    const orlanBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const orlanBody = new THREE.Mesh(orlanBodyGeometry, orlanBodyMaterial);
+                    orlanBody.rotation.x = Math.PI / 2;
+                    group.add(orlanBody);
+                    
+                    // Крылья
+                    const orlanWingGeometry = new THREE.BoxGeometry(3, 0.05, 0.5);
+                    const orlanWingMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const orlanWing = new THREE.Mesh(orlanWingGeometry, orlanWingMaterial);
+                    group.add(orlanWing);
+                    
+                    // Хвостовое оперение
+                    const orlanTailGeometry = new THREE.BoxGeometry(0.8, 0.05, 0.3);
+                    const orlanTailMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const orlanTail = new THREE.Mesh(orlanTailGeometry, orlanTailMaterial);
+                    orlanTail.position.set(0, 0, -0.6);
+                    group.add(orlanTail);
+                    
+                    // Камера
+                    const cameraGeometry = new THREE.SphereGeometry(0.1, 8, 8);
+                    const cameraMaterial = new THREE.MeshLambertMaterial({ color: 0x111111 });
+                    const camera = new THREE.Mesh(cameraGeometry, cameraMaterial);
+                    camera.position.set(0.5, 0.1, 0);
+                    group.add(camera);
+                    break;
+                    
+                case 'lancet':
+                    // Фюзеляж Ланцета
+                    const lancetBodyGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1.0, 8);
+                    const lancetBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2f2f2f });
+                    const lancetBody = new THREE.Mesh(lancetBodyGeometry, lancetBodyMaterial);
+                    lancetBody.rotation.x = Math.PI / 2;
+                    group.add(lancetBody);
+                    
+                    // Крылья X-образной схемы
+                    const lancetWingGeometry = new THREE.BoxGeometry(0.8, 0.02, 0.1);
+                    const lancetWingMaterial = new THREE.MeshLambertMaterial({ color: 0x3f3f3f });
+                    
+                    const lancetWing1 = new THREE.Mesh(lancetWingGeometry, lancetWingMaterial);
+                    lancetWing1.rotation.z = Math.PI / 4;
+                    group.add(lancetWing1);
+                    
+                    const lancetWing2 = new THREE.Mesh(lancetWingGeometry, lancetWingMaterial);
+                    lancetWing2.rotation.z = -Math.PI / 4;
+                    group.add(lancetWing2);
+                    
+                    // Боевая часть
+                    const warheadGeometry = new THREE.SphereGeometry(0.15, 8, 8);
+                    const warheadMaterial = new THREE.MeshLambertMaterial({ color: 0xaa0000 });
+                    const warhead = new THREE.Mesh(warheadGeometry, warheadMaterial);
+                    warhead.position.set(-0.4, 0, 0);
+                    group.add(warhead);
+                    break;
+                    
+                case 'zala':
+                    // Фюзеляж ZALA
+                    const zalaBodyGeometry = new THREE.BoxGeometry(0.8, 0.15, 0.8);
+                    const zalaBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const zalaBody = new THREE.Mesh(zalaBodyGeometry, zalaBodyMaterial);
+                    group.add(zalaBody);
+                    
+                    // Крылья
+                    const zalaWingGeometry = new THREE.BoxGeometry(2.5, 0.03, 0.4);
+                    const zalaWingMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const zalaWing = new THREE.Mesh(zalaWingGeometry, zalaWingMaterial);
+                    group.add(zalaWing);
+                    
+                    // Хвостовое оперение
+                    const zalaTailGeometry = new THREE.BoxGeometry(0.6, 0.03, 0.3);
+                    const zalaTailMaterial = new THREE.MeshLambertMaterial({ color: 0x2f4f4f });
+                    const zalaTail = new THREE.Mesh(zalaTailGeometry, zalaTailMaterial);
+                    zalaTail.position.set(0, 0, -0.5);
+                    group.add(zalaTail);
+                    
+                    // Винты
+                    const zalaPropellerGeometry = new THREE.BoxGeometry(0.4, 0.01, 0.05);
+                    const zalaPropellerMaterial = new THREE.MeshLambertMaterial({ color: 0x111111 });
+                    const zalaPropeller = new THREE.Mesh(zalaPropellerGeometry, zalaPropellerMaterial);
+                    zalaPropeller.position.set(0, 0.1, 0.4);
+                    group.add(zalaPropeller);
+                    break;
+                    
+                case 'kub':
+                    // Фюзеляж Куба
+                    const kubBodyGeometry = new THREE.CylinderGeometry(0.15, 0.15, 1.2, 8);
+                    const kubBodyMaterial = new THREE.MeshLambertMaterial({ color: 0x3f3f3f });
+                    const kubBody = new THREE.Mesh(kubBodyGeometry, kubBodyMaterial);
+                    kubBody.rotation.x = Math.PI / 2;
+                    group.add(kubBody);
+                    
+                    // Крылья
+                    const kubWingGeometry = new THREE.BoxGeometry(1.2, 0.02, 0.2);
+                    const kubWingMaterial = new THREE.MeshLambertMaterial({ color: 0x3f3f3f });
+                    const kubWing = new THREE.Mesh(kubWingGeometry, kubWingMaterial);
+                    group.add(kubWing);
+                    
+                    // Стабилизаторы
+                    const kubStabGeometry = new THREE.BoxGeometry(0.4, 0.02, 0.15);
+                    const kubStabMaterial = new THREE.MeshLambertMaterial({ color: 0x3f3f3f });
+                    const kubStab = new THREE.Mesh(kubStabGeometry, kubStabMaterial);
+                    kubStab.position.set(0, 0, -0.5);
+                    group.add(kubStab);
+                    
+                    // Боевая часть
+                    const kubWarheadGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+                    const kubWarheadMaterial = new THREE.MeshLambertMaterial({ color: 0xaa0000 });
+                    const kubWarhead = new THREE.Mesh(kubWarheadGeometry, kubWarheadMaterial);
+                    kubWarhead.position.set(-0.5, 0, 0);
+                    group.add(kubWarhead);
+                    break;
+            }
+            
+            return group;
+        }
+        
+        // Создание модели вертолета
+        function createHelicopterModel(model) {
+            const group = new THREE.Group();
+            
+            switch(model) {
+                case 'mi8':
+                    // Фюзеляж Ми-8
+                    const mi8BodyGeometry = new THREE.CylinderGeometry(0.8, 0.8, 10, 8);
+                    const mi8BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const mi8Body = new THREE.Mesh(mi8BodyGeometry, mi8BodyMaterial);
+                    mi8Body.rotation.z = Math.PI / 2;
+                    group.add(mi8Body);
+                    
+                    // Хвостовая балка
+                    const mi8TailGeometry = new THREE.CylinderGeometry(0.3, 0.2, 6, 8);
+                    const mi8TailMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const mi8Tail = new THREE.Mesh(mi8TailGeometry, mi8TailMaterial);
+                    mi8Tail.position.set(5, 0, 0);
+                    mi8Tail.rotation.z = Math.PI / 2;
+                    group.add(mi8Tail);
+                    
+                    // Главный ротор
+                    const mi8RotorGeometry = new THREE.BoxGeometry(0.1, 10, 0.3);
+                    const mi8RotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    const mi8Rotor = new THREE.Mesh(mi8RotorGeometry, mi8RotorMaterial);
+                    mi8Rotor.position.y = 1.5;
+                    group.add(mi8Rotor);
+                    
+                    // Хвостовой ротор
+                    const mi8TailRotorGeometry = new THREE.BoxGeometry(2, 0.1, 0.3);
+                    const mi8TailRotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    const mi8TailRotor = new THREE.Mesh(mi8TailRotorGeometry, mi8TailRotorMaterial);
+                    mi8TailRotor.position.set(7.5, 0.5, 0);
+                    group.add(mi8TailRotor);
+                    
+                    // Шасси
+                    const mi8LandingGeometry = new THREE.CylinderGeometry(0.1, 0.1, 1.5, 8);
+                    const mi8LandingMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    const mi8Landing1 = new THREE.Mesh(mi8LandingGeometry, mi8LandingMaterial);
+                    mi8Landing1.position.set(-1, -0.8, 1);
+                    group.add(mi8Landing1);
+                    
+                    const mi8Landing2 = new THREE.Mesh(mi8LandingGeometry, mi8LandingMaterial);
+                    mi8Landing2.position.set(-1, -0.8, -1);
+                    group.add(mi8Landing2);
+                    
+                    const mi8Landing3 = new THREE.Mesh(mi8LandingGeometry, mi8LandingMaterial);
+                    mi8Landing3.position.set(3, -0.8, 0);
+                    group.add(mi8Landing3);
+                    break;
+                    
+                case 'ka52':
+                    // Фюзеляж Ка-52
+                    const ka52BodyGeometry = new THREE.CylinderGeometry(0.7, 0.7, 8, 8);
+                    const ka52BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const ka52Body = new THREE.Mesh(ka52BodyGeometry, ka52BodyMaterial);
+                    ka52Body.rotation.z = Math.PI / 2;
+                    group.add(ka52Body);
+                    
+                    // Кабина (двухместная)
+                    const ka52CockpitGeometry = new THREE.BoxGeometry(1.5, 0.8, 1.2);
+                    const ka52CockpitMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+                    const ka52Cockpit = new THREE.Mesh(ka52CockpitGeometry, ka52CockpitMaterial);
+                    ka52Cockpit.position.set(-2, 0.5, 0);
+                    group.add(ka52Cockpit);
+                    
+                    // Соосные роторы
+                    const ka52RotorGeometry = new THREE.BoxGeometry(0.1, 8, 0.3);
+                    const ka52RotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    
+                    const ka52Rotor1 = new THREE.Mesh(ka52RotorGeometry, ka52RotorMaterial);
+                    ka52Rotor1.position.y = 1.5;
+                    group.add(ka52Rotor1);
+                    
+                    const ka52Rotor2 = new THREE.Mesh(ka52RotorGeometry, ka52RotorMaterial);
+                    ka52Rotor2.position.y = 1.8;
+                    ka52Rotor2.rotation.z = Math.PI / 2;
+                    group.add(ka52Rotor2);
+                    
+                    // Крылья с вооружением
+                    const ka52WingGeometry = new THREE.BoxGeometry(3, 0.1, 0.5);
+                    const ka52WingMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const ka52Wing = new THREE.Mesh(ka52WingGeometry, ka52WingMaterial);
+                    ka52Wing.position.set(0, 0, 0);
+                    group.add(ka52Wing);
+                    
+                    // Пушки
+                    const ka52GunGeometry = new THREE.CylinderGeometry(0.08, 0.08, 1.5, 8);
+                    const ka52GunMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    const ka52Gun = new THREE.Mesh(ka52GunGeometry, ka52GunMaterial);
+                    ka52Gun.position.set(-3, 0, 0.3);
+                    ka52Gun.rotation.z = Math.PI / 2;
+                    group.add(ka52Gun);
+                    break;
+                    
+                case 'mi28':
+                    // Фюзеляж Ми-28
+                    const mi28BodyGeometry = new THREE.CylinderGeometry(0.7, 0.7, 10, 8);
+                    const mi28BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const mi28Body = new THREE.Mesh(mi28BodyGeometry, mi28BodyMaterial);
+                    mi28Body.rotation.z = Math.PI / 2;
+                    group.add(mi28Body);
+                    
+                    // Кабина
+                    const mi28CockpitGeometry = new THREE.BoxGeometry(1.2, 0.8, 1.0);
+                    const mi28CockpitMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+                    const mi28Cockpit = new THREE.Mesh(mi28CockpitGeometry, mi28CockpitMaterial);
+                    mi28Cockpit.position.set(-3, 0.5, 0);
+                    group.add(mi28Cockpit);
+                    
+                    // Главный ротор
+                    const mi28RotorGeometry = new THREE.BoxGeometry(0.1, 12, 0.3);
+                    const mi28RotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    const mi28Rotor = new THREE.Mesh(mi28RotorGeometry, mi28RotorMaterial);
+                    mi28Rotor.position.y = 1.5;
+                    group.add(mi28Rotor);
+                    
+                    // Хвостовой ротор
+                    const mi28TailRotorGeometry = new THREE.BoxGeometry(2, 0.1, 0.3);
+                    const mi28TailRotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    const mi28TailRotor = new THREE.Mesh(mi28TailRotorGeometry, mi28TailRotorMaterial);
+                    mi28TailRotor.position.set(5, 0.5, 0);
+                    group.add(mi28TailRotor);
+                    
+                    // Крылья
+                    const mi28WingGeometry = new THREE.BoxGeometry(4, 0.1, 0.6);
+                    const mi28WingMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const mi28Wing = new THREE.Mesh(mi28WingGeometry, mi28WingMaterial);
+                    mi28Wing.position.set(0, 0, 0);
+                    group.add(mi28Wing);
+                    
+                    // Пушка
+                    const mi28GunGeometry = new THREE.CylinderGeometry(0.1, 0.1, 2, 8);
+                    const mi28GunMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    const mi28Gun = new THREE.Mesh(mi28GunGeometry, mi28GunMaterial);
+                    mi28Gun.position.set(-3, 0, 0.5);
+                    mi28Gun.rotation.z = Math.PI / 2;
+                    group.add(mi28Gun);
+                    break;
+                    
+                case 'mi26':
+                    // Фюзеляж Ми-26 (огромный)
+                    const mi26BodyGeometry = new THREE.CylinderGeometry(1.5, 1.5, 15, 8);
+                    const mi26BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const mi26Body = new THREE.Mesh(mi26BodyGeometry, mi26BodyMaterial);
+                    mi26Body.rotation.z = Math.PI / 2;
+                    group.add(mi26Body);
+                    
+                    // Главный ротор (огромный)
+                    const mi26RotorGeometry = new THREE.BoxGeometry(0.2, 16, 0.4);
+                    const mi26RotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    const mi26Rotor = new THREE.Mesh(mi26RotorGeometry, mi26RotorMaterial);
+                    mi26Rotor.position.y = 2;
+                    group.add(mi26Rotor);
+                    
+                    // Хвостовой ротор
+                    const mi26TailRotorGeometry = new THREE.BoxGeometry(3, 0.2, 0.4);
+                    const mi26TailRotorMaterial = new THREE.MeshLambertMaterial({ color: 0x222222 });
+                    const mi26TailRotor = new THREE.Mesh(mi26TailRotorGeometry, mi26TailRotorMaterial);
+                    mi26TailRotor.position.set(8, 1, 0);
+                    group.add(mi26TailRotor);
+                    
+                    // Шасси
+                    const mi26LandingGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2, 8);
+                    const mi26LandingMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const landing = new THREE.Mesh(mi26LandingGeometry, mi26LandingMaterial);
+                        landing.position.set(-4 + i * 2, -1, 1.5);
+                        group.add(landing);
+                        
+                        const landing2 = new THREE.Mesh(mi26LandingGeometry, mi26LandingMaterial);
+                        landing2.position.set(-4 + i * 2, -1, -1.5);
+                        group.add(landing2);
+                    }
+                    break;
+            }
+            
+            return group;
+        }
+        
+        // Создание модели самолета
+        function createAircraftModel(model) {
+            const group = new THREE.Group();
+            
+            switch(model) {
+                case 'su34':
+                    // Фюзеляж Су-34
+                    const su34BodyGeometry = new THREE.CylinderGeometry(0.6, 0.6, 12, 8);
+                    const su34BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const su34Body = new THREE.Mesh(su34BodyGeometry, su34BodyMaterial);
+                    su34Body.rotation.z = Math.PI / 2;
+                    group.add(su34Body);
+                    
+                    // Кабина (тактическая)
+                    const su34CockpitGeometry = new THREE.BoxGeometry(1.2, 0.6, 1.5);
+                    const su34CockpitMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+                    const su34Cockpit = new THREE.Mesh(su34CockpitGeometry, su34CockpitMaterial);
+                    su34Cockpit.position.set(-4, 0.4, 0);
+                    group.add(su34Cockpit);
+                    
+                    // Крылья
+                    const su34WingGeometry = new THREE.BoxGeometry(8, 0.1, 2.5);
+                    const su34WingMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const su34Wing = new THREE.Mesh(su34WingGeometry, su34WingMaterial);
+                    su34Wing.position.set(1, 0, 0);
+                    group.add(su34Wing);
+                    
+                    // Хвостовое оперение
+                    const su34TailGeometry = new THREE.BoxGeometry(3, 0.1, 1.5);
+                    const su34TailMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const su34Tail = new THREE.Mesh(su34TailGeometry, su34TailMaterial);
+                    su34Tail.position.set(5, 0.5, 0);
+                    group.add(su34Tail);
+                    
+                    // Двигатели
+                    const su34EngineGeometry = new THREE.CylinderGeometry(0.4, 0.4, 2, 8);
+                    const su34EngineMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    const su34Engine1 = new THREE.Mesh(su34EngineGeometry, su34EngineMaterial);
+                    su34Engine1.position.set(2, 0, 0.8);
+                    su34Engine1.rotation.z = Math.PI / 2;
+                    group.add(su34Engine1);
+                    
+                    const su34Engine2 = new THREE.Mesh(su34EngineGeometry, su34EngineMaterial);
+                    su34Engine2.position.set(2, 0, -0.8);
+                    su34Engine2.rotation.z = Math.PI / 2;
+                    group.add(su34Engine2);
+                    break;
+                    
+                case 'su35':
+                    // Фюзеляж Су-35
+                    const su35BodyGeometry = new THREE.CylinderGeometry(0.5, 0.5, 11, 8);
+                    const su35BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x6a6a6a });
+                    const su35Body = new THREE.Mesh(su35BodyGeometry, su35BodyMaterial);
+                    su35Body.rotation.z = Math.PI / 2;
+                    group.add(su35Body);
+                    
+                    // Кабина
+                    const su35CockpitGeometry = new THREE.BoxGeometry(1.0, 0.5, 1.2);
+                    const su35CockpitMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+                    const su35Cockpit = new THREE.Mesh(su35CockpitGeometry, su35CockpitMaterial);
+                    su35Cockpit.position.set(-4, 0.3, 0);
+                    group.add(su35Cockpit);
+                    
+                    // Крылья
+                    const su35WingGeometry = new THREE.BoxGeometry(7, 0.1, 2.2);
+                    const su35WingMaterial = new THREE.MeshLambertMaterial({ color: 0x6a6a6a });
+                    const su35Wing = new THREE.Mesh(su35WingGeometry, su35WingMaterial);
+                    su35Wing.position.set(1, 0, 0);
+                    group.add(su35Wing);
+                    
+                    // Хвостовое оперение
+                    const su35TailGeometry = new THREE.BoxGeometry(2.5, 0.1, 1.2);
+                    const su35TailMaterial = new THREE.MeshLambertMaterial({ color: 0x6a6a6a });
+                    const su35Tail = new THREE.Mesh(su35TailGeometry, su35TailMaterial);
+                    su35Tail.position.set(4.5, 0.4, 0);
+                    group.add(su35Tail);
+                    
+                    // Двигатели
+                    const su35EngineGeometry = new THREE.CylinderGeometry(0.35, 0.35, 1.8, 8);
+                    const su35EngineMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    const su35Engine1 = new THREE.Mesh(su35EngineGeometry, su35EngineMaterial);
+                    su35Engine1.position.set(2, 0, 0.6);
+                    su35Engine1.rotation.z = Math.PI / 2;
+                    group.add(su35Engine1);
+                    
+                    const su35Engine2 = new THREE.Mesh(su35EngineGeometry, su35EngineMaterial);
+                    su35Engine2.position.set(2, 0, -0.6);
+                    su35Engine2.rotation.z = Math.PI / 2;
+                    group.add(su35Engine2);
+                    break;
+                    
+                case 'su57':
+                    // Фюзеляж Су-57 (стелс)
+                    const su57BodyGeometry = new THREE.BoxGeometry(1.2, 0.8, 10);
+                    const su57BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const su57Body = new THREE.Mesh(su57BodyGeometry, su57BodyMaterial);
+                    su57Body.rotation.z = Math.PI / 2;
+                    group.add(su57Body);
+                    
+                    // Кабина
+                    const su57CockpitGeometry = new THREE.BoxGeometry(1.0, 0.4, 1.0);
+                    const su57CockpitMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+                    const su57Cockpit = new THREE.Mesh(su57CockpitGeometry, su57CockpitMaterial);
+                    su57Cockpit.position.set(-4, 0.3, 0);
+                    group.add(su57Cockpit);
+                    
+                    // Крылья (интегрированные)
+                    const su57WingGeometry = new THREE.BoxGeometry(6, 0.1, 3.5);
+                    const su57WingMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const su57Wing = new THREE.Mesh(su57WingGeometry, su57WingMaterial);
+                    su57Wing.position.set(1, 0, 0);
+                    group.add(su57Wing);
+                    
+                    // Хвостовое оперение (V-образное)
+                    const su57TailGeometry = new THREE.BoxGeometry(2, 0.1, 1.0);
+                    const su57TailMaterial = new THREE.MeshLambertMaterial({ color: 0x4a4a4a });
+                    const su57Tail = new THREE.Mesh(su57TailGeometry, su57TailMaterial);
+                    su57Tail.position.set(4.5, 0.3, 0);
+                    su57Tail.rotation.z = Math.PI / 6;
+                    group.add(su57Tail);
+                    
+                    const su57Tail2 = new THREE.Mesh(su57TailGeometry, su57TailMaterial);
+                    su57Tail2.position.set(4.5, 0.3, 0);
+                    su57Tail2.rotation.z = -Math.PI / 6;
+                    group.add(su57Tail2);
+                    
+                    // Двигатели (скрытые)
+                    const su57EngineGeometry = new THREE.CylinderGeometry(0.3, 0.3, 1.5, 8);
+                    const su57EngineMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    const su57Engine1 = new THREE.Mesh(su57EngineGeometry, su57EngineMaterial);
+                    su57Engine1.position.set(2, 0, 0.4);
+                    su57Engine1.rotation.z = Math.PI / 2;
+                    group.add(su57Engine1);
+                    
+                    const su57Engine2 = new THREE.Mesh(su57EngineGeometry, su57EngineMaterial);
+                    su57Engine2.position.set(2, 0, -0.4);
+                    su57Engine2.rotation.z = Math.PI / 2;
+                    group.add(su57Engine2);
+                    break;
+                    
+                case 'su25':
+                    // Фюзеляж Су-25
+                    const su25BodyGeometry = new THREE.CylinderGeometry(0.7, 0.7, 9, 8);
+                    const su25BodyMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const su25Body = new THREE.Mesh(su25BodyGeometry, su25BodyMaterial);
+                    su25Body.rotation.z = Math.PI / 2;
+                    group.add(su25Body);
+                    
+                    // Кабина (хорошо бронированная)
+                    const su25CockpitGeometry = new THREE.BoxGeometry(1.0, 0.7, 1.2);
+                    const su25CockpitMaterial = new THREE.MeshLambertMaterial({ color: 0x222222, transparent: true, opacity: 0.7 });
+                    const su25Cockpit = new THREE.Mesh(su25CockpitGeometry, su25CockpitMaterial);
+                    su25Cockpit.position.set(-3, 0.5, 0);
+                    group.add(su25Cockpit);
+                    
+                    // Прямые крылья
+                    const su25WingGeometry = new THREE.BoxGeometry(7, 0.1, 3.5);
+                    const su25WingMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const su25Wing = new THREE.Mesh(su25WingGeometry, su25WingMaterial);
+                    su25Wing.position.set(1, 0, 0);
+                    group.add(su25Wing);
+                    
+                    // Хвостовое оперение
+                    const su25TailGeometry = new THREE.BoxGeometry(2.5, 0.1, 1.5);
+                    const su25TailMaterial = new THREE.MeshLambertMaterial({ color: 0x5a5a5a });
+                    const su25Tail = new THREE.Mesh(su25TailGeometry, su25TailMaterial);
+                    su25Tail.position.set(4, 0.5, 0);
+                    group.add(su25Tail);
+                    
+                    // Двигатели
+                    const su25EngineGeometry = new THREE.CylinderGeometry(0.4, 0.4, 1.8, 8);
+                    const su25EngineMaterial = new THREE.MeshLambertMaterial({ color: 0x333333 });
+                    
+                    const su25Engine1 = new THREE.Mesh(su25EngineGeometry, su25EngineMaterial);
+                    su25Engine1.position.set(1, 0, 1);
+                    su25Engine1.rotation.z = Math.PI / 2;
+                    group.add(su25Engine1);
+                    
+                    const su25Engine2 = new THREE.Mesh(su25EngineGeometry, su25EngineMaterial);
+                    su25Engine2.position.set(1, 0, -1);
+                    su25Engine2.rotation.z = Math.PI / 2;
+                    group.add(su25Engine2);
+                    break;
+            }
+            
+            return group;
+        }
+        
+        // Создание модели по умолчанию
+        function createDefaultModel() {
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshLambertMaterial({ color: 0x4dabf7 });
+            return new THREE.Mesh(geometry, material);
         }
         
         // Обновление информации о юните
@@ -480,135 +1315,58 @@
             
             let title, description, armor, firepower, mobility;
             
-            switch(type) {
-                case 'soldier':
-                    if (model === 'rifleman') {
-                        title = 'Стрелок';
-                        description = 'Основная боевая единица с автоматом Калашникова. Обладает сбалансированными характеристиками.';
-                        armor = 3;
-                        firepower = 6;
-                        mobility = 8;
-                    } else if (model === 'sniper') {
-                        title = 'Снайпер';
-                        description = 'Специалист по точной стрельбе на большие дистанции. Вооружён снайперской винтовкой.';
-                        armor = 2;
-                        firepower = 8;
-                        mobility = 5;
-                    } else if (model === 'machinegunner') {
-                        title = 'Пулемётчик';
-                        description = 'Обеспечивает огневую поддержку с помощью пулемёта ПКП "Печенег".';
-                        armor = 4;
-                        firepower = 9;
-                        mobility = 4;
-                    } else if (model === 'medic') {
-                        title = 'Медик';
-                        description = 'Оказывает первую помощь на поле боя. Вооружён пистолетом для самообороны.';
-                        armor = 3;
-                        firepower = 3;
-                        mobility = 7;
-                    }
-                    break;
-                    
-                case 'vehicle':
-                    if (model === 'tank') {
-                        title = 'Танк Т-90';
-                        description = 'Основной боевой танк с мощным вооружением и защитой. Оснащён 125-мм пушкой.';
-                        armor = 9;
-                        firepower = 9;
-                        mobility = 6;
-                    } else if (model === 'bmp') {
-                        title = 'БМП-3';
-                        description = 'Боевая машина пехоты с мощным вооружением. Может перевозить до 7 солдат.';
-                        armor = 6;
-                        firepower = 7;
-                        mobility = 8;
-                    } else if (model === 'btr') {
-                        title = 'БТР-82А';
-                        description = 'Бронетранспортёр с 30-мм автоматической пушкой. Обеспечивает мобильность пехоты.';
-                        armor = 5;
-                        firepower = 6;
-                        mobility = 8;
-                    } else if (model === 'mlrs') {
-                        title = 'РСЗО "Торнадо-С"';
-                        description = 'Реактивная система залпового огня. Наносит массированные удары по площадным целям.';
-                        armor = 4;
-                        firepower = 10;
-                        mobility = 5;
-                    }
-                    break;
-                    
-                case 'drone':
-                    if (model === 'recon') {
-                        title = 'Разведывательный дрон';
-                        description = 'Беспилотник для ведения разведки и наблюдения. Оснащён камерами высокого разрешения.';
-                        armor = 1;
-                        firepower = 0;
-                        mobility = 9;
-                    } else if (model === 'kamikaze') {
-                        title = 'Ударный дрон "Ланцет"';
-                        description = 'Беспилотник-камикадзе для поражения бронированных целей. Несёт осколочно-фугасную боевую часть.';
-                        armor = 2;
-                        firepower = 8;
-                        mobility = 8;
-                    } else if (model === 'scout') {
-                        title = 'БПЛА "Орлан-10"';
-                        description = 'Многофункциональный беспилотник для разведки, наблюдения и целеуказания.';
-                        armor = 2;
-                        firepower = 0;
-                        mobility = 7;
-                    }
-                    break;
-                    
-                case 'helicopter':
-                    if (model === 'mi8') {
-                        title = 'Транспортный Ми-8';
-                        description = 'Многоцелевой вертолёт для переброски войск и грузов. Может нести до 24 солдат.';
-                        armor = 4;
-                        firepower = 5;
-                        mobility = 7;
-                    } else if (model === 'ka52') {
-                        title = 'Ударный Ка-52 "Аллигатор"';
-                        description = 'Двухместный ударный вертолёт. Оснащён ПТУР "Вихрь" и 30-мм пушкой.';
-                        armor = 7;
-                        firepower = 9;
-                        mobility = 8;
-                    } else if (model === 'mi28') {
-                        title = 'Ударный Ми-28Н "Ночной охотник"';
-                        description = 'Специализированный ударный вертолёт для работы в любое время суток.';
-                        armor = 8;
-                        firepower = 9;
-                        mobility = 7;
-                    }
-                    break;
-                    
-                case 'aircraft':
-                    if (model === 'su34') {
-                        title = 'Истребитель-бомбардировщик Су-34';
-                        description = 'Самолёт тактической авиации для поражения наземных и воздушных целей.';
-                        armor = 6;
-                        firepower = 9;
-                        mobility = 8;
-                    } else if (model === 'su35') {
-                        title = 'Истребитель Су-35С';
-                        description = 'Многофункциональный истребитель для завоевания превосходства в воздухе.';
-                        armor = 5;
-                        firepower = 8;
-                        mobility = 9;
-                    } else if (model === 'su57') {
-                        title = 'Истребитель 5-го поколения Су-57';
-                        description = 'Перспективный истребитель с технологией стелс и передовой авионикой.';
-                        armor = 7;
-                        firepower = 10;
-                        mobility = 9;
-                    }
-                    break;
-            }
+            // Данные для всех юнитов
+            const unitData = {
+                soldier: {
+                    rifleman: { title: 'Стрелок', description: 'Основная боевая единица с автоматом АК-74М. Обладает сбалансированными характеристиками.', armor: 3, firepower: 6, mobility: 8 },
+                    sniper: { title: 'Снайпер', description: 'Специалист по точной стрельбе на большие дистанции. Вооружён снайперской винтовкой СВД.', armor: 2, firepower: 8, mobility: 5 },
+                    machinegunner: { title: 'Пулемётчик', description: 'Обеспечивает огневую поддержку с помощью пулемёта ПКП "Печенег".', armor: 4, firepower: 9, mobility: 4 },
+                    medic: { title: 'Медик', description: 'Оказывает первую помощь на поле боя. Вооружён пистолетом для самообороны.', armor: 3, firepower: 3, mobility: 7 }
+                },
+                vehicle: {
+                    t90: { title: 'Танк Т-90М "Прорыв"', description: 'Основной боевой танк с мощным вооружением и защитой. Оснащён 125-мм пушкой 2А46М-5.', armor: 9, firepower: 9, mobility: 6 },
+                    t14: { title: 'Танк Т-14 "Армата"', description: 'Танк нового поколения с необитаемой башней и активной защитой "Афганит".', armor: 10, firepower: 10, mobility: 7 },
+                    bmp3: { title: 'БМП-3', description: 'Боевая машина пехоты с мощным вооружением. Может перевозить до 7 солдат.', armor: 6, firepower: 7, mobility: 8 },
+                    btr82: { title: 'БТР-82А', description: 'Бронетранспортёр с 30-мм автоматической пушкой. Обеспечивает мобильность пехоты.', armor: 5, firepower: 6, mobility: 8 },
+                    tornado: { title: 'РСЗО "Торнадо-С"', description: 'Реактивная система залпового огня. Наносит массированные удары по площадным целям.', armor: 4, firepower: 10, mobility: 5 }
+                },
+                drone: {
+                    orlan: { title: 'БПЛА "Орлан-10"', description: 'Разведывательный беспилотник для ведения наблюдения и разведки. Оснащён камерами высокого разрешения.', armor: 1, firepower: 0, mobility: 9 },
+                    lancet: { title: 'Ударный дрон "Ланцет"', description: 'Беспилотник-камикадзе для поражения бронированных целей. Несёт осколочно-фугасную боевую часть.', armor: 2, firepower: 8, mobility: 8 },
+                    zala: { title: 'БПЛА "ZALA 421-16"', description: 'Разведывательный дрон для наблюдения и целеуказания. Может работать в сложных погодных условиях.', armor: 2, firepower: 0, mobility: 7 },
+                    kub: { title: 'Ударный дрон "Куб"', description: 'Беспилотник для поражения целей на большом расстоянии. Оснащён высокоточной системой наведения.', armor: 3, firepower: 7, mobility: 6 }
+                },
+                helicopter: {
+                    mi8: { title: 'Транспортный Ми-8АМТШ', description: 'Многоцелевой вертолёт для переброски войск и грузов. Может нести до 24 солдат или 4 тонны груза.', armor: 4, firepower: 5, mobility: 7 },
+                    ka52: { title: 'Ударный Ка-52 "Аллигатор"', description: 'Разведывательно-ударный вертолёт с соосной схемой винтов. Оснащён ПТУР "Вихрь" и 30-мм пушкой.', armor: 7, firepower: 9, mobility: 8 },
+                    mi28: { title: 'Ударный Ми-28Н "Ночной охотник"', description: 'Вертолёт огневой поддержки для работы в любое время суток. Оснащён системой ночного видения.', armor: 8, firepower: 9, mobility: 7 },
+                    mi26: { title: 'Тяжёлый транспортный Ми-26', description: 'Самый большой вертолёт в мире. Может перевозить до 82 солдат или 20 тонн груза.', armor: 5, firepower: 3, mobility: 5 }
+                },
+                aircraft: {
+                    su34: { title: 'Истребитель-бомбардировщик Су-34', description: 'Самолёт тактической авиации для поражения наземных и воздушных целей. Оснащён современным БРЭО.', armor: 6, firepower: 9, mobility: 8 },
+                    su35: { title: 'Истребитель Су-35С', description: 'Многофункциональный истребитель для завоевания превосходства в воздухе. Оснащён двигателями с УВТ.', armor: 5, firepower: 8, mobility: 9 },
+                    su57: { title: 'Истребитель Су-57', description: 'Перспективный истребитель 5-го поколения с технологией стелс и передовой авионикой.', armor: 7, firepower: 10, mobility: 9 },
+                    su25: { title: 'Штурмовик Су-25СМ', description: 'Самолёт непосредственной поддержки сухопутных войск. Обладает повышенной живучестью.', armor: 8, firepower: 8, mobility: 6 }
+                }
+            };
+            
+            const data = unitData[type][model];
+            title = data.title;
+            description = data.description;
+            armor = data.armor;
+            firepower = data.firepower;
+            mobility = data.mobility;
             
             document.getElementById('info-title').textContent = title;
             document.getElementById('info-description').textContent = description;
             document.getElementById('stat-armor').textContent = armor;
             document.getElementById('stat-firepower').textContent = firepower;
             document.getElementById('stat-mobility').textContent = mobility;
+            
+            // Обновление прогресс-баров
+            document.getElementById('progress-armor').style.width = (armor * 10) + '%';
+            document.getElementById('progress-firepower').style.width = (firepower * 10) + '%';
+            document.getElementById('progress-mobility').style.width = (mobility * 10) + '%';
         }
         
         // Инициализация обработчиков событий
@@ -658,6 +1416,21 @@
             
             document.getElementById('details-btn').addEventListener('click', function() {
                 alert('Подробная информация о юните будет отображена здесь.');
+            });
+            
+            // Обработчики для управления сценой
+            document.getElementById('reset-view').addEventListener('click', function() {
+                controls.reset();
+            });
+            
+            document.getElementById('toggle-grid').addEventListener('click', function() {
+                gridVisible = !gridVisible;
+                scene.children.forEach(child => {
+                    if (child.isGridHelper) {
+                        child.visible = gridVisible;
+                    }
+                });
+                this.textContent = gridVisible ? 'Сетка: ВКЛ' : 'Сетка: ВЫКЛ';
             });
         }
         
