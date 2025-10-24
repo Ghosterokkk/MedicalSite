@@ -576,6 +576,10 @@
         </footer>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Элементы DOM
@@ -628,110 +632,291 @@
             let questionTimers = [];
             let currentQuestionTimer;
             
-            // Учетные данные администратора (в реальном приложении должны храниться на сервере)
+            // Учетные данные администратора
             const adminCredentials = {
                 username: "admin",
                 password: "admin123"
             };
-            
-            // Вопросы для теста (по умолчанию)
-            let questions = JSON.parse(localStorage.getItem('medicalTestQuestions')) || [
-                {
-                    id: 1,
-                    question: "Каков нормальный показатель артериального давления у взрослого человека?",
-                    options: [
-                        "120/80 мм рт.ст.",
-                        "140/90 мм рт.ст.",
-                        "100/60 мм рт.ст.",
-                        "130/85 мм рт.ст."
-                    ],
-                    correct: 0,
-                    time: 60 // время в секундах
-                },
-                {
-                    id: 2,
-                    question: "Какой витамин вырабатывается в коже под воздействием солнечного света?",
-                    options: [
-                        "Витамин А",
-                        "Витамин С",
-                        "Витамин D",
-                        "Витамин Е"
-                    ],
-                    correct: 2,
-                    time: 45
-                },
-                {
-                    id: 3,
-                    question: "Какой орган отвечает за фильтрацию крови и выработку мочи?",
-                    options: [
-                        "Печень",
-                        "Сердце",
-                        "Почки",
-                        "Легкие"
-                    ],
-                    correct: 2,
-                    time: 75
-                }
-            ];
-            
-            // Загрузка настроек времени
-            const savedSettings = JSON.parse(localStorage.getItem('medicalTestSettings'));
-            if (savedSettings) {
-                totalTime = savedSettings.totalTime * 60;
-                totalTimeInput.value = savedSettings.totalTime;
+
+            // 🔥 КОНФИГУРАЦИЯ FIREBASE - ЗАМЕНИТЕ НА ВАШУ! 🔥
+            const firebaseConfig = {
+                apiKey: "ВАШ_API_KEY",
+                authDomain: "ВАШ_PROJECT.firebaseapp.com",
+                projectId: "ВАШ_PROJECT_ID",
+                storageBucket: "ВАШ_PROJECT.appspot.com",
+                messagingSenderId: "ВАШ_SENDER_ID",
+                appId: "ВАШ_APP_ID"
+            };
+
+            // Инициализация Firebase
+            let db;
+            try {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                console.log("Firebase initialized successfully");
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
             }
-            
-            // Инициализация админ-панели
-            function initAdminPanel() {
-                renderQuestionsList();
-                
-                // Обработчики вкладок
-                tabs.forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        const tabId = this.getAttribute('data-tab');
-                        
-                        tabs.forEach(t => t.classList.remove('active'));
-                        this.classList.add('active');
-                        
-                        tabContents.forEach(content => {
-                            content.classList.remove('active');
-                            if (content.id === `${tabId}-tab`) {
-                                content.classList.add('active');
-                            }
+
+            // Firebase функции
+            async function loadQuestions() {
+                try {
+                    if (!db) {
+                        console.log("Firebase not available, using local storage");
+                        return getLocalQuestions();
+                    }
+
+                    console.log("Loading questions from Firebase...");
+                    const snapshot = await db.collection('questions').orderBy('order').get();
+                    
+                    if (snapshot.empty) {
+                        console.log("No questions found, creating default ones...");
+                        await createDefaultQuestions();
+                        return getDefaultQuestions();
+                    }
+                    
+                    const questions = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return {
+                            id: doc.id,
+                            question: data.question,
+                            options: data.options,
+                            correct: data.correct,
+                            time: data.time || 60
+                        };
+                    });
+                    
+                    console.log("Loaded questions:", questions.length);
+                    return questions;
+                } catch (error) {
+                    console.error('Error loading questions from Firebase:', error);
+                    return getLocalQuestions();
+                }
+            }
+
+            async function saveQuestions(questions) {
+                try {
+                    if (!db) {
+                        console.log("Firebase not available, saving to local storage");
+                        saveToLocalStorage(questions);
+                        return questions;
+                    }
+
+                    console.log("Saving questions to Firebase...");
+                    const batch = db.batch();
+                    
+                    // Удаляем старые вопросы
+                    const oldQuestions = await db.collection('questions').get();
+                    oldQuestions.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    
+                    // Добавляем новые вопросы
+                    questions.forEach((question, index) => {
+                        const ref = db.collection('questions').doc();
+                        batch.set(ref, {
+                            question: question.question,
+                            options: question.options,
+                            correct: question.correct,
+                            time: question.time,
+                            order: index
                         });
                     });
-                });
-                
-                // Добавление вопроса
-                addQuestionBtn.addEventListener('click', function() {
-                    const newId = questions.length > 0 ? Math.max(...questions.map(q => q.id)) + 1 : 1;
-                    questions.push({
-                        id: newId,
-                        question: "Новый вопрос",
-                        options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
+                    
+                    await batch.commit();
+                    console.log("Questions saved successfully to Firebase");
+                    
+                    // Также сохраняем в localStorage как backup
+                    saveToLocalStorage(questions);
+                    return questions;
+                } catch (error) {
+                    console.error('Error saving questions to Firebase:', error);
+                    saveToLocalStorage(questions);
+                    return questions;
+                }
+            }
+
+            async function loadSettings() {
+                try {
+                    if (!db) {
+                        return getLocalSettings();
+                    }
+
+                    const doc = await db.collection('settings').doc('main').get();
+                    if (doc.exists) {
+                        return doc.data();
+                    } else {
+                        const defaultSettings = { totalTime: 30 };
+                        await db.collection('settings').doc('main').set(defaultSettings);
+                        return defaultSettings;
+                    }
+                } catch (error) {
+                    console.error('Error loading settings from Firebase:', error);
+                    return getLocalSettings();
+                }
+            }
+
+            async function saveSettings(settings) {
+                try {
+                    if (!db) {
+                        saveSettingsToLocal(settings);
+                        return settings;
+                    }
+
+                    await db.collection('settings').doc('main').set(settings);
+                    saveSettingsToLocal(settings);
+                    return settings;
+                } catch (error) {
+                    console.error('Error saving settings to Firebase:', error);
+                    saveSettingsToLocal(settings);
+                    return settings;
+                }
+            }
+
+            // Локальные функции как fallback
+            function getLocalQuestions() {
+                const localQuestions = JSON.parse(localStorage.getItem('medicalTestQuestions'));
+                return localQuestions || getDefaultQuestions();
+            }
+
+            function saveToLocalStorage(questions) {
+                localStorage.setItem('medicalTestQuestions', JSON.stringify(questions));
+            }
+
+            function getLocalSettings() {
+                const localSettings = JSON.parse(localStorage.getItem('medicalTestSettings'));
+                return localSettings || { totalTime: 30 };
+            }
+
+            function saveSettingsToLocal(settings) {
+                localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
+            }
+
+            async function createDefaultQuestions() {
+                const defaultQuestions = getDefaultQuestions();
+                await saveQuestions(defaultQuestions);
+            }
+
+            function getDefaultQuestions() {
+                return [
+                    {
+                        id: 'default1',
+                        question: "Каков нормальный показатель артериального давления у взрослого человека?",
+                        options: [
+                            "120/80 мм рт.ст.",
+                            "140/90 мм рт.ст.",
+                            "100/60 мм рт.ст.",
+                            "130/85 мм рт.ст."
+                        ],
                         correct: 0,
                         time: 60
-                    });
-                    saveQuestions();
+                    },
+                    {
+                        id: 'default2',
+                        question: "Какой витамин вырабатывается в коже под воздействием солнечного света?",
+                        options: [
+                            "Витамин А",
+                            "Витамин С",
+                            "Витамин D",
+                            "Витамин Е"
+                        ],
+                        correct: 2,
+                        time: 45
+                    },
+                    {
+                        id: 'default3',
+                        question: "Какой орган отвечает за фильтрацию крови и выработку мочи?",
+                        options: [
+                            "Печень",
+                            "Сердце",
+                            "Почки",
+                            "Легкие"
+                        ],
+                        correct: 2,
+                        time: 75
+                    }
+                ];
+            }
+
+            // Вопросы для теста (будут загружены из Firebase)
+            let questions = [];
+            
+            // Инициализация админ-панели
+            async function initAdminPanel() {
+                try {
+                    const [serverQuestions, serverSettings] = await Promise.all([
+                        loadQuestions(),
+                        loadSettings()
+                    ]);
+                    
+                    questions = serverQuestions;
+                    totalTime = serverSettings.totalTime * 60;
+                    totalTimeInput.value = serverSettings.totalTime;
+                    
                     renderQuestionsList();
-                });
-                
-                // Сохранение настроек
-                saveSettingsBtn.addEventListener('click', function() {
+                    
+                    // Обработчики вкладок
+                    tabs.forEach(tab => {
+                        tab.addEventListener('click', function() {
+                            const tabId = this.getAttribute('data-tab');
+                            
+                            tabs.forEach(t => t.classList.remove('active'));
+                            this.classList.add('active');
+                            
+                            tabContents.forEach(content => {
+                                content.classList.remove('active');
+                                if (content.id === `${tabId}-tab`) {
+                                    content.classList.add('active');
+                                }
+                            });
+                        });
+                    });
+                    
+                    // Добавление вопроса
+                    addQuestionBtn.addEventListener('click', function() {
+                        const newId = 'question_' + Date.now();
+                        questions.push({
+                            id: newId,
+                            question: "Новый вопрос",
+                            options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
+                            correct: 0,
+                            time: 60
+                        });
+                        saveQuestionsToServer();
+                        renderQuestionsList();
+                    });
+                    
+                    // Сохранение настроек
+                    saveSettingsBtn.addEventListener('click', saveSettingsToServer);
+                    
+                } catch (error) {
+                    console.error('Error initializing admin panel:', error);
+                }
+            }
+
+            async function saveQuestionsToServer() {
+                try {
+                    await saveQuestions(questions);
+                    alert('✅ Вопросы успешно сохранены для всех пользователей!');
+                } catch (error) {
+                    alert('❌ Ошибка сохранения вопросов: ' + error.message);
+                }
+            }
+
+            async function saveSettingsToServer() {
+                try {
                     const totalTimeMinutes = parseInt(totalTimeInput.value);
                     
                     if (totalTimeMinutes) {
+                        await saveSettings({ totalTime: totalTimeMinutes });
                         totalTime = totalTimeMinutes * 60;
-                        
-                        localStorage.setItem('medicalTestSettings', JSON.stringify({
-                            totalTime: totalTimeMinutes
-                        }));
-                        
-                        alert('Настройки времени сохранены!');
+                        alert('✅ Настройки успешно сохранены для всех пользователей!');
                     } else {
-                        alert('Пожалуйста, введите корректное значение времени.');
+                        alert('❌ Пожалуйста, введите корректное значение времени.');
                     }
-                });
+                } catch (error) {
+                    alert('❌ Ошибка сохранения настроек: ' + error.message);
+                }
             }
             
             // Отрисовка списка вопросов в админ-панели
@@ -763,14 +948,14 @@
                 // Обработчики для кнопок редактирования и удаления
                 document.querySelectorAll('.edit-question').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        const questionId = parseInt(this.getAttribute('data-id'));
+                        const questionId = this.getAttribute('data-id');
                         editQuestion(questionId);
                     });
                 });
                 
                 document.querySelectorAll('.delete-question').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        const questionId = parseInt(this.getAttribute('data-id'));
+                        const questionId = this.getAttribute('data-id');
                         deleteQuestion(questionId);
                     });
                 });
@@ -833,7 +1018,7 @@
                     question.options = updatedOptions;
                     question.correct = correctAnswer;
                     
-                    saveQuestions();
+                    saveQuestionsToServer();
                     renderQuestionsList();
                 });
                 
@@ -846,36 +1031,38 @@
             function deleteQuestion(questionId) {
                 if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
                     questions = questions.filter(q => q.id !== questionId);
-                    saveQuestions();
+                    saveQuestionsToServer();
                     renderQuestionsList();
                 }
             }
             
-            // Сохранение вопросов в localStorage
-            function saveQuestions() {
-                localStorage.setItem('medicalTestQuestions', JSON.stringify(questions));
-            }
-            
             // Инициализация теста
-            function initTest() {
-                questionsContainer.innerHTML = '';
-                userAnswers = [];
-                currentQuestionIndex = 0;
-                questionTimers = [];
-                
-                // Создаем таймеры для каждого вопроса
-                questions.forEach(question => {
-                    questionTimers.push({
-                        timeLeft: question.time,
-                        timer: null
+            async function initTest() {
+                try {
+                    const serverQuestions = await loadQuestions();
+                    questions = serverQuestions;
+                    
+                    questionsContainer.innerHTML = '';
+                    userAnswers = [];
+                    currentQuestionIndex = 0;
+                    questionTimers = [];
+                    
+                    // Создаем таймеры для каждого вопроса
+                    questions.forEach(question => {
+                        questionTimers.push({
+                            timeLeft: question.time,
+                            timer: null
+                        });
                     });
-                });
-                
-                // Показываем первый вопрос
-                showQuestion(currentQuestionIndex);
-                
-                // Запускаем общий таймер
-                startTotalTimer();
+                    
+                    // Показываем первый вопрос
+                    showQuestion(currentQuestionIndex);
+                    
+                    // Запускаем общий таймер
+                    startTotalTimer();
+                } catch (error) {
+                    console.error('Error initializing test:', error);
+                }
             }
             
             // Показать вопрос
@@ -1128,7 +1315,7 @@
                 `;
                 
                 // Детали по каждому вопросу
-                questions.forEach((question, index) {
+                questions.forEach((question, index) => {
                     const resultItem = document.createElement('div');
                     const userAnswer = userAnswers[index];
                     const isCorrect = userAnswer === question.correct;
@@ -1257,6 +1444,7 @@
                     adminLoginError.classList.add('hidden');
                     adminLogin.classList.add('hidden');
                     adminContent.classList.remove('hidden');
+                    initAdminPanel();
                 } else {
                     adminLoginError.classList.remove('hidden');
                 }
@@ -1269,9 +1457,6 @@
                 adminUsername.value = '';
                 adminPassword.value = '';
             });
-            
-            // Инициализация админ-панели
-            initAdminPanel();
         });
     </script>
 </body>
