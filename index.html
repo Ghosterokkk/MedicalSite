@@ -1275,4 +1275,348 @@
         });
     </script>
 </body>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+<script>
+// 🔥 ВСТАВЬТЕ СЮДА ВАШУ КОНФИГУРАЦИЮ ИЗ FIREBASE 🔥
+const firebaseConfig = {
+  apiKey: "ВАШ_API_KEY",
+  authDomain: "ВАШ_PROJECT.firebaseapp.com",
+  projectId: "ВАШ_PROJECT_ID",
+  storageBucket: "ВАШ_PROJECT.appspot.com",
+  messagingSenderId: "ВАШ_SENDER_ID",
+  appId: "ВАШ_APP_ID"
+};
+
+// Инициализация Firebase
+try {
+  firebase.initializeApp(firebaseConfig);
+  console.log("Firebase initialized successfully");
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
+const db = firebase.firestore();
+
+// Функции для работы с Firebase
+async function loadQuestions() {
+  try {
+    console.log("Loading questions from Firebase...");
+    const snapshot = await db.collection('questions').orderBy('order').get();
+    
+    if (snapshot.empty) {
+      console.log("No questions found, creating default ones...");
+      await createDefaultQuestions();
+      return getDefaultQuestions();
+    }
+    
+    const questions = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        question: data.question,
+        options: data.options,
+        correct: data.correct,
+        time: data.time || 60
+      };
+    });
+    
+    console.log("Loaded questions:", questions.length);
+    return questions;
+  } catch (error) {
+    console.error('Error loading questions:', error);
+    return getDefaultQuestions();
+  }
+}
+
+async function saveQuestions(questions) {
+  try {
+    console.log("Saving questions to Firebase...");
+    const batch = db.batch();
+    
+    // Удаляем старые вопросы
+    const oldQuestions = await db.collection('questions').get();
+    oldQuestions.docs.forEach(doc => {
+      batch.delete(doc.ref);
+    });
+    
+    // Добавляем новые вопросы
+    questions.forEach((question, index) => {
+      const ref = db.collection('questions').doc();
+      batch.set(ref, {
+        question: question.question,
+        options: question.options,
+        correct: question.correct,
+        time: question.time,
+        order: index
+      });
+    });
+    
+    await batch.commit();
+    console.log("Questions saved successfully");
+    return questions;
+  } catch (error) {
+    console.error('Error saving questions:', error);
+    throw error;
+  }
+}
+
+async function loadSettings() {
+  try {
+    const doc = await db.collection('settings').doc('main').get();
+    if (doc.exists) {
+      return doc.data();
+    } else {
+      const defaultSettings = { totalTime: 30 };
+      await db.collection('settings').doc('main').set(defaultSettings);
+      return defaultSettings;
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+    return { totalTime: 30 };
+  }
+}
+
+async function saveSettings(settings) {
+  try {
+    await db.collection('settings').doc('main').set(settings);
+    return settings;
+  } catch (error) {
+    console.error('Error saving settings:', error);
+    throw error;
+  }
+}
+
+async function createDefaultQuestions() {
+  const defaultQuestions = getDefaultQuestions();
+  await saveQuestions(defaultQuestions);
+}
+
+function getDefaultQuestions() {
+  return [
+    {
+      id: 'default1',
+      question: "Каков нормальный показатель артериального давления у взрослого человека?",
+      options: [
+        "120/80 мм рт.ст.",
+        "140/90 мм рт.ст.",
+        "100/60 мм рт.ст.",
+        "130/85 мм рт.ст."
+      ],
+      correct: 0,
+      time: 60
+    },
+    {
+      id: 'default2',
+      question: "Какой витамин вырабатывается в коже под воздействием солнечного света?",
+      options: [
+        "Витамин А",
+        "Витамин С",
+        "Витамин D",
+        "Витамин Е"
+      ],
+      correct: 2,
+      time: 45
+    },
+    {
+      id: 'default3',
+      question: "Какой орган отвечает за фильтрацию крови и выработку мочи?",
+      options: [
+        "Печень",
+        "Сердце",
+        "Почки",
+        "Легкие"
+      ],
+      correct: 2,
+      time: 75
+    }
+  ];
+}
+
+// Обновляем функции инициализации
+async function initAdminPanel() {
+  try {
+    console.log("Initializing admin panel with Firebase...");
+    const [serverQuestions, serverSettings] = await Promise.all([
+      loadQuestions(),
+      loadSettings()
+    ]);
+    
+    questions = serverQuestions;
+    totalTime = serverSettings.totalTime * 60;
+    totalTimeInput.value = serverSettings.totalTime;
+    
+    renderQuestionsList();
+    
+    // Обработчики вкладок
+    tabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const tabId = this.getAttribute('data-tab');
+        
+        tabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        tabContents.forEach(content => {
+          content.classList.remove('active');
+          if (content.id === `${tabId}-tab`) {
+            content.classList.add('active');
+          }
+        });
+      });
+    });
+    
+    // Добавление вопроса
+    addQuestionBtn.addEventListener('click', function() {
+      const newId = 'question_' + Date.now();
+      questions.push({
+        id: newId,
+        question: "Новый вопрос",
+        options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
+        correct: 0,
+        time: 60
+      });
+      saveQuestionsToServer();
+      renderQuestionsList();
+    });
+    
+    // Сохранение настроек
+    saveSettingsBtn.addEventListener('click', saveSettingsToServer);
+    
+  } catch (error) {
+    console.error('Error initializing admin panel:', error);
+  }
+}
+
+async function saveQuestionsToServer() {
+  try {
+    await saveQuestions(questions);
+    alert('✅ Вопросы успешно сохранены для всех пользователей!');
+  } catch (error) {
+    alert('❌ Ошибка сохранения вопросов: ' + error.message);
+  }
+}
+
+async function saveSettingsToServer() {
+  try {
+    const totalTimeMinutes = parseInt(totalTimeInput.value);
+    
+    if (totalTimeMinutes) {
+      await saveSettings({ totalTime: totalTimeMinutes });
+      totalTime = totalTimeMinutes * 60;
+      alert('✅ Настройки успешно сохранены для всех пользователей!');
+    } else {
+      alert('❌ Пожалуйста, введите корректное значение времени.');
+    }
+  } catch (error) {
+    alert('❌ Ошибка сохранения настроек: ' + error.message);
+  }
+}
+
+async function initTest() {
+  try {
+    console.log("Initializing test with Firebase...");
+    const serverQuestions = await loadQuestions();
+    questions = serverQuestions;
+    
+    questionsContainer.innerHTML = '';
+    userAnswers = [];
+    currentQuestionIndex = 0;
+    questionTimers = [];
+    
+    // Создаем таймеры для каждого вопроса
+    questions.forEach(question => {
+      questionTimers.push({
+        timeLeft: question.time,
+        timer: null
+      });
+    });
+    
+    // Показываем первый вопрос
+    showQuestion(currentQuestionIndex);
+    
+    // Запускаем общий таймер
+    startTotalTimer();
+  } catch (error) {
+    console.error('Error initializing test:', error);
+  }
+}
+
+// Обновляем функции редактирования и удаления
+function editQuestion(questionId) {
+  const question = questions.find(q => q.id === questionId);
+  if (!question) return;
+  
+  const questionItem = document.querySelector(`.edit-question[data-id="${questionId}"]`).closest('.question-item');
+  
+  questionItem.innerHTML = `
+    <div class="form-group">
+      <label>Текст вопроса</label>
+      <textarea class="question-text">${question.question}</textarea>
+    </div>
+    
+    <div class="form-group">
+      <label>Время на вопрос (секунды)</label>
+      <input type="number" class="question-time" value="${question.time}" min="10">
+    </div>
+    
+    <div class="form-group">
+      <label>Варианты ответов</label>
+      ${question.options.map((option, index) => `
+        <div class="option-input">
+          <input type="text" class="option-text" value="${option}" placeholder="Вариант ${index + 1}">
+        </div>
+      `).join('')}
+    </div>
+    
+    <div class="correct-option">
+      <label>Правильный ответ:</label>
+      <select class="correct-answer">
+        ${question.options.map((_, index) => `
+          <option value="${index}" ${index === question.correct ? 'selected' : ''}>Вариант ${index + 1}</option>
+        `).join('')}
+      </select>
+    </div>
+    
+    <div class="question-actions" style="margin-top: 15px;">
+      <button class="btn save-question" data-id="${questionId}">Сохранить</button>
+      <button class="btn btn-secondary cancel-edit" data-id="${questionId}">Отмена</button>
+    </div>
+  `;
+  
+  questionItem.querySelector('.save-question').addEventListener('click', function() {
+    const updatedQuestion = questionItem.querySelector('.question-text').value;
+    const questionTime = parseInt(questionItem.querySelector('.question-time').value);
+    const optionInputs = questionItem.querySelectorAll('.option-text');
+    const correctAnswer = parseInt(questionItem.querySelector('.correct-answer').value);
+    
+    const updatedOptions = Array.from(optionInputs).map(input => input.value);
+    
+    // Обновление вопроса
+    question.question = updatedQuestion;
+    question.time = questionTime;
+    question.options = updatedOptions;
+    question.correct = correctAnswer;
+    
+    saveQuestionsToServer();
+    renderQuestionsList();
+  });
+  
+  questionItem.querySelector('.cancel-edit').addEventListener('click', function() {
+    renderQuestionsList();
+  });
+}
+
+function deleteQuestion(questionId) {
+  if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
+    questions = questions.filter(q => q.id !== questionId);
+    saveQuestionsToServer();
+    renderQuestionsList();
+  }
+}
+
+// Переопределяем старые функции
+window.initAdminPanel = initAdminPanel;
+window.initTest = initTest;
+</script>
 </html>
