@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Медицинский тест для сотрудников</title>
     <style>
-        /* Ваши стили остаются без изменений */
+        /* Все ваши стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -582,6 +582,30 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <script>
+        // 🔥 КОНФИГУРАЦИЯ FIREBASE - ВСТАВЬТЕ ВАШУ КОНФИГУРАЦИЮ 🔥
+        const firebaseConfig = {
+            apiKey: "AIzaSyAL8dXiQQFdboo1Z36mfcr41_ux4uf5KMs",
+            authDomain: "medicallsites.firebaseapp.com",
+            projectId: "medicallsites",
+            storageBucket: "medicallsites.firebasestorage.app",
+            messagingSenderId: "1089776801097",
+            appId: "1:1089776801097:web:34e3c634e63ae21280f698"
+        };
+
+        // Инициализация Firebase
+        let db;
+        try {
+            if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("ВАШ")) {
+                firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                console.log("✅ Firebase подключен");
+            } else {
+                console.log("⚠️ Firebase не настроен, используется localStorage");
+            }
+        } catch (error) {
+            console.error("❌ Ошибка Firebase:", error);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Элементы DOM
             const userPanel = document.getElementById('user-panel');
@@ -639,31 +663,6 @@
                 password: "admin123"
             };
 
-            // 🔥🔥🔥 ЗАМЕНИТЕ ЭТУ КОНФИГУРАЦИЮ НА ВАШУ ИЗ FIREBASE 🔥🔥🔥
-            const firebaseConfig = {
-                apiKey: "AIzaSyAL8dXiQQFdboo1Z36mfcr41_ux4uf5KMs",
-                authDomain: "medicallsites.firebaseapp.com",
-                projectId: "medicallsites",
-                storageBucket: "medicallsites.firebasestorage.app",
-                messagingSenderId: "1089776801097",
-                appId: "1:1089776801097:web:34e3c634e63ae21280f698"
-            };
-
-            // Инициализация Firebase
-            let db;
-            try {
-                if (firebaseConfig.apiKey.includes("xxx")) {
-                    throw new Error("Пожалуйста, замените конфигурацию Firebase на вашу реальную!");
-                }
-                
-                firebase.initializeApp(firebaseConfig);
-                db = firebase.firestore();
-                console.log("✅ Firebase успешно инициализирован");
-            } catch (error) {
-                console.error("❌ Ошибка инициализации Firebase:", error);
-                alert("Ошибка Firebase: " + error.message);
-            }
-
             // Вопросы для теста
             let questions = [];
 
@@ -671,7 +670,7 @@
             async function loadQuestions() {
                 try {
                     if (!db) {
-                        console.log("⚠️ Firebase недоступен, использую localStorage");
+                        console.log("📥 Загружаю вопросы из localStorage");
                         return getLocalQuestions();
                     }
 
@@ -706,7 +705,7 @@
             async function saveQuestions(questions) {
                 try {
                     if (!db) {
-                        console.log("⚠️ Firebase недоступен, сохраняю в localStorage");
+                        console.log("💾 Сохраняю вопросы в localStorage");
                         saveToLocalStorage(questions);
                         return questions;
                     }
@@ -733,15 +732,211 @@
                     });
                     
                     await batch.commit();
-                    console.log("✅ Вопросы успешно сохранены в Firebase");
+                    console.log("✅ Вопросы успешно сохранены");
                     
-                    // Также сохраняем в localStorage как backup
                     saveToLocalStorage(questions);
                     return questions;
                 } catch (error) {
                     console.error('❌ Ошибка сохранения вопросов:', error);
                     saveToLocalStorage(questions);
                     throw error;
+                }
+            }
+
+            // Локальные функции
+            function getLocalQuestions() {
+                const localQuestions = JSON.parse(localStorage.getItem('medicalTestQuestions'));
+                return localQuestions || getDefaultQuestions();
+            }
+
+            function saveToLocalStorage(questions) {
+                localStorage.setItem('medicalTestQuestions', JSON.stringify(questions));
+            }
+
+            function getDefaultQuestions() {
+                return [
+                    {
+                        id: 'default1',
+                        question: "Каков нормальный показатель артериального давления у взрослого человека?",
+                        options: ["120/80 мм рт.ст.", "140/90 мм рт.ст.", "100/60 мм рт.ст.", "130/85 мм рт.ст."],
+                        correct: 0,
+                        time: 60
+                    },
+                    {
+                        id: 'default2',
+                        question: "Какой витамин вырабатывается в коже под воздействием солнечного света?",
+                        options: ["Витамин А", "Витамин С", "Витамин D", "Витамин Е"],
+                        correct: 2,
+                        time: 45
+                    },
+                    {
+                        id: 'default3',
+                        question: "Какой орган отвечает за фильтрацию крови и выработку мочи?",
+                        options: ["Печень", "Сердце", "Почки", "Легкие"],
+                        correct: 2,
+                        time: 75
+                    }
+                ];
+            }
+
+            async function createDefaultQuestions() {
+                const defaultQuestions = getDefaultQuestions();
+                await saveQuestions(defaultQuestions);
+            }
+
+            // ОСНОВНЫЕ ОБРАБОТЧИКИ СОБЫТИЙ
+            function setupEventListeners() {
+                console.log("🔄 Настраиваю обработчики событий...");
+                
+                // Переключение между режимами
+                adminToggle.addEventListener('click', function() {
+                    userPanel.style.display = 'none';
+                    adminPanel.style.display = 'block';
+                    adminLogin.classList.remove('hidden');
+                    adminContent.classList.add('hidden');
+                });
+
+                userModeBtn.addEventListener('click', function() {
+                    adminPanel.style.display = 'none';
+                    userPanel.style.display = 'block';
+                });
+
+                // Вход в админ-панель
+                adminLoginBtn.addEventListener('click', function() {
+                    const username = adminUsername.value.trim();
+                    const password = adminPassword.value.trim();
+                    
+                    if (username === adminCredentials.username && password === adminCredentials.password) {
+                        adminLoginError.classList.add('hidden');
+                        adminLogin.classList.add('hidden');
+                        adminContent.classList.remove('hidden');
+                        initAdminPanel();
+                    } else {
+                        adminLoginError.classList.remove('hidden');
+                    }
+                });
+
+                // Выход из админ-панели
+                adminLogoutBtn.addEventListener('click', function() {
+                    adminLogin.classList.remove('hidden');
+                    adminContent.classList.add('hidden');
+                    adminUsername.value = '';
+                    adminPassword.value = '';
+                });
+
+                // Начало теста
+                startTestBtn.addEventListener('click', function() {
+                    const email = emailInput.value.trim();
+                    
+                    if (!isValidEmail(email)) {
+                        emailError.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    emailError.classList.add('hidden');
+                    userEmail = email;
+                    userEmailElement.textContent = email;
+                    
+                    loginSection.classList.add('hidden');
+                    testSection.classList.remove('test-section');
+                    initTest();
+                });
+
+                // Завершение теста
+                submitTestBtn.addEventListener('click', () => submitTest());
+
+                // Перезапуск теста
+                restartTestBtn.addEventListener('click', function() {
+                    resultsSection.classList.add('test-section');
+                    loginSection.classList.remove('hidden');
+                    emailInput.value = '';
+                    
+                    clearInterval(timerInterval);
+                    if (currentQuestionTimer) {
+                        clearInterval(currentQuestionTimer);
+                    }
+                });
+
+                // Навигация по вопросам
+                nextQuestionBtn.addEventListener('click', nextQuestion);
+                prevQuestionBtn.addEventListener('click', prevQuestion);
+
+                console.log("✅ Обработчики событий настроены");
+            }
+
+            // Инициализация админ-панели
+            async function initAdminPanel() {
+                try {
+                    console.log("🔄 Инициализация админ-панели...");
+                    questions = await loadQuestions();
+                    
+                    const settings = await loadSettings();
+                    totalTime = settings.totalTime * 60;
+                    totalTimeInput.value = settings.totalTime;
+                    
+                    renderQuestionsList();
+                    setupAdminEventListeners();
+                    
+                } catch (error) {
+                    console.error('❌ Ошибка инициализации админ-панели:', error);
+                }
+            }
+
+            function setupAdminEventListeners() {
+                // Вкладки
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        const tabId = this.getAttribute('data-tab');
+                        tabs.forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                        tabContents.forEach(content => {
+                            content.classList.remove('active');
+                            if (content.id === `${tabId}-tab`) {
+                                content.classList.add('active');
+                            }
+                        });
+                    });
+                });
+                
+                // Добавление вопроса
+                addQuestionBtn.addEventListener('click', function() {
+                    const newId = 'question_' + Date.now();
+                    questions.push({
+                        id: newId,
+                        question: "Новый вопрос",
+                        options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
+                        correct: 0,
+                        time: 60
+                    });
+                    saveQuestionsToServer();
+                    renderQuestionsList();
+                });
+                
+                // Сохранение настроек
+                saveSettingsBtn.addEventListener('click', saveSettingsToServer);
+            }
+
+            async function saveQuestionsToServer() {
+                try {
+                    await saveQuestions(questions);
+                    alert('✅ Вопросы успешно сохранены!');
+                } catch (error) {
+                    alert('❌ Ошибка сохранения вопросов: ' + error.message);
+                }
+            }
+
+            async function saveSettingsToServer() {
+                try {
+                    const totalTimeMinutes = parseInt(totalTimeInput.value);
+                    if (totalTimeMinutes) {
+                        await saveSettings({ totalTime: totalTimeMinutes });
+                        totalTime = totalTimeMinutes * 60;
+                        alert('✅ Настройки успешно сохранены!');
+                    } else {
+                        alert('❌ Пожалуйста, введите корректное значение времени.');
+                    }
+                } catch (error) {
+                    alert('❌ Ошибка сохранения настроек: ' + error.message);
                 }
             }
 
@@ -782,16 +977,6 @@
                 }
             }
 
-            // Локальные функции как fallback
-            function getLocalQuestions() {
-                const localQuestions = JSON.parse(localStorage.getItem('medicalTestQuestions'));
-                return localQuestions || getDefaultQuestions();
-            }
-
-            function saveToLocalStorage(questions) {
-                localStorage.setItem('medicalTestQuestions', JSON.stringify(questions));
-            }
-
             function getLocalSettings() {
                 const localSettings = JSON.parse(localStorage.getItem('medicalTestSettings'));
                 return localSettings || { totalTime: 30 };
@@ -801,124 +986,435 @@
                 localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
             }
 
-            async function createDefaultQuestions() {
-                const defaultQuestions = getDefaultQuestions();
-                await saveQuestions(defaultQuestions);
-            }
-
-            function getDefaultQuestions() {
-                return [
-                    {
-                        id: 'default1',
-                        question: "Каков нормальный показатель артериального давления у взрослого человека?",
-                        options: ["120/80 мм рт.ст.", "140/90 мм рт.ст.", "100/60 мм рт.ст.", "130/85 мм рт.ст."],
-                        correct: 0,
-                        time: 60
-                    },
-                    {
-                        id: 'default2',
-                        question: "Какой витамин вырабатывается в коже под воздействием солнечного света?",
-                        options: ["Витамин А", "Витамин С", "Витамин D", "Витамин Е"],
-                        correct: 2,
-                        time: 45
-                    },
-                    {
-                        id: 'default3',
-                        question: "Какой орган отвечает за фильтрацию крови и выработку мочи?",
-                        options: ["Печень", "Сердце", "Почки", "Легкие"],
-                        correct: 2,
-                        time: 75
-                    }
-                ];
-            }
-
-            // Инициализация админ-панели
-            async function initAdminPanel() {
-                try {
-                    console.log("🔄 Инициализация админ-панели...");
-                    const [serverQuestions, serverSettings] = await Promise.all([
-                        loadQuestions(),
-                        loadSettings()
-                    ]);
+            // [ОСТАВШИЕСЯ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ]
+            function renderQuestionsList() {
+                questionsList.innerHTML = '';
+                
+                questions.forEach((question, index) => {
+                    const questionItem = document.createElement('div');
+                    questionItem.className = 'question-item';
+                    questionItem.innerHTML = `
+                        <div class="question-header">
+                            <h3>Вопрос ${index + 1} (Время: ${question.time} сек.)</h3>
+                            <div class="question-actions">
+                                <button class="btn btn-secondary edit-question" data-id="${question.id}">Редактировать</button>
+                                <button class="btn btn-danger delete-question" data-id="${question.id}">Удалить</button>
+                            </div>
+                        </div>
+                        <p>${question.question}</p>
+                        <div class="options">
+                            ${question.options.map((option, optIndex) => `
+                                <div>${optIndex + 1}. ${option} ${optIndex === question.correct ? '(правильный)' : ''}</div>
+                            `).join('')}
+                        </div>
+                    `;
                     
-                    questions = serverQuestions;
-                    totalTime = serverSettings.totalTime * 60;
-                    totalTimeInput.value = serverSettings.totalTime;
-                    
-                    renderQuestionsList();
-                    setupAdminEventListeners();
-                    
-                } catch (error) {
-                    console.error('❌ Ошибка инициализации админ-панели:', error);
-                    alert('Ошибка загрузки данных: ' + error.message);
-                }
-            }
-
-            function setupAdminEventListeners() {
-                // Обработчики вкладок
-                tabs.forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        const tabId = this.getAttribute('data-tab');
-                        tabs.forEach(t => t.classList.remove('active'));
-                        this.classList.add('active');
-                        tabContents.forEach(content => {
-                            content.classList.remove('active');
-                            if (content.id === `${tabId}-tab`) {
-                                content.classList.add('active');
-                            }
-                        });
+                    questionsList.appendChild(questionItem);
+                });
+                
+                document.querySelectorAll('.edit-question').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const questionId = this.getAttribute('data-id');
+                        editQuestion(questionId);
                     });
                 });
                 
-                // Добавление вопроса
-                addQuestionBtn.addEventListener('click', function() {
-                    const newId = 'question_' + Date.now();
-                    questions.push({
-                        id: newId,
-                        question: "Новый вопрос",
-                        options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
-                        correct: 0,
-                        time: 60
+                document.querySelectorAll('.delete-question').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const questionId = this.getAttribute('data-id');
+                        deleteQuestion(questionId);
                     });
+                });
+            }
+
+            function editQuestion(questionId) {
+                const question = questions.find(q => q.id === questionId);
+                if (!question) return;
+                
+                const questionItem = document.querySelector(`.edit-question[data-id="${questionId}"]`).closest('.question-item');
+                
+                questionItem.innerHTML = `
+                    <div class="form-group">
+                        <label>Текст вопроса</label>
+                        <textarea class="question-text">${question.question}</textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Время на вопрос (секунды)</label>
+                        <input type="number" class="question-time" value="${question.time}" min="10">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Варианты ответов</label>
+                        ${question.options.map((option, index) => `
+                            <div class="option-input">
+                                <input type="text" class="option-text" value="${option}" placeholder="Вариант ${index + 1}">
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="correct-option">
+                        <label>Правильный ответ:</label>
+                        <select class="correct-answer">
+                            ${question.options.map((_, index) => `
+                                <option value="${index}" ${index === question.correct ? 'selected' : ''}>Вариант ${index + 1}</option>
+                            `).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="question-actions" style="margin-top: 15px;">
+                        <button class="btn save-question" data-id="${questionId}">Сохранить</button>
+                        <button class="btn btn-secondary cancel-edit" data-id="${questionId}">Отмена</button>
+                    </div>
+                `;
+                
+                questionItem.querySelector('.save-question').addEventListener('click', function() {
+                    const updatedQuestion = questionItem.querySelector('.question-text').value;
+                    const questionTime = parseInt(questionItem.querySelector('.question-time').value);
+                    const optionInputs = questionItem.querySelectorAll('.option-text');
+                    const correctAnswer = parseInt(questionItem.querySelector('.correct-answer').value);
+                    
+                    const updatedOptions = Array.from(optionInputs).map(input => input.value);
+                    
+                    question.question = updatedQuestion;
+                    question.time = questionTime;
+                    question.options = updatedOptions;
+                    question.correct = correctAnswer;
+                    
                     saveQuestionsToServer();
                     renderQuestionsList();
                 });
                 
-                // Сохранение настроек
-                saveSettingsBtn.addEventListener('click', saveSettingsToServer);
+                questionItem.querySelector('.cancel-edit').addEventListener('click', function() {
+                    renderQuestionsList();
+                });
             }
 
-            async function saveQuestionsToServer() {
-                try {
-                    await saveQuestions(questions);
-                    alert('✅ Вопросы успешно сохранены для всех пользователей!');
-                } catch (error) {
-                    alert('❌ Ошибка сохранения вопросов: ' + error.message);
+            function deleteQuestion(questionId) {
+                if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
+                    questions = questions.filter(q => q.id !== questionId);
+                    saveQuestionsToServer();
+                    renderQuestionsList();
                 }
             }
 
-            async function saveSettingsToServer() {
+            // Инициализация теста
+            async function initTest() {
                 try {
-                    const totalTimeMinutes = parseInt(totalTimeInput.value);
-                    if (totalTimeMinutes) {
-                        await saveSettings({ totalTime: totalTimeMinutes });
-                        totalTime = totalTimeMinutes * 60;
-                        alert('✅ Настройки успешно сохранены для всех пользователей!');
-                    } else {
-                        alert('❌ Пожалуйста, введите корректное значение времени.');
+                    questions = await loadQuestions();
+                    
+                    questionsContainer.innerHTML = '';
+                    userAnswers = [];
+                    currentQuestionIndex = 0;
+                    questionTimers = [];
+                    
+                    questions.forEach(question => {
+                        questionTimers.push({
+                            timeLeft: question.time,
+                            timer: null
+                        });
+                    });
+                    
+                    showQuestion(currentQuestionIndex);
+                    startTotalTimer();
+                } catch (error) {
+                    console.error('Error initializing test:', error);
+                }
+            }
+
+            // [ОСТАЛЬНЫЕ ФУНКЦИИ БЕЗ ИЗМЕНЕНИЙ...]
+            function showQuestion(index) {
+                questionsContainer.innerHTML = '';
+                questionCounter.textContent = `Вопрос ${index + 1} из ${questions.length}`;
+                
+                const question = questions[index];
+                const questionElement = document.createElement('div');
+                questionElement.className = 'question';
+                
+                const questionText = document.createElement('div');
+                questionText.className = 'question-text';
+                questionText.textContent = `${index + 1}. ${question.question}`;
+                
+                const questionTimer = document.createElement('div');
+                questionTimer.className = 'question-timer';
+                questionTimer.id = 'current-question-timer';
+                questionTimer.textContent = `Время на вопрос: ${formatTime(questionTimers[index].timeLeft)}`;
+                
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'options';
+                
+                question.options.forEach((option, optionIndex) => {
+                    const optionElement = document.createElement('label');
+                    optionElement.className = 'option';
+                    if (userAnswers[index] === optionIndex) {
+                        optionElement.classList.add('selected');
                     }
-                } catch (error) {
-                    alert('❌ Ошибка сохранения настроек: ' + error.message);
+                    
+                    const radioInput = document.createElement('input');
+                    radioInput.type = 'radio';
+                    radioInput.name = `question-${index}`;
+                    radioInput.value = optionIndex;
+                    radioInput.checked = userAnswers[index] === optionIndex;
+                    
+                    radioInput.addEventListener('change', function() {
+                        userAnswers[index] = optionIndex;
+                        const allOptions = optionsContainer.querySelectorAll('.option');
+                        allOptions.forEach(opt => opt.classList.remove('selected'));
+                        optionElement.classList.add('selected');
+                        
+                        if (index < questions.length - 1) {
+                            nextQuestionBtn.disabled = false;
+                        }
+                    });
+                    
+                    const optionText = document.createElement('span');
+                    optionText.textContent = option;
+                    
+                    optionElement.appendChild(radioInput);
+                    optionElement.appendChild(optionText);
+                    optionsContainer.appendChild(optionElement);
+                });
+                
+                questionElement.appendChild(questionTimer);
+                questionElement.appendChild(questionText);
+                questionElement.appendChild(optionsContainer);
+                questionsContainer.appendChild(questionElement);
+                
+                prevQuestionBtn.disabled = index === 0;
+                nextQuestionBtn.disabled = index === questions.length - 1 || userAnswers[index] === undefined;
+                
+                startQuestionTimer(index);
+            }
+
+            function startTotalTimer() {
+                let timeLeft = totalTime;
+                updateTimerDisplay(timeLeft);
+                
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay(timeLeft);
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        timeExpired();
+                    }
+                }, 1000);
+            }
+
+            function startQuestionTimer(questionIndex) {
+                if (currentQuestionTimer) {
+                    clearInterval(currentQuestionTimer);
+                }
+                
+                const questionTimer = questionTimers[questionIndex];
+                const questionTime = questions[questionIndex].time;
+                
+                if (questionTimer.timeLeft <= 0) {
+                    if (questionIndex < questions.length - 1) {
+                        nextQuestion();
+                    } else {
+                        submitTest();
+                    }
+                    return;
+                }
+                
+                currentQuestionTimer = setInterval(() => {
+                    questionTimer.timeLeft--;
+                    updateQuestionTimerDisplay(questionTimer.timeLeft);
+                    
+                    if (questionTimer.timeLeft <= 0) {
+                        clearInterval(currentQuestionTimer);
+                        if (questionIndex < questions.length - 1) {
+                            nextQuestion();
+                        } else {
+                            submitTest();
+                        }
+                    }
+                }, 1000);
+            }
+
+            function updateTimerDisplay(seconds) {
+                timerElement.textContent = `Общее время: ${formatTime(seconds)}`;
+                if (seconds <= 300) {
+                    timerElement.classList.add('warning');
+                } else {
+                    timerElement.classList.remove('warning');
                 }
             }
 
-            // Остальные функции (renderQuestionsList, editQuestion, deleteQuestion, и т.д.)
-            // остаются такими же как в предыдущем коде...
+            function updateQuestionTimerDisplay(seconds) {
+                const questionTimer = document.getElementById('current-question-timer');
+                if (questionTimer) {
+                    questionTimer.textContent = `Время на вопрос: ${formatTime(seconds)}`;
+                    if (seconds <= 10) {
+                        questionTimer.style.color = '#d93025';
+                    } else {
+                        questionTimer.style.color = '#5f6368';
+                    }
+                }
+            }
 
-            // [ВСТАВЬТЕ СЮДА ВСЕ ОСТАЛЬНЫЕ ФУНКЦИИ ИЗ ПРЕДЫДУЩЕГО КОДА]
-            // renderQuestionsList, editQuestion, deleteQuestion, initTest, showQuestion,
-            // startTotalTimer, startQuestionTimer, и все остальные функции...
+            function nextQuestion() {
+                if (currentQuestionIndex < questions.length - 1) {
+                    currentQuestionIndex++;
+                    showQuestion(currentQuestionIndex);
+                }
+            }
 
+            function prevQuestion() {
+                if (currentQuestionIndex > 0) {
+                    currentQuestionIndex--;
+                    showQuestion(currentQuestionIndex);
+                }
+            }
+
+            function timeExpired() {
+                clearInterval(timerInterval);
+                if (currentQuestionTimer) {
+                    clearInterval(currentQuestionTimer);
+                }
+                
+                questionTimers.forEach(timer => {
+                    if (timer.timer) {
+                        clearInterval(timer.timer);
+                    }
+                });
+                
+                const timeExpiredMsg = document.createElement('div');
+                timeExpiredMsg.className = 'time-expired';
+                timeExpiredMsg.innerHTML = `
+                    <h3>Время вышло!</h3>
+                    <p>К сожалению, вы не успели завершить тест в отведенное время.</p>
+                    <p>Тест считается проваленным.</p>
+                `;
+                
+                testSection.insertBefore(timeExpiredMsg, testSection.firstChild);
+                
+                setTimeout(() => {
+                    submitTest(true);
+                }, 3000);
+            }
+
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            function isValidEmail(email) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                return emailRegex.test(email) && email.includes('gmail.com');
+            }
+
+            function showDetailedResults(correctAnswers, answeredQuestions, timeExpired = false) {
+                resultsSummary.innerHTML = '';
+                resultsDetails.innerHTML = '';
+                
+                resultsSummary.innerHTML = `
+                    <div class="summary-item">
+                        <div class="summary-value">${questions.length}</div>
+                        <div class="summary-label">Всего вопросов</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">${answeredQuestions}</div>
+                        <div class="summary-label">Отвечено</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">${correctAnswers}</div>
+                        <div class="summary-label">Правильно</div>
+                    </div>
+                    <div class="summary-item">
+                        <div class="summary-value">${questions.length - answeredQuestions}</div>
+                        <div class="summary-label">Пропущено</div>
+                    </div>
+                `;
+                
+                questions.forEach((question, index) => {
+                    const resultItem = document.createElement('div');
+                    const userAnswer = userAnswers[index];
+                    const isCorrect = userAnswer === question.correct;
+                    const isAnswered = userAnswer !== undefined;
+                    
+                    let statusClass = '';
+                    let statusText = '';
+                    
+                    if (!isAnswered) {
+                        statusClass = 'unanswered';
+                        statusText = 'Вопрос без ответа';
+                    } else if (isCorrect) {
+                        statusClass = 'correct';
+                        statusText = 'Правильно';
+                    } else {
+                        statusClass = 'incorrect';
+                        statusText = 'Неправильно';
+                    }
+                    
+                    resultItem.className = `result-item ${statusClass}`;
+                    resultItem.innerHTML = `
+                        <div class="result-question">${index + 1}. ${question.question}</div>
+                        <div class="result-answer">
+                            <span class="user-answer">Ваш ответ: </span>
+                            ${isAnswered ? question.options[userAnswer] : '<span class="unanswered">Не ответили</span>'}
+                            ${!isAnswered ? '' : (isCorrect ? ' <span class="correct-answer">✓</span>' : ' <span class="incorrect-answer">✗</span>')}
+                        </div>
+                        ${!isCorrect && isAnswered ? `
+                            <div class="result-answer">
+                                <span class="correct-answer">Правильный ответ: ${question.options[question.correct]}</span>
+                            </div>
+                        ` : ''}
+                        <div style="margin-top: 8px; font-size: 14px; color: #5f6368;">
+                            ${statusText}
+                        </div>
+                    `;
+                    
+                    resultsDetails.appendChild(resultItem);
+                });
+            }
+
+            function submitTest(timeExpired = false) {
+                clearInterval(timerInterval);
+                if (currentQuestionTimer) {
+                    clearInterval(currentQuestionTimer);
+                }
+                
+                let correctAnswers = 0;
+                let answeredQuestions = 0;
+                
+                userAnswers.forEach((answer, index) => {
+                    if (answer !== undefined) {
+                        answeredQuestions++;
+                        if (answer === questions[index].correct) {
+                            correctAnswers++;
+                        }
+                    }
+                });
+                
+                const score = timeExpired ? 0 : Math.round((correctAnswers / questions.length) * 100);
+                
+                testSection.classList.add('test-section');
+                resultsSection.classList.remove('test-section');
+                
+                scoreElement.textContent = `${score}%`;
+                
+                if (timeExpired) {
+                    resultMessage.textContent = 'Время вышло! Тест не пройден.';
+                } else if (score >= 80) {
+                    resultMessage.textContent = 'Отличный результат! Вы показали высокий уровень медицинских знаний.';
+                } else if (score >= 60) {
+                    resultMessage.textContent = 'Хороший результат! Ваши медицинские знания на достаточном уровне.';
+                } else {
+                    resultMessage.textContent = 'Рекомендуется дополнительное обучение для улучшения медицинских знаний.';
+                }
+                
+                showDetailedResults(correctAnswers, answeredQuestions, timeExpired);
+                
+                console.log(`Результаты теста отправлены на ${userEmail}: ${score}% правильных ответов`);
+            }
+
+            // ЗАПУСК ПРИЛОЖЕНИЯ
+            setupEventListeners();
+            console.log("🚀 Приложение запущено");
         });
     </script>
 </body>
