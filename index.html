@@ -1623,14 +1623,19 @@
         }
 
         function startQuestionTimer(time) {
-            questionTime = time;
-            questionStartTime = Date.now();
-            
-            // Обновлять таймер вопроса каждую секунду
+            // Остановить предыдущий таймер вопроса
             if (questionTimerInterval) {
                 clearInterval(questionTimerInterval);
             }
             
+            questionTime = time;
+            questionStartTime = Date.now();
+            
+            // Обновить отображение сразу
+            document.getElementById('question-timer').textContent = 
+                `Время на вопрос: ${questionTime} сек.`;
+            
+            // Обновлять таймер вопроса каждую секунду
             questionTimerInterval = setInterval(function() {
                 questionTime--;
                 document.getElementById('question-timer').textContent = 
@@ -1641,6 +1646,9 @@
                     // Автоматически перейти к следующему вопросу
                     if (currentQuestionIndex < currentQuestionSet.questions.length - 1) {
                         nextQuestion();
+                    } else {
+                        // Если это последний вопрос, показать кнопку завершения
+                        document.getElementById('submit-test').style.display = 'block';
                     }
                 }
             }, 1000);
