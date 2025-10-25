@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Медицинский тест для сотрудников</title>
     <style>
+        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -496,6 +497,7 @@
             border-bottom: none;
         }
 
+        /* Новые стили для редактирования вопросов */
         .question-editor {
             background-color: #f8f9fa;
             border: 1px solid #ddd;
@@ -938,101 +940,6 @@
             }
         }
 
-        // Глобальные переменные
-        let currentUser = null;
-        let currentQuestionSet = null;
-        let currentQuestionIndex = 0;
-        let userAnswers = [];
-        let totalTime = 0;
-        let timerInterval = null;
-        let questionTime = 0;
-        let questionStartTime = 0;
-        let questionTimerInterval = null;
-        let currentEditingQuestionSet = null;
-        let currentEditingQuestionIndex = -1;
-
-        // Локальное хранилище (fallback)
-        function getLocalUsers() {
-            const users = localStorage.getItem('medicalTestUsers');
-            return users ? JSON.parse(users) : [];
-        }
-
-        function saveUserToLocal(user) {
-            const users = getLocalUsers();
-            const existingIndex = users.findIndex(u => u.id === user.id);
-            
-            if (existingIndex >= 0) {
-                users[existingIndex] = user;
-            } else {
-                users.push(user);
-            }
-            
-            localStorage.setItem('medicalTestUsers', JSON.stringify(users));
-        }
-
-        function getLocalQuestionSets() {
-            const questionSets = localStorage.getItem('medicalTestQuestionSets');
-            return questionSets ? JSON.parse(questionSets) : [];
-        }
-
-        function saveQuestionSetToLocal(questionSet) {
-            const questionSets = getLocalQuestionSets();
-            const existingIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
-            
-            if (existingIndex >= 0) {
-                questionSets[existingIndex] = questionSet;
-            } else {
-                questionSets.push(questionSet);
-            }
-            
-            localStorage.setItem('medicalTestQuestionSets', JSON.stringify(questionSets));
-        }
-
-        function getLocalAssignments() {
-            const assignments = localStorage.getItem('medicalTestAssignments');
-            return assignments ? JSON.parse(assignments) : [];
-        }
-
-        function saveAssignmentToLocal(assignment) {
-            const assignments = getLocalAssignments();
-            const existingIndex = assignments.findIndex(a => a.id === assignment.id);
-            
-            if (existingIndex >= 0) {
-                assignments[existingIndex] = assignment;
-            } else {
-                assignments.push(assignment);
-            }
-            
-            localStorage.setItem('medicalTestAssignments', JSON.stringify(assignments));
-        }
-
-        function getLocalTestResults() {
-            const results = localStorage.getItem('medicalTestResults');
-            return results ? JSON.parse(results) : [];
-        }
-
-        function saveTestResultToLocal(result) {
-            const results = getLocalTestResults();
-            results.push(result);
-            localStorage.setItem('medicalTestResults', JSON.stringify(results));
-        }
-
-        function getLocalSettings() {
-            const settings = localStorage.getItem('medicalTestSettings');
-            return settings ? JSON.parse(settings) : getDefaultSettings();
-        }
-
-        function saveSettingsToLocal(settings) {
-            localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
-        }
-
-        function getDefaultSettings() {
-            return {
-                totalTime: 30,
-                defaultQuestionTime: 60
-            };
-        }
-
         // Firebase функции
         async function loadUsers() {
             try {
@@ -1307,6 +1214,88 @@
                 saveSettingsToLocal(settings);
                 throw error;
             }
+        }
+
+        // Локальное хранилище (fallback)
+        function getLocalUsers() {
+            const users = localStorage.getItem('medicalTestUsers');
+            return users ? JSON.parse(users) : [];
+        }
+
+        function saveUserToLocal(user) {
+            const users = getLocalUsers();
+            const existingIndex = users.findIndex(u => u.id === user.id);
+            
+            if (existingIndex >= 0) {
+                users[existingIndex] = user;
+            } else {
+                users.push(user);
+            }
+            
+            localStorage.setItem('medicalTestUsers', JSON.stringify(users));
+        }
+
+        function getLocalQuestionSets() {
+            const questionSets = localStorage.getItem('medicalTestQuestionSets');
+            return questionSets ? JSON.parse(questionSets) : [];
+        }
+
+        function saveQuestionSetToLocal(questionSet) {
+            const questionSets = getLocalQuestionSets();
+            const existingIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
+            
+            if (existingIndex >= 0) {
+                questionSets[existingIndex] = questionSet;
+            } else {
+                questionSets.push(questionSet);
+            }
+            
+            localStorage.setItem('medicalTestQuestionSets', JSON.stringify(questionSets));
+        }
+
+        function getLocalAssignments() {
+            const assignments = localStorage.getItem('medicalTestAssignments');
+            return assignments ? JSON.parse(assignments) : [];
+        }
+
+        function saveAssignmentToLocal(assignment) {
+            const assignments = getLocalAssignments();
+            const existingIndex = assignments.findIndex(a => a.id === assignment.id);
+            
+            if (existingIndex >= 0) {
+                assignments[existingIndex] = assignment;
+            } else {
+                assignments.push(assignment);
+            }
+            
+            localStorage.setItem('medicalTestAssignments', JSON.stringify(assignments));
+        }
+
+        function getLocalTestResults() {
+            const results = localStorage.getItem('medicalTestResults');
+            return results ? JSON.parse(results) : [];
+        }
+
+        function saveTestResultToLocal(result) {
+            const results = getLocalTestResults();
+            results.push(result);
+            localStorage.setItem('medicalTestResults', JSON.stringify(results));
+        }
+
+        function getLocalSettings() {
+            const settings = localStorage.getItem('medicalTestSettings');
+            return settings ? JSON.parse(settings) : getDefaultSettings();
+        }
+
+        function saveSettingsToLocal(settings) {
+            localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
+        }
+
+        function getDefaultSettings() {
+            return {
+                totalTime: 30,
+                defaultQuestionTime: 60
+            };
         }
 
         // Инициализация приложения
@@ -1617,9 +1606,6 @@
                 
                 if (totalTime <= 0) {
                     clearInterval(timerInterval);
-                    if (questionTimerInterval) {
-                        clearInterval(questionTimerInterval);
-                    }
                     timeExpired();
                 }
             }, 1000);
@@ -1652,14 +1638,9 @@
                 
                 if (questionTime <= 0) {
                     clearInterval(questionTimerInterval);
-                    // Автоматически сохранить пустой ответ и перейти к следующему вопросу
-                    saveAnswer(currentQuestionIndex, null);
+                    // Автоматически перейти к следующему вопросу
                     if (currentQuestionIndex < currentQuestionSet.questions.length - 1) {
                         nextQuestion();
-                    } else {
-                        // Если это последний вопрос, показать кнопку завершения
-                        document.getElementById('next-question').style.display = 'none';
-                        document.getElementById('submit-test').style.display = 'block';
                     }
                 }
             }, 1000);
@@ -1668,9 +1649,7 @@
         function timeExpired() {
             // Остановить все таймеры
             clearInterval(timerInterval);
-            if (questionTimerInterval) {
-                clearInterval(questionTimerInterval);
-            }
+            clearInterval(questionTimerInterval);
             
             // Показать сообщение о завершении времени
             const testSection = document.getElementById('test-section');
@@ -1688,9 +1667,7 @@
         async function submitTest() {
             // Остановить таймеры
             clearInterval(timerInterval);
-            if (questionTimerInterval) {
-                clearInterval(questionTimerInterval);
-            }
+            clearInterval(questionTimerInterval);
             
             // Рассчитать результаты
             await calculateResults();
@@ -1822,9 +1799,7 @@
             
             // Остановить таймеры
             clearInterval(timerInterval);
-            if (questionTimerInterval) {
-                clearInterval(questionTimerInterval);
-            }
+            clearInterval(questionTimerInterval);
         }
 
         function restartTest() {
@@ -2571,6 +2546,19 @@
             // Добавить активный класс к выбранной вкладке
             document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
         }
+
+        // Глобальные переменные
+        let currentUser = null;
+        let currentQuestionSet = null;
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let totalTime = 0;
+        let timerInterval = null;
+        let questionTime = 0;
+        let questionStartTime = 0;
+        let questionTimerInterval = null;
+        let currentEditingQuestionSet = null;
+        let currentEditingQuestionIndex = -1;
     </script>
 </body>
 </html>
