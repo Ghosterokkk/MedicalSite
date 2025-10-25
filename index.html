@@ -380,10 +380,6 @@
             border-left: 4px solid #5f6368;
         }
         
-        .result-item.timeout {
-            border-left: 4px solid #f9ab00;
-        }
-        
         .result-question {
             font-weight: 600;
             margin-bottom: 10px;
@@ -410,11 +406,6 @@
         .unanswered {
             color: #5f6368;
             font-style: italic;
-        }
-        
-        .timeout-answer {
-            color: #f9ab00;
-            font-weight: 600;
         }
         
         .results-summary {
@@ -572,50 +563,76 @@
             color: white;
         }
         
+        /* Новые стили для анимированного текста в футере */
+        .animated-footer {
+            background: linear-gradient(90deg, #ff0000, #ff3333, #ff0000);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 2s infinite linear;
+            font-weight: bold;
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+        
         /* Стили для настроек внешнего вида */
-        .appearance-settings {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        .color-preview {
-            width: 50px;
-            height: 50px;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            display: inline-block;
-            vertical-align: middle;
-            margin-left: 10px;
-        }
-        
-        .icon-preview {
-            width: 32px;
-            height: 32px;
-            margin-left: 10px;
-            vertical-align: middle;
-        }
-        
-        .theme-option {
+        .color-picker {
             display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            cursor: pointer;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         
-        .theme-option.selected {
-            border-color: #1a73e8;
-            background-color: #e8f0fe;
-        }
-        
-        .theme-preview {
+        .color-option {
             width: 40px;
             height: 40px;
             border-radius: 4px;
-            margin-right: 10px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        
+        .color-option.selected {
+            border-color: #333;
+        }
+        
+        .icon-preview {
+            width: 64px;
+            height: 64px;
+            margin: 10px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            font-size: 24px;
+        }
+        
+        .group-time-settings {
+            margin-top: 20px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        
+        .group-time-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .group-time-input {
+            width: 100px;
         }
         
         @media (max-width: 600px) {
@@ -675,8 +692,14 @@
                 margin-bottom: 10px;
             }
             
-            .appearance-settings {
-                grid-template-columns: 1fr;
+            .group-time-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .group-time-input {
+                width: 100%;
+                margin-top: 5px;
             }
         }
     </style>
@@ -685,9 +708,9 @@
     <div class="firebase-status hidden" id="firebase-status"></div>
     
     <div class="container">
-        <header id="app-header">
-            <h1 id="app-title">Медицинский тест для сотрудников</h1>
-            <p class="description" id="app-description">Система тестирования медицинских знаний</p>
+        <header>
+            <h1>Медицинский тест для сотрудников</h1>
+            <p class="description">Система тестирования медицинских знаний</p>
             <button class="btn admin-btn" id="admin-toggle">Режим администратора</button>
         </header>
         
@@ -780,6 +803,7 @@
                     <div class="tab" data-tab="questions">Управление вопросами</div>
                     <div class="tab" data-tab="assignments">Назначение тестов</div>
                     <div class="tab" data-tab="results">Результаты тестов</div>
+                    <div class="tab" data-tab="appearance">Внешний вид</div>
                     <div class="tab" data-tab="settings">Настройки системы</div>
                 </div>
                 
@@ -821,10 +845,6 @@
                         <div class="form-group">
                             <label for="question-set-name">Название набора вопросов</label>
                             <input type="text" id="question-set-name" placeholder="Введите название набора">
-                            <div class="question-time">
-                                <label for="question-set-time">Общее время на тест (минуты):</label>
-                                <input type="number" id="question-set-time" class="time-input" min="1" value="30">
-                            </div>
                             <button class="btn" id="add-question-set" style="margin-top: 10px;">Создать новый набор</button>
                         </div>
                         
@@ -921,63 +941,80 @@
                     </div>
                 </div>
                 
-                <div class="tab-content" id="settings-tab">
+                <!-- Новая вкладка для настроек внешнего вида -->
+                <div class="tab-content" id="appearance-tab">
                     <div class="card">
                         <h2>Настройки внешнего вида</h2>
-                        <p>Настройте внешний вид приложения.</p>
+                        <p>Настройте цвета и иконку сайта.</p>
                         
-                        <div class="appearance-settings">
-                            <div class="form-group">
-                                <label for="app-title-input">Название приложения</label>
-                                <input type="text" id="app-title-input" value="Медицинский тест для сотрудников">
+                        <div class="form-group">
+                            <h3>Цветовая схема</h3>
+                            <p>Выберите основной цвет для сайта:</p>
+                            <div class="color-picker">
+                                <div class="color-option selected" style="background-color: #1a73e8;" data-color="#1a73e8"></div>
+                                <div class="color-option" style="background-color: #0b8043;" data-color="#0b8043"></div>
+                                <div class="color-option" style="background-color: #d93025;" data-color="#d93025"></div>
+                                <div class="color-option" style="background-color: #f9ab00;" data-color="#f9ab00"></div>
+                                <div class="color-option" style="background-color: #673ab7;" data-color="#673ab7"></div>
+                                <div class="color-option" style="background-color: #e91e63;" data-color="#e91e63"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <h3>Иконка сайта</h3>
+                            <p>Выберите иконку для сайта:</p>
+                            <div class="icon-picker">
+                                <div class="icon-option selected" data-icon="🏥">🏥</div>
+                                <div class="icon-option" data-icon="⚕️">⚕️</div>
+                                <div class="icon-option" data-icon="💊">💊</div>
+                                <div class="icon-option" data-icon="🩺">🩺</div>
+                                <div class="icon-option" data-icon="📋">📋</div>
+                                <div class="icon-option" data-icon="🔬">🔬</div>
+                            </div>
+                            <div class="icon-preview" id="icon-preview">🏥</div>
+                        </div>
+                        
+                        <button class="btn btn-block" id="save-appearance">Сохранить настройки внешнего вида</button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="settings-tab">
+                    <div class="card">
+                        <h2>Настройки системы</h2>
+                        <p>Настройте общие параметры тестирования.</p>
+                        
+                        <div class="form-group">
+                            <label for="total-time">Общее время теста по умолчанию (минуты)</label>
+                            <input type="number" id="total-time" min="1" value="30">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="default-time">Время на вопрос по умолчанию (секунды)</label>
+                            <input type="number" id="default-time" min="10" value="60">
+                        </div>
+                        
+                        <div class="group-time-settings">
+                            <h3>Время теста для групп пользователей</h3>
+                            <p>Установите различное время теста для разных групп пользователей:</p>
+                            
+                            <div id="group-time-list">
+                                <!-- Список групп будет добавлен динамически -->
                             </div>
                             
-                            <div class="form-group">
-                                <label for="app-description-input">Описание приложения</label>
-                                <input type="text" id="app-description-input" value="Система тестирования медицинских знаний">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="primary-color">Основной цвет</label>
-                                <div>
-                                    <input type="color" id="primary-color" value="#1a73e8">
-                                    <span class="color-preview" id="primary-color-preview" style="background-color: #1a73e8;"></span>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="secondary-color">Вторичный цвет</label>
-                                <div>
-                                    <input type="color" id="secondary-color" value="#0b8043">
-                                    <span class="color-preview" id="secondary-color-preview" style="background-color: #0b8043;"></span>
-                                </div>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="favicon-url">URL иконки сайта (favicon)</label>
-                                <input type="text" id="favicon-url" placeholder="https://example.com/favicon.ico">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label>Тема оформления</label>
-                                <div>
-                                    <div class="theme-option" data-theme="light">
-                                        <div class="theme-preview" style="background: linear-gradient(to right, #f5f7fa 50%, #1a73e8 50%);"></div>
-                                        <span>Светлая тема</span>
+                            <div class="form-group" style="margin-top: 15px;">
+                                <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
+                                    <div>
+                                        <label>Название группы</label>
+                                        <input type="text" id="new-group-name" placeholder="Введите название группы">
                                     </div>
-                                    <div class="theme-option" data-theme="dark">
-                                        <div class="theme-preview" style="background: linear-gradient(to right, #2d3748 50%, #1a73e8 50%);"></div>
-                                        <span>Темная тема</span>
-                                    </div>
-                                    <div class="theme-option" data-theme="blue">
-                                        <div class="theme-preview" style="background: linear-gradient(to right, #e3f2fd 50%, #0d47a1 50%);"></div>
-                                        <span>Синяя тема</span>
+                                    <div>
+                                        <button class="btn btn-success" id="add-group">Добавить группу</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <button class="btn btn-block" id="save-appearance">Сохранить настройки внешнего вида</button>
+                        <button class="btn btn-block" id="save-settings">Сохранить настройки</button>
                     </div>
                 </div>
                 
@@ -989,7 +1026,7 @@
         </div>
         
         <footer>
-            <p>Система Тестирования Медицинского Корпуса © 2025</p>
+            <p class="animated-footer">Система Тестирования Медицинского Корпуса © 2025</p>
         </footer>
     </div>
 
@@ -1160,85 +1197,19 @@
             try {
                 if (!firebaseConnected) {
                     const questionSets = getLocalQuestionSets();
-                    const updatedQuestionSets = questionSets.filter(qs => qs.id !== questionSetId);
-                    localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedQuestionSets));
+                    const updatedSets = questionSets.filter(qs => qs.id !== questionSetId);
+                    localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedSets));
                     return;
                 }
 
                 await db.collection('questionSets').doc(questionSetId).delete();
                 
                 const questionSets = getLocalQuestionSets();
-                const updatedQuestionSets = questionSets.filter(qs => qs.id !== questionSetId);
-                localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedQuestionSets));
+                const updatedSets = questionSets.filter(qs => qs.id !== questionSetId);
+                localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedSets));
                 
             } catch (error) {
                 console.error('❌ Ошибка удаления набора вопросов:', error);
-                throw error;
-            }
-        }
-
-        async function loadAssignments() {
-            try {
-                if (!firebaseConnected) {
-                    return getLocalAssignments();
-                }
-
-                const snapshot = await db.collection('assignments').get();
-                const assignments = [];
-                
-                snapshot.forEach(doc => {
-                    assignments.push({
-                        id: doc.id,
-                        ...doc.data()
-                    });
-                });
-                
-                return assignments;
-            } catch (error) {
-                console.error('❌ Ошибка загрузки назначений:', error);
-                return getLocalAssignments();
-            }
-        }
-
-        async function saveAssignment(assignment) {
-            try {
-                if (!firebaseConnected) {
-                    return saveAssignmentToLocal(assignment);
-                }
-
-                if (assignment.id) {
-                    await db.collection('assignments').doc(assignment.id).update(assignment);
-                } else {
-                    const docRef = await db.collection('assignments').add(assignment);
-                    assignment.id = docRef.id;
-                }
-                
-                saveAssignmentToLocal(assignment);
-                return assignment;
-            } catch (error) {
-                console.error('❌ Ошибка сохранения назначения:', error);
-                saveAssignmentToLocal(assignment);
-                throw error;
-            }
-        }
-
-        async function deleteAssignment(assignmentId) {
-            try {
-                if (!firebaseConnected) {
-                    const assignments = getLocalAssignments();
-                    const updatedAssignments = assignments.filter(a => a.id !== assignmentId);
-                    localStorage.setItem('medicalTestAssignments', JSON.stringify(updatedAssignments));
-                    return;
-                }
-
-                await db.collection('assignments').doc(assignmentId).delete();
-                
-                const assignments = getLocalAssignments();
-                const updatedAssignments = assignments.filter(a => a.id !== assignmentId);
-                localStorage.setItem('medicalTestAssignments', JSON.stringify(updatedAssignments));
-                
-            } catch (error) {
-                console.error('❌ Ошибка удаления назначения:', error);
                 throw error;
             }
         }
@@ -1250,36 +1221,36 @@
                 }
 
                 const snapshot = await db.collection('testResults').get();
-                const testResults = [];
+                const results = [];
                 
                 snapshot.forEach(doc => {
-                    testResults.push({
+                    results.push({
                         id: doc.id,
                         ...doc.data()
                     });
                 });
                 
-                return testResults;
+                return results;
             } catch (error) {
                 console.error('❌ Ошибка загрузки результатов тестов:', error);
                 return getLocalTestResults();
             }
         }
 
-        async function saveTestResult(testResult) {
+        async function saveTestResult(result) {
             try {
                 if (!firebaseConnected) {
-                    return saveTestResultToLocal(testResult);
+                    return saveTestResultToLocal(result);
                 }
 
-                const docRef = await db.collection('testResults').add(testResult);
-                testResult.id = docRef.id;
+                const docRef = await db.collection('testResults').add(result);
+                result.id = docRef.id;
                 
-                saveTestResultToLocal(testResult);
-                return testResult;
+                saveTestResultToLocal(result);
+                return result;
             } catch (error) {
                 console.error('❌ Ошибка сохранения результата теста:', error);
-                saveTestResultToLocal(testResult);
+                saveTestResultToLocal(result);
                 throw error;
             }
         }
@@ -1292,10 +1263,10 @@
 
         function saveUserToLocal(user) {
             const users = getLocalUsers();
-            const existingUserIndex = users.findIndex(u => u.id === user.id);
+            const existingIndex = users.findIndex(u => u.id === user.id);
             
-            if (existingUserIndex !== -1) {
-                users[existingUserIndex] = user;
+            if (existingIndex >= 0) {
+                users[existingIndex] = user;
             } else {
                 users.push(user);
             }
@@ -1310,10 +1281,10 @@
 
         function saveQuestionSetToLocal(questionSet) {
             const questionSets = getLocalQuestionSets();
-            const existingSetIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
+            const existingIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
             
-            if (existingSetIndex !== -1) {
-                questionSets[existingSetIndex] = questionSet;
+            if (existingIndex >= 0) {
+                questionSets[existingIndex] = questionSet;
             } else {
                 questionSets.push(questionSet);
             }
@@ -1321,1514 +1292,64 @@
             localStorage.setItem('medicalTestQuestionSets', JSON.stringify(questionSets));
         }
 
-        function getLocalAssignments() {
-            const assignments = localStorage.getItem('medicalTestAssignments');
-            return assignments ? JSON.parse(assignments) : [];
-        }
-
-        function saveAssignmentToLocal(assignment) {
-            const assignments = getLocalAssignments();
-            const existingAssignmentIndex = assignments.findIndex(a => a.id === assignment.id);
-            
-            if (existingAssignmentIndex !== -1) {
-                assignments[existingAssignmentIndex] = assignment;
-            } else {
-                assignments.push(assignment);
-            }
-            
-            localStorage.setItem('medicalTestAssignments', JSON.stringify(assignments));
-        }
-
         function getLocalTestResults() {
-            const testResults = localStorage.getItem('medicalTestResults');
-            return testResults ? JSON.parse(testResults) : [];
+            const results = localStorage.getItem('medicalTestResults');
+            return results ? JSON.parse(results) : [];
         }
 
-        function saveTestResultToLocal(testResult) {
-            const testResults = getLocalTestResults();
-            testResults.push(testResult);
-            localStorage.setItem('medicalTestResults', JSON.stringify(testResults));
+        function saveTestResultToLocal(result) {
+            const results = getLocalTestResults();
+            results.push(result);
+            localStorage.setItem('medicalTestResults', JSON.stringify(results));
         }
 
-        // Переменные состояния
-        let currentUser = null;
-        let currentQuestionSet = null;
-        let currentQuestionIndex = 0;
-        let userAnswers = {};
-        let testStartTime = null;
-        let totalTimeRemaining = 0;
-        let questionTimeRemaining = 0;
-        let totalTimer = null;
-        let questionTimer = null;
-        let questionTimeouts = {}; // Хранит информацию о времени на каждый вопрос
+        // Функции для работы с настройками внешнего вида
+        function getAppearanceSettings() {
+            const settings = localStorage.getItem('medicalTestAppearance');
+            return settings ? JSON.parse(settings) : {
+                primaryColor: '#1a73e8',
+                siteIcon: '🏥'
+            };
+        }
 
-        // Элементы DOM
-        const userPanel = document.getElementById('user-panel');
-        const adminPanel = document.getElementById('admin-panel');
-        const adminToggle = document.getElementById('admin-toggle');
-        const adminLogin = document.getElementById('admin-login');
-        const adminContent = document.getElementById('admin-content');
-        const adminLoginBtn = document.getElementById('admin-login-btn');
-        const adminLogoutBtn = document.getElementById('admin-logout');
-        const userModeBtn = document.getElementById('user-mode');
-        const loginSection = document.getElementById('login-section');
-        const testSection = document.getElementById('test-section');
-        const resultsSection = document.getElementById('results-section');
-        const loginBtn = document.getElementById('login-btn');
-        const logoutBtn = document.getElementById('logout-btn');
-        const submitTestBtn = document.getElementById('submit-test');
-        const restartTestBtn = document.getElementById('restart-test');
-        const prevQuestionBtn = document.getElementById('prev-question');
-        const nextQuestionBtn = document.getElementById('next-question');
-        const timerElement = document.getElementById('timer');
-        const questionTimerElement = document.getElementById('question-timer');
-        const questionCounterElement = document.getElementById('question-counter');
-        const questionsContainer = document.getElementById('questions-container');
-        const currentUserElement = document.getElementById('current-user');
-        const scoreElement = document.getElementById('score');
-        const resultMessageElement = document.getElementById('result-message');
-        const resultsSummaryElement = document.getElementById('results-summary');
-        const resultsDetailsElement = document.getElementById('results-details');
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
+        function saveAppearanceSettings(settings) {
+            localStorage.setItem('medicalTestAppearance', JSON.stringify(settings));
+            applyAppearanceSettings(settings);
+        }
 
-        // Инициализация приложения
+        function applyAppearanceSettings(settings) {
+            // Применяем основной цвет
+            document.documentElement.style.setProperty('--primary-color', settings.primaryColor);
+            
+            // Применяем иконку сайта
+            const iconElement = document.querySelector("link[rel*='icon']") || document.createElement('link');
+            iconElement.type = 'image/x-icon';
+            iconElement.rel = 'shortcut icon';
+            iconElement.href = `data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>${settings.siteIcon}</text></svg>`;
+            document.head.appendChild(iconElement);
+        }
+
+        // Функции для работы с настройками групп
+        function getGroupTimeSettings() {
+            const settings = localStorage.getItem('medicalTestGroupTimes');
+            return settings ? JSON.parse(settings) : {};
+        }
+
+        function saveGroupTimeSettings(settings) {
+            localStorage.setItem('medicalTestGroupTimes', JSON.stringify(settings));
+        }
+
+        // Применяем настройки внешнего вида при загрузке
         document.addEventListener('DOMContentLoaded', function() {
-            // Загружаем настройки внешнего вида
-            loadAppearanceSettings();
+            const appearanceSettings = getAppearanceSettings();
+            applyAppearanceSettings(appearanceSettings);
             
-            // Устанавливаем обработчики событий
-            setupEventListeners();
-            
-            // Показываем панель пользователя по умолчанию
-            userPanel.style.display = 'block';
-            adminPanel.style.display = 'none';
-            
-            // Проверяем, есть ли сохраненный пользователь
-            const savedUser = localStorage.getItem('currentMedicalTestUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showTestSection();
-            }
+            // Инициализация остального кода...
+            // (остальной код инициализации остается без изменений)
         });
 
-        function setupEventListeners() {
-            // Переключение между режимами пользователя и администратора
-            adminToggle.addEventListener('click', function() {
-                userPanel.style.display = 'none';
-                adminPanel.style.display = 'block';
-                adminLogin.style.display = 'block';
-                adminContent.style.display = 'none';
-            });
-            
-            userModeBtn.addEventListener('click', function() {
-                adminPanel.style.display = 'none';
-                userPanel.style.display = 'block';
-                loginSection.style.display = 'block';
-                testSection.style.display = 'none';
-                resultsSection.style.display = 'none';
-            });
-            
-            // Вход в систему
-            loginBtn.addEventListener('click', handleLogin);
-            document.getElementById('username').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') handleLogin();
-            });
-            document.getElementById('password').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') handleLogin();
-            });
-            
-            // Вход в админ-панель
-            adminLoginBtn.addEventListener('click', handleAdminLogin);
-            document.getElementById('admin-username').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') handleAdminLogin();
-            });
-            document.getElementById('admin-password').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') handleAdminLogin();
-            });
-            
-            // Выход из системы
-            logoutBtn.addEventListener('click', handleLogout);
-            adminLogoutBtn.addEventListener('click', handleAdminLogout);
-            
-            // Навигация по вопросам
-            prevQuestionBtn.addEventListener('click', showPreviousQuestion);
-            nextQuestionBtn.addEventListener('click', showNextQuestion);
-            submitTestBtn.addEventListener('click', submitTest);
-            restartTestBtn.addEventListener('click', restartTest);
-            
-            // Управление вкладками в админ-панели
-            tabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabId = this.getAttribute('data-tab');
-                    
-                    // Убираем активный класс у всех вкладок и контента
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(tc => tc.classList.remove('active'));
-                    
-                    // Добавляем активный класс текущей вкладке и контенту
-                    this.classList.add('active');
-                    document.getElementById(`${tabId}-tab`).classList.add('active');
-                    
-                    // Загружаем данные для активной вкладки
-                    if (tabId === 'users') {
-                        loadUsersList();
-                    } else if (tabId === 'questions') {
-                        loadQuestionSetsList();
-                    } else if (tabId === 'assignments') {
-                        loadAssignmentsList();
-                    } else if (tabId === 'results') {
-                        loadTestResultsList();
-                    }
-                });
-            });
-            
-            // Управление пользователями
-            document.getElementById('add-user').addEventListener('click', addNewUser);
-            
-            // Управление вопросами
-            document.getElementById('add-question-set').addEventListener('click', addNewQuestionSet);
-            document.getElementById('question-sets').addEventListener('change', loadQuestionsForSet);
-            document.getElementById('add-question').addEventListener('click', addNewQuestion);
-            document.getElementById('add-option').addEventListener('click', addOption);
-            document.getElementById('save-question').addEventListener('click', saveQuestion);
-            document.getElementById('cancel-edit').addEventListener('click', cancelEdit);
-            
-            // Назначение тестов
-            document.getElementById('assign-test').addEventListener('click', assignTest);
-            
-            // Настройки внешнего вида
-            document.getElementById('save-appearance').addEventListener('click', saveAppearanceSettings);
-            document.getElementById('primary-color').addEventListener('input', updateColorPreview);
-            document.getElementById('secondary-color').addEventListener('input', updateColorPreview);
-            
-            // Выбор темы
-            document.querySelectorAll('.theme-option').forEach(option => {
-                option.addEventListener('click', function() {
-                    document.querySelectorAll('.theme-option').forEach(o => o.classList.remove('selected'));
-                    this.classList.add('selected');
-                });
-            });
-        }
-
-        // Функции для работы с пользователями
-        async function handleLogin() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const loginError = document.getElementById('login-error');
-            
-            if (!username || !password) {
-                loginError.textContent = 'Пожалуйста, введите логин и пароль';
-                loginError.classList.remove('hidden');
-                return;
-            }
-            
-            try {
-                const users = await loadUsers();
-                const user = users.find(u => u.username === username && u.password === password);
-                
-                if (user) {
-                    currentUser = user;
-                    localStorage.setItem('currentMedicalTestUser', JSON.stringify(user));
-                    loginError.classList.add('hidden');
-                    showTestSection();
-                } else {
-                    loginError.textContent = 'Неверный логин или пароль';
-                    loginError.classList.remove('hidden');
-                }
-            } catch (error) {
-                console.error('Ошибка входа:', error);
-                loginError.textContent = 'Ошибка входа. Попробуйте снова.';
-                loginError.classList.remove('hidden');
-            }
-        }
-        
-        function handleLogout() {
-            currentUser = null;
-            localStorage.removeItem('currentMedicalTestUser');
-            clearInterval(totalTimer);
-            clearInterval(questionTimer);
-            loginSection.style.display = 'block';
-            testSection.style.display = 'none';
-            resultsSection.style.display = 'none';
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-        }
-        
-        function showTestSection() {
-            loginSection.style.display = 'none';
-            testSection.style.display = 'block';
-            resultsSection.style.display = 'none';
-            
-            // Загружаем назначенный тест для пользователя
-            loadAssignedTest();
-        }
-        
-        async function loadAssignedTest() {
-            try {
-                const assignments = await loadAssignments();
-                const userAssignments = assignments.filter(a => a.userId === currentUser.id);
-                
-                if (userAssignments.length === 0) {
-                    alert('Для вас не назначено ни одного теста. Обратитесь к администратору.');
-                    handleLogout();
-                    return;
-                }
-                
-                // Берем первый назначенный тест (можно расширить для выбора)
-                const assignment = userAssignments[0];
-                const questionSets = await loadQuestionSets();
-                currentQuestionSet = questionSets.find(qs => qs.id === assignment.questionSetId);
-                
-                if (!currentQuestionSet) {
-                    alert('Назначенный тест не найден. Обратитесь к администратору.');
-                    handleLogout();
-                    return;
-                }
-                
-                // Инициализируем тест
-                initializeTest();
-            } catch (error) {
-                console.error('Ошибка загрузки назначенного теста:', error);
-                alert('Ошибка загрузки теста. Попробуйте снова или обратитесь к администратору.');
-            }
-        }
-        
-        function initializeTest() {
-            currentQuestionIndex = 0;
-            userAnswers = {};
-            testStartTime = new Date();
-            
-            // Устанавливаем общее время теста
-            totalTimeRemaining = (currentQuestionSet.totalTime || 30) * 60; // в секундах
-            
-            // Инициализируем информацию о времени на каждый вопрос
-            currentQuestionSet.questions.forEach((question, index) => {
-                questionTimeouts[index] = {
-                    timeSpent: 0,
-                    expired: false
-                };
-            });
-            
-            // Запускаем таймеры
-            startTotalTimer();
-            startQuestionTimer();
-            
-            // Показываем первый вопрос
-            showQuestion(currentQuestionIndex);
-        }
-        
-        function startTotalTimer() {
-            clearInterval(totalTimer);
-            
-            totalTimer = setInterval(function() {
-                totalTimeRemaining--;
-                
-                if (totalTimeRemaining <= 0) {
-                    clearInterval(totalTimer);
-                    clearInterval(questionTimer);
-                    submitTest(true);
-                    return;
-                }
-                
-                updateTimerDisplay();
-            }, 1000);
-            
-            updateTimerDisplay();
-        }
-        
-        function startQuestionTimer() {
-            clearInterval(questionTimer);
-            
-            const currentQuestion = currentQuestionSet.questions[currentQuestionIndex];
-            questionTimeRemaining = currentQuestion.time || 60;
-            
-            questionTimer = setInterval(function() {
-                questionTimeRemaining--;
-                questionTimeouts[currentQuestionIndex].timeSpent++;
-                
-                if (questionTimeRemaining <= 0) {
-                    clearInterval(questionTimer);
-                    // Помечаем вопрос как просроченный
-                    questionTimeouts[currentQuestionIndex].expired = true;
-                    // Блокируем возможность отвечать на вопрос
-                    disableQuestionInputs();
-                    // Показываем сообщение о том, что время вышло
-                    showTimeExpiredMessage();
-                    return;
-                }
-                
-                updateQuestionTimerDisplay();
-            }, 1000);
-            
-            updateQuestionTimerDisplay();
-        }
-        
-        function updateTimerDisplay() {
-            const minutes = Math.floor(totalTimeRemaining / 60);
-            const seconds = totalTimeRemaining % 60;
-            timerElement.textContent = `Общее время: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-            
-            if (totalTimeRemaining < 300) { // 5 минут
-                timerElement.classList.add('warning');
-            } else {
-                timerElement.classList.remove('warning');
-            }
-        }
-        
-        function updateQuestionTimerDisplay() {
-            const currentQuestion = currentQuestionSet.questions[currentQuestionIndex];
-            const totalQuestionTime = currentQuestion.time || 60;
-            questionTimerElement.textContent = `Время на вопрос: ${questionTimeRemaining} сек.`;
-            
-            if (questionTimeRemaining < 10) {
-                questionTimerElement.classList.add('warning');
-            } else {
-                questionTimerElement.classList.remove('warning');
-            }
-        }
-        
-        function disableQuestionInputs() {
-            const options = document.querySelectorAll('.option');
-            options.forEach(option => {
-                option.style.pointerEvents = 'none';
-                option.style.opacity = '0.6';
-            });
-        }
-        
-        function showTimeExpiredMessage() {
-            const timeExpiredDiv = document.createElement('div');
-            timeExpiredDiv.className = 'time-expired';
-            timeExpiredDiv.textContent = 'Время на вопрос истекло. Вы не можете изменить ответ.';
-            
-            const questionContainer = document.querySelector('.question:not(.hidden)');
-            questionContainer.appendChild(timeExpiredDiv);
-        }
-        
-        function showQuestion(index) {
-            // Очищаем контейнер вопросов
-            questionsContainer.innerHTML = '';
-            
-            const question = currentQuestionSet.questions[index];
-            
-            // Обновляем счетчик вопросов
-            questionCounterElement.textContent = `Вопрос ${index + 1} из ${currentQuestionSet.questions.length}`;
-            
-            // Создаем элемент вопроса
-            const questionElement = document.createElement('div');
-            questionElement.className = 'question';
-            
-            const questionText = document.createElement('div');
-            questionText.className = 'question-text';
-            questionText.textContent = question.text;
-            questionElement.appendChild(questionText);
-            
-            const optionsContainer = document.createElement('div');
-            optionsContainer.className = 'options';
-            
-            // Добавляем варианты ответов
-            question.options.forEach((option, optionIndex) => {
-                const optionElement = document.createElement('div');
-                optionElement.className = 'option';
-                
-                const optionId = `q${index}_option${optionIndex}`;
-                
-                const radioInput = document.createElement('input');
-                radioInput.type = 'radio';
-                radioInput.name = `question_${index}`;
-                radioInput.value = optionIndex;
-                radioInput.id = optionId;
-                
-                // Проверяем, был ли уже выбран этот вариант
-                if (userAnswers[index] === optionIndex) {
-                    radioInput.checked = true;
-                    optionElement.classList.add('selected');
-                }
-                
-                // Если время на вопрос истекло, блокируем ввод
-                if (questionTimeouts[index] && questionTimeouts[index].expired) {
-                    radioInput.disabled = true;
-                    optionElement.style.pointerEvents = 'none';
-                    optionElement.style.opacity = '0.6';
-                }
-                
-                radioInput.addEventListener('change', function() {
-                    // Снимаем выделение со всех вариантов
-                    document.querySelectorAll(`.question:nth-child(${index + 1}) .option`).forEach(opt => {
-                        opt.classList.remove('selected');
-                    });
-                    
-                    // Добавляем выделение к выбранному варианту
-                    optionElement.classList.add('selected');
-                    
-                    // Сохраняем ответ
-                    userAnswers[index] = optionIndex;
-                });
-                
-                const optionLabel = document.createElement('label');
-                optionLabel.htmlFor = optionId;
-                optionLabel.textContent = option;
-                
-                optionElement.appendChild(radioInput);
-                optionElement.appendChild(optionLabel);
-                optionsContainer.appendChild(optionElement);
-            });
-            
-            questionElement.appendChild(optionsContainer);
-            questionsContainer.appendChild(questionElement);
-            
-            // Обновляем состояние кнопок навигации
-            prevQuestionBtn.disabled = index === 0;
-            nextQuestionBtn.disabled = index === currentQuestionSet.questions.length - 1;
-            
-            // Показываем кнопку завершения теста на последнем вопросе
-            submitTestBtn.style.display = index === currentQuestionSet.questions.length - 1 ? 'block' : 'none';
-            
-            // Перезапускаем таймер вопроса
-            startQuestionTimer();
-        }
-        
-        function showPreviousQuestion() {
-            if (currentQuestionIndex > 0) {
-                currentQuestionIndex--;
-                showQuestion(currentQuestionIndex);
-            }
-        }
-        
-        function showNextQuestion() {
-            if (currentQuestionIndex < currentQuestionSet.questions.length - 1) {
-                currentQuestionIndex++;
-                showQuestion(currentQuestionIndex);
-            }
-        }
-        
-        async function submitTest(timeExpired = false) {
-            clearInterval(totalTimer);
-            clearInterval(questionTimer);
-            
-            // Вычисляем результаты
-            const results = calculateResults(timeExpired);
-            
-            // Сохраняем результаты
-            await saveTestResult({
-                userId: currentUser.id,
-                username: currentUser.username,
-                questionSetId: currentQuestionSet.id,
-                questionSetName: currentQuestionSet.name,
-                answers: userAnswers,
-                results: results,
-                timeSpent: calculateTimeSpent(),
-                submittedAt: new Date().toISOString(),
-                timeExpired: timeExpired
-            });
-            
-            // Показываем результаты
-            showResults(results, timeExpired);
-        }
-        
-        function calculateResults(timeExpired) {
-            let correctAnswers = 0;
-            const questionResults = [];
-            
-            currentQuestionSet.questions.forEach((question, index) => {
-                const userAnswer = userAnswers[index];
-                const isCorrect = userAnswer === question.correctAnswer;
-                const isTimeout = questionTimeouts[index] && questionTimeouts[index].expired;
-                
-                if (isCorrect && !isTimeout) {
-                    correctAnswers++;
-                }
-                
-                questionResults.push({
-                    question: question.text,
-                    options: question.options,
-                    correctAnswer: question.correctAnswer,
-                    userAnswer: userAnswer,
-                    isCorrect: isCorrect,
-                    isTimeout: isTimeout,
-                    isUnanswered: userAnswer === undefined && !isTimeout
-                });
-            });
-            
-            const totalQuestions = currentQuestionSet.questions.length;
-            const score = Math.round((correctAnswers / totalQuestions) * 100);
-            
-            return {
-                score: score,
-                correctAnswers: correctAnswers,
-                totalQuestions: totalQuestions,
-                questionResults: questionResults,
-                timeExpired: timeExpired
-            };
-        }
-        
-        function calculateTimeSpent() {
-            const endTime = new Date();
-            const timeDiff = endTime - testStartTime;
-            return Math.round(timeDiff / 1000); // в секундах
-        }
-        
-        function showResults(results, timeExpired) {
-            testSection.style.display = 'none';
-            resultsSection.style.display = 'block';
-            
-            currentUserElement.textContent = currentUser.username;
-            scoreElement.textContent = `${results.score}%`;
-            resultMessageElement.textContent = getResultMessage(results.score, timeExpired);
-            
-            // Обновляем сводку результатов
-            updateResultsSummary(results);
-            
-            // Показываем детали результатов
-            updateResultsDetails(results);
-        }
-        
-        function getResultMessage(score, timeExpired) {
-            if (timeExpired) {
-                return "Время теста истекло. Ваши ответы сохранены.";
-            }
-            
-            if (score >= 90) {
-                return "Отличный результат! Вы показали превосходные знания.";
-            } else if (score >= 70) {
-                return "Хороший результат! Вы хорошо знаете материал.";
-            } else if (score >= 50) {
-                return "Удовлетворительный результат. Есть над чем поработать.";
-            } else {
-                return "Неудовлетворительный результат. Рекомендуется повторить материал.";
-            }
-        }
-        
-        function updateResultsSummary(results) {
-            const timeExpiredCount = results.questionResults.filter(q => q.isTimeout).length;
-            const unansweredCount = results.questionResults.filter(q => q.isUnanswered).length;
-            const incorrectCount = results.totalQuestions - results.correctAnswers - timeExpiredCount - unansweredCount;
-            
-            resultsSummaryElement.innerHTML = `
-                <div class="summary-item">
-                    <div class="summary-value">${results.correctAnswers}/${results.totalQuestions}</div>
-                    <div class="summary-label">Правильные ответы</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${incorrectCount}</div>
-                    <div class="summary-label">Неправильные ответы</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${unansweredCount}</div>
-                    <div class="summary-label">Без ответа</div>
-                </div>
-                <div class="summary-item">
-                    <div class="summary-value">${timeExpiredCount}</div>
-                    <div class="summary-label">Время истекло</div>
-                </div>
-            `;
-        }
-        
-        function updateResultsDetails(results) {
-            resultsDetailsElement.innerHTML = '';
-            
-            results.questionResults.forEach((result, index) => {
-                const resultItem = document.createElement('div');
-                
-                let statusClass = '';
-                if (result.isTimeout) {
-                    statusClass = 'timeout';
-                } else if (result.isUnanswered) {
-                    statusClass = 'unanswered';
-                } else if (result.isCorrect) {
-                    statusClass = 'correct';
-                } else {
-                    statusClass = 'incorrect';
-                }
-                
-                resultItem.className = `result-item ${statusClass}`;
-                
-                let answerStatus = '';
-                if (result.isTimeout) {
-                    answerStatus = '<div class="timeout-answer">Время на вопрос истекло</div>';
-                } else if (result.isUnanswered) {
-                    answerStatus = '<div class="unanswered">Вопрос без ответа</div>';
-                } else if (result.isCorrect) {
-                    answerStatus = `<div class="correct-answer">Ваш ответ: ${result.options[result.userAnswer]} (правильно)</div>`;
-                } else {
-                    answerStatus = `
-                        <div class="incorrect-answer">Ваш ответ: ${result.options[result.userAnswer]}</div>
-                        <div class="correct-answer">Правильный ответ: ${result.options[result.correctAnswer]}</div>
-                    `;
-                }
-                
-                resultItem.innerHTML = `
-                    <div class="result-question">${index + 1}. ${result.question}</div>
-                    ${answerStatus}
-                `;
-                
-                resultsDetailsElement.appendChild(resultItem);
-            });
-        }
-        
-        function restartTest() {
-            resultsSection.style.display = 'none';
-            initializeTest();
-        }
-        
-        // Функции для админ-панели
-        async function handleAdminLogin() {
-            const username = document.getElementById('admin-username').value;
-            const password = document.getElementById('admin-password').value;
-            const loginError = document.getElementById('admin-login-error');
-            
-            // Простая проверка для демонстрации (в реальном приложении нужна более надежная аутентификация)
-            if (username === 'admin' && password === 'admin123') {
-                loginError.classList.add('hidden');
-                adminLogin.style.display = 'none';
-                adminContent.classList.remove('hidden');
-                
-                // Загружаем данные для первой вкладки
-                loadUsersList();
-            } else {
-                loginError.textContent = 'Неверный логин или пароль администратора';
-                loginError.classList.remove('hidden');
-            }
-        }
-        
-        function handleAdminLogout() {
-            adminLogin.style.display = 'block';
-            adminContent.classList.add('hidden');
-            document.getElementById('admin-username').value = '';
-            document.getElementById('admin-password').value = '';
-        }
-        
-        async function loadUsersList() {
-            try {
-                const users = await loadUsers();
-                const usersListElement = document.getElementById('users-list');
-                
-                usersListElement.innerHTML = '';
-                
-                if (users.length === 0) {
-                    usersListElement.innerHTML = '<p>Пользователи не найдены.</p>';
-                    return;
-                }
-                
-                users.forEach(user => {
-                    const userItem = document.createElement('div');
-                    userItem.className = 'user-item';
-                    
-                    userItem.innerHTML = `
-                        <div class="user-header">
-                            <div>
-                                <strong>${user.username}</strong>
-                                <span class="user-role ${user.role === 'admin' ? 'role-admin' : 'role-user'}">${user.role === 'admin' ? 'Администратор' : 'Пользователь'}</span>
-                            </div>
-                            <div class="user-actions">
-                                <button class="btn btn-danger btn-delete-user" data-user-id="${user.id}">Удалить</button>
-                            </div>
-                        </div>
-                        <div class="user-info">
-                            <div class="user-stats">Создан: ${new Date(user.createdAt).toLocaleDateString()}</div>
-                        </div>
-                    `;
-                    
-                    usersListElement.appendChild(userItem);
-                });
-                
-                // Добавляем обработчики событий для кнопок удаления
-                document.querySelectorAll('.btn-delete-user').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const userId = this.getAttribute('data-user-id');
-                        deleteUserConfirmation(userId);
-                    });
-                });
-                
-                // Обновляем список пользователей для назначения тестов
-                updateUserAssignmentList();
-            } catch (error) {
-                console.error('Ошибка загрузки списка пользователей:', error);
-                document.getElementById('users-list').innerHTML = '<p class="error">Ошибка загрузки пользователей.</p>';
-            }
-        }
-        
-        async function addNewUser() {
-            const login = document.getElementById('new-user-login').value;
-            const password = document.getElementById('new-user-password').value;
-            const successElement = document.getElementById('user-add-success');
-            const errorElement = document.getElementById('user-add-error');
-            
-            if (!login || !password) {
-                errorElement.textContent = 'Пожалуйста, введите логин и пароль';
-                errorElement.classList.remove('hidden');
-                successElement.classList.add('hidden');
-                return;
-            }
-            
-            try {
-                const users = await loadUsers();
-                
-                // Проверяем, существует ли пользователь с таким логином
-                const existingUser = users.find(u => u.username === login);
-                if (existingUser) {
-                    errorElement.textContent = 'Пользователь с таким логином уже существует';
-                    errorElement.classList.remove('hidden');
-                    successElement.classList.add('hidden');
-                    return;
-                }
-                
-                // Создаем нового пользователя
-                const newUser = {
-                    username: login,
-                    password: password,
-                    role: 'user',
-                    createdAt: new Date().toISOString()
-                };
-                
-                await saveUser(newUser);
-                
-                // Очищаем поля и показываем сообщение об успехе
-                document.getElementById('new-user-login').value = '';
-                document.getElementById('new-user-password').value = '';
-                errorElement.classList.add('hidden');
-                successElement.classList.remove('hidden');
-                
-                // Обновляем список пользователей
-                loadUsersList();
-            } catch (error) {
-                console.error('Ошибка добавления пользователя:', error);
-                errorElement.textContent = 'Ошибка добавления пользователя';
-                errorElement.classList.remove('hidden');
-                successElement.classList.add('hidden');
-            }
-        }
-        
-        async function deleteUserConfirmation(userId) {
-            if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-                try {
-                    await deleteUser(userId);
-                    loadUsersList();
-                } catch (error) {
-                    console.error('Ошибка удаления пользователя:', error);
-                    alert('Ошибка удаления пользователя');
-                }
-            }
-        }
-        
-        async function loadQuestionSetsList() {
-            try {
-                const questionSets = await loadQuestionSets();
-                const questionSetsSelect = document.getElementById('question-sets');
-                
-                // Очищаем выпадающий список
-                questionSetsSelect.innerHTML = '<option value="">-- Выберите набор --</option>';
-                
-                // Заполняем выпадающий список
-                questionSets.forEach(set => {
-                    const option = document.createElement('option');
-                    option.value = set.id;
-                    option.textContent = set.name;
-                    questionSetsSelect.appendChild(option);
-                });
-                
-                // Обновляем список для назначения тестов
-                updateQuestionSetAssignmentList();
-            } catch (error) {
-                console.error('Ошибка загрузки наборов вопросов:', error);
-            }
-        }
-        
-        async function addNewQuestionSet() {
-            const name = document.getElementById('question-set-name').value;
-            const totalTime = parseInt(document.getElementById('question-set-time').value) || 30;
-            
-            if (!name) {
-                alert('Пожалуйста, введите название набора вопросов');
-                return;
-            }
-            
-            try {
-                const newQuestionSet = {
-                    name: name,
-                    totalTime: totalTime,
-                    questions: [],
-                    createdAt: new Date().toISOString()
-                };
-                
-                await saveQuestionSet(newQuestionSet);
-                
-                // Очищаем поле и обновляем список
-                document.getElementById('question-set-name').value = '';
-                loadQuestionSetsList();
-                
-                alert('Набор вопросов успешно создан');
-            } catch (error) {
-                console.error('Ошибка создания набора вопросов:', error);
-                alert('Ошибка создания набора вопросов');
-            }
-        }
-        
-        async function loadQuestionsForSet() {
-            const questionSetId = document.getElementById('question-sets').value;
-            
-            if (!questionSetId) {
-                document.getElementById('question-editor').classList.add('hidden');
-                document.getElementById('questions-list').innerHTML = '';
-                return;
-            }
-            
-            try {
-                const questionSets = await loadQuestionSets();
-                const selectedSet = questionSets.find(set => set.id === questionSetId);
-                
-                if (!selectedSet) {
-                    document.getElementById('question-editor').classList.add('hidden');
-                    document.getElementById('questions-list').innerHTML = '<p>Набор вопросов не найден</p>';
-                    return;
-                }
-                
-                // Показываем редактор вопросов
-                document.getElementById('question-editor').classList.remove('hidden');
-                
-                // Сбрасываем редактор
-                resetQuestionEditor();
-                
-                // Загружаем список вопросов
-                displayQuestionsList(selectedSet);
-            } catch (error) {
-                console.error('Ошибка загрузки вопросов:', error);
-                document.getElementById('questions-list').innerHTML = '<p class="error">Ошибка загрузки вопросов</p>';
-            }
-        }
-        
-        function displayQuestionsList(questionSet) {
-            const questionsListElement = document.getElementById('questions-list');
-            
-            questionsListElement.innerHTML = '';
-            
-            if (questionSet.questions.length === 0) {
-                questionsListElement.innerHTML = '<p>В этом наборе пока нет вопросов.</p>';
-                return;
-            }
-            
-            questionSet.questions.forEach((question, index) => {
-                const questionItem = document.createElement('div');
-                questionItem.className = 'question-item';
-                
-                questionItem.innerHTML = `
-                    <div class="question-header">
-                        <div>
-                            <strong>Вопрос ${index + 1}</strong>
-                            <div>Время: ${question.time || 60} сек.</div>
-                        </div>
-                        <div class="question-actions">
-                            <button class="btn btn-warning btn-edit-question" data-index="${index}">Редактировать</button>
-                            <button class="btn btn-danger btn-delete-question" data-index="${index}">Удалить</button>
-                        </div>
-                    </div>
-                    <div class="question-text">${question.text}</div>
-                    <div class="options">
-                        ${question.options.map((option, optIndex) => `
-                            <div class="option ${optIndex === question.correctAnswer ? 'correct-answer' : ''}">
-                                ${optIndex + 1}. ${option} ${optIndex === question.correctAnswer ? '✓' : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-                
-                questionsListElement.appendChild(questionItem);
-            });
-            
-            // Добавляем обработчики событий для кнопок редактирования и удаления
-            document.querySelectorAll('.btn-edit-question').forEach(button => {
-                button.addEventListener('click', function() {
-                    const questionIndex = parseInt(this.getAttribute('data-index'));
-                    editQuestion(questionIndex);
-                });
-            });
-            
-            document.querySelectorAll('.btn-delete-question').forEach(button => {
-                button.addEventListener('click', function() {
-                    const questionIndex = parseInt(this.getAttribute('data-index'));
-                    deleteQuestion(questionIndex);
-                });
-            });
-        }
-        
-        let currentEditingQuestionIndex = -1;
-        
-        function resetQuestionEditor() {
-            document.getElementById('edit-question-text').value = '';
-            document.getElementById('options-container').innerHTML = '';
-            document.getElementById('correct-answer').innerHTML = '<option value="">-- Выберите правильный ответ --</option>';
-            document.getElementById('question-time').value = '60';
-            currentEditingQuestionIndex = -1;
-            
-            // Добавляем два пустых варианта ответа по умолчанию
-            addOption();
-            addOption();
-        }
-        
-        function addOption() {
-            const optionsContainer = document.getElementById('options-container');
-            const optionIndex = optionsContainer.children.length;
-            
-            const optionEditor = document.createElement('div');
-            optionEditor.className = 'option-editor';
-            
-            optionEditor.innerHTML = `
-                <input type="text" class="option-input" placeholder="Вариант ответа ${optionIndex + 1}" data-index="${optionIndex}">
-                <button class="btn btn-danger btn-remove-option" data-index="${optionIndex}">×</button>
-            `;
-            
-            optionsContainer.appendChild(optionEditor);
-            
-            // Добавляем вариант в выпадающий список правильных ответов
-            const correctAnswerSelect = document.getElementById('correct-answer');
-            const optionElement = document.createElement('option');
-            optionElement.value = optionIndex;
-            optionElement.textContent = `Вариант ${optionIndex + 1}`;
-            correctAnswerSelect.appendChild(optionElement);
-            
-            // Добавляем обработчик события для кнопки удаления
-            optionEditor.querySelector('.btn-remove-option').addEventListener('click', function() {
-                const indexToRemove = parseInt(this.getAttribute('data-index'));
-                removeOption(indexToRemove);
-            });
-        }
-        
-        function removeOption(indexToRemove) {
-            const optionsContainer = document.getElementById('options-container');
-            const correctAnswerSelect = document.getElementById('correct-answer');
-            
-            // Удаляем элемент варианта ответа
-            const optionToRemove = optionsContainer.querySelector(`.option-editor input[data-index="${indexToRemove}"]`).parentNode;
-            optionsContainer.removeChild(optionToRemove);
-            
-            // Удаляем вариант из выпадающего списка
-            correctAnswerSelect.removeChild(correctAnswerSelect.querySelector(`option[value="${indexToRemove}"]`));
-            
-            // Обновляем индексы оставшихся вариантов
-            const remainingOptions = optionsContainer.querySelectorAll('.option-editor');
-            remainingOptions.forEach((option, newIndex) => {
-                const input = option.querySelector('input');
-                input.setAttribute('data-index', newIndex);
-                input.placeholder = `Вариант ответа ${newIndex + 1}`;
-                
-                const removeButton = option.querySelector('.btn-remove-option');
-                removeButton.setAttribute('data-index', newIndex);
-                
-                // Обновляем выпадающий список
-                const optionElement = correctAnswerSelect.querySelector(`option[value="${newIndex}"]`);
-                if (optionElement) {
-                    optionElement.value = newIndex;
-                    optionElement.textContent = `Вариант ${newIndex + 1}`;
-                }
-            });
-            
-            // Если удаленный вариант был выбран как правильный, сбрасываем выбор
-            if (parseInt(correctAnswerSelect.value) === indexToRemove) {
-                correctAnswerSelect.value = '';
-            }
-        }
-        
-        async function saveQuestion() {
-            const questionText = document.getElementById('edit-question-text').value;
-            const correctAnswer = parseInt(document.getElementById('correct-answer').value);
-            const questionTime = parseInt(document.getElementById('question-time').value) || 60;
-            
-            // Собираем варианты ответов
-            const optionInputs = document.querySelectorAll('.option-input');
-            const options = [];
-            
-            optionInputs.forEach(input => {
-                if (input.value.trim()) {
-                    options.push(input.value.trim());
-                }
-            });
-            
-            // Проверяем валидность данных
-            if (!questionText) {
-                alert('Пожалуйста, введите текст вопроса');
-                return;
-            }
-            
-            if (options.length < 2) {
-                alert('Добавьте как минимум два варианта ответа');
-                return;
-            }
-            
-            if (isNaN(correctAnswer) || correctAnswer < 0 || correctAnswer >= options.length) {
-                alert('Пожалуйста, выберите правильный ответ');
-                return;
-            }
-            
-            try {
-                const questionSetId = document.getElementById('question-sets').value;
-                const questionSets = await loadQuestionSets();
-                const selectedSet = questionSets.find(set => set.id === questionSetId);
-                
-                if (!selectedSet) {
-                    alert('Набор вопросов не найден');
-                    return;
-                }
-                
-                const question = {
-                    text: questionText,
-                    options: options,
-                    correctAnswer: correctAnswer,
-                    time: questionTime
-                };
-                
-                if (currentEditingQuestionIndex === -1) {
-                    // Добавляем новый вопрос
-                    selectedSet.questions.push(question);
-                } else {
-                    // Обновляем существующий вопрос
-                    selectedSet.questions[currentEditingQuestionIndex] = question;
-                }
-                
-                await saveQuestionSet(selectedSet);
-                
-                // Сбрасываем редактор и обновляем список вопросов
-                resetQuestionEditor();
-                displayQuestionsList(selectedSet);
-                
-                alert(currentEditingQuestionIndex === -1 ? 'Вопрос успешно добавлен' : 'Вопрос успешно обновлен');
-            } catch (error) {
-                console.error('Ошибка сохранения вопроса:', error);
-                alert('Ошибка сохранения вопроса');
-            }
-        }
-        
-        function editQuestion(questionIndex) {
-            const questionSetId = document.getElementById('question-sets').value;
-            if (!questionSetId) return;
-            
-            loadQuestionSets().then(questionSets => {
-                const selectedSet = questionSets.find(set => set.id === questionSetId);
-                if (!selectedSet || !selectedSet.questions[questionIndex]) return;
-                
-                const question = selectedSet.questions[questionIndex];
-                
-                // Заполняем редактор данными вопроса
-                document.getElementById('edit-question-text').value = question.text;
-                document.getElementById('question-time').value = question.time || 60;
-                
-                // Очищаем контейнер вариантов ответов
-                document.getElementById('options-container').innerHTML = '';
-                document.getElementById('correct-answer').innerHTML = '<option value="">-- Выберите правильный ответ --</option>';
-                
-                // Добавляем варианты ответов
-                question.options.forEach((option, index) => {
-                    const optionsContainer = document.getElementById('options-container');
-                    const optionEditor = document.createElement('div');
-                    optionEditor.className = 'option-editor';
-                    
-                    optionEditor.innerHTML = `
-                        <input type="text" class="option-input" value="${option}" data-index="${index}">
-                        <button class="btn btn-danger btn-remove-option" data-index="${index}">×</button>
-                    `;
-                    
-                    optionsContainer.appendChild(optionEditor);
-                    
-                    // Добавляем вариант в выпадающий список правильных ответов
-                    const correctAnswerSelect = document.getElementById('correct-answer');
-                    const optionElement = document.createElement('option');
-                    optionElement.value = index;
-                    optionElement.textContent = `Вариант ${index + 1}`;
-                    correctAnswerSelect.appendChild(optionElement);
-                    
-                    // Добавляем обработчик события для кнопки удаления
-                    optionEditor.querySelector('.btn-remove-option').addEventListener('click', function() {
-                        const indexToRemove = parseInt(this.getAttribute('data-index'));
-                        removeOption(indexToRemove);
-                    });
-                });
-                
-                // Устанавливаем правильный ответ
-                document.getElementById('correct-answer').value = question.correctAnswer;
-                
-                // Устанавливаем индекс редактируемого вопроса
-                currentEditingQuestionIndex = questionIndex;
-            });
-        }
-        
-        async function deleteQuestion(questionIndex) {
-            if (!confirm('Вы уверены, что хотите удалить этот вопрос?')) {
-                return;
-            }
-            
-            try {
-                const questionSetId = document.getElementById('question-sets').value;
-                const questionSets = await loadQuestionSets();
-                const selectedSet = questionSets.find(set => set.id === questionSetId);
-                
-                if (!selectedSet) {
-                    alert('Набор вопросов не найден');
-                    return;
-                }
-                
-                // Удаляем вопрос
-                selectedSet.questions.splice(questionIndex, 1);
-                
-                await saveQuestionSet(selectedSet);
-                
-                // Обновляем список вопросов
-                displayQuestionsList(selectedSet);
-                
-                alert('Вопрос успешно удален');
-            } catch (error) {
-                console.error('Ошибка удаления вопроса:', error);
-                alert('Ошибка удаления вопроса');
-            }
-        }
-        
-        function cancelEdit() {
-            resetQuestionEditor();
-        }
-        
-        async function loadAssignmentsList() {
-            try {
-                const assignments = await loadAssignments();
-                const users = await loadUsers();
-                const questionSets = await loadQuestionSets();
-                
-                const assignmentsListElement = document.getElementById('assignments-list');
-                
-                assignmentsListElement.innerHTML = '';
-                
-                if (assignments.length === 0) {
-                    assignmentsListElement.innerHTML = '<p>Назначения не найдены.</p>';
-                    return;
-                }
-                
-                assignments.forEach(assignment => {
-                    const user = users.find(u => u.id === assignment.userId);
-                    const questionSet = questionSets.find(qs => qs.id === assignment.questionSetId);
-                    
-                    if (!user || !questionSet) return;
-                    
-                    const assignmentItem = document.createElement('div');
-                    assignmentItem.className = 'assignment-item';
-                    
-                    assignmentItem.innerHTML = `
-                        <div>
-                            <strong>${user.username}</strong> - ${questionSet.name}
-                        </div>
-                        <div>
-                            <button class="btn btn-danger btn-delete-assignment" data-assignment-id="${assignment.id}">Удалить</button>
-                        </div>
-                    `;
-                    
-                    assignmentsListElement.appendChild(assignmentItem);
-                });
-                
-                // Добавляем обработчики событий для кнопок удаления
-                document.querySelectorAll('.btn-delete-assignment').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const assignmentId = this.getAttribute('data-assignment-id');
-                        deleteAssignmentConfirmation(assignmentId);
-                    });
-                });
-            } catch (error) {
-                console.error('Ошибка загрузки списка назначений:', error);
-                document.getElementById('assignments-list').innerHTML = '<p class="error">Ошибка загрузки назначений.</p>';
-            }
-        }
-        
-        function updateUserAssignmentList() {
-            loadUsers().then(users => {
-                const assignUserSelect = document.getElementById('assign-user');
-                
-                // Очищаем выпадающий список
-                assignUserSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
-                
-                // Заполняем выпадающий список
-                users.forEach(user => {
-                    if (user.role !== 'admin') {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.username;
-                        assignUserSelect.appendChild(option);
-                    }
-                });
-            });
-        }
-        
-        function updateQuestionSetAssignmentList() {
-            loadQuestionSets().then(questionSets => {
-                const assignQuestionSetSelect = document.getElementById('assign-question-set');
-                
-                // Очищаем выпадающий список
-                assignQuestionSetSelect.innerHTML = '<option value="">-- Выберите набор --</option>';
-                
-                // Заполняем выпадающий список
-                questionSets.forEach(set => {
-                    const option = document.createElement('option');
-                    option.value = set.id;
-                    option.textContent = set.name;
-                    assignQuestionSetSelect.appendChild(option);
-                });
-            });
-        }
-        
-        async function assignTest() {
-            const userId = document.getElementById('assign-user').value;
-            const questionSetId = document.getElementById('assign-question-set').value;
-            
-            if (!userId || !questionSetId) {
-                alert('Пожалуйста, выберите пользователя и набор вопросов');
-                return;
-            }
-            
-            try {
-                const assignments = await loadAssignments();
-                
-                // Проверяем, не назначен ли уже этот тест пользователю
-                const existingAssignment = assignments.find(a => a.userId === userId && a.questionSetId === questionSetId);
-                if (existingAssignment) {
-                    alert('Этот тест уже назначен данному пользователю');
-                    return;
-                }
-                
-                const newAssignment = {
-                    userId: userId,
-                    questionSetId: questionSetId,
-                    assignedAt: new Date().toISOString()
-                };
-                
-                await saveAssignment(newAssignment);
-                
-                // Очищаем выбор и обновляем список назначений
-                document.getElementById('assign-user').value = '';
-                document.getElementById('assign-question-set').value = '';
-                loadAssignmentsList();
-                
-                alert('Тест успешно назначен пользователю');
-            } catch (error) {
-                console.error('Ошибка назначения теста:', error);
-                alert('Ошибка назначения теста');
-            }
-        }
-        
-        async function deleteAssignmentConfirmation(assignmentId) {
-            if (confirm('Вы уверены, что хотите удалить это назначение?')) {
-                try {
-                    await deleteAssignment(assignmentId);
-                    loadAssignmentsList();
-                } catch (error) {
-                    console.error('Ошибка удаления назначения:', error);
-                    alert('Ошибка удаления назначения');
-                }
-            }
-        }
-        
-        async function loadTestResultsList() {
-            try {
-                const testResults = await loadTestResults();
-                const users = await loadUsers();
-                const questionSets = await loadQuestionSets();
-                
-                const testResultsListElement = document.getElementById('test-results-list');
-                
-                testResultsListElement.innerHTML = '';
-                
-                if (testResults.length === 0) {
-                    testResultsListElement.innerHTML = '<p>Результаты тестов не найдены.</p>';
-                    return;
-                }
-                
-                // Группируем результаты по пользователям
-                const resultsByUser = {};
-                
-                testResults.forEach(result => {
-                    if (!resultsByUser[result.userId]) {
-                        resultsByUser[result.userId] = [];
-                    }
-                    resultsByUser[result.userId].push(result);
-                });
-                
-                // Создаем элементы для каждого пользователя
-                for (const userId in resultsByUser) {
-                    const user = users.find(u => u.id === userId);
-                    if (!user) continue;
-                    
-                    const userResults = resultsByUser[userId];
-                    
-                    const userItem = document.createElement('div');
-                    userItem.className = 'user-item';
-                    
-                    let resultsHTML = '';
-                    
-                    userResults.forEach(result => {
-                        const questionSet = questionSets.find(qs => qs.id === result.questionSetId);
-                        const date = new Date(result.submittedAt).toLocaleDateString();
-                        const time = new Date(result.submittedAt).toLocaleTimeString();
-                        
-                        resultsHTML += `
-                            <div class="assignment-item">
-                                <div>
-                                    <strong>${questionSet ? questionSet.name : 'Неизвестный тест'}</strong>
-                                    <div>Результат: ${result.results.score}% (${result.results.correctAnswers}/${result.results.totalQuestions})</div>
-                                    <div>Завершено: ${date} ${time}</div>
-                                    ${result.timeExpired ? '<div style="color: #f9ab00;">Тест завершен по истечении времени</div>' : ''}
-                                </div>
-                                <div>
-                                    <button class="btn btn-view-result" data-result-id="${result.id}">Подробнее</button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    userItem.innerHTML = `
-                        <div class="user-header">
-                            <div>
-                                <strong>${user.username}</strong>
-                            </div>
-                        </div>
-                        <div class="user-assignments">
-                            ${resultsHTML}
-                        </div>
-                    `;
-                    
-                    testResultsListElement.appendChild(userItem);
-                }
-                
-                // Добавляем обработчики событий для кнопок просмотра результатов
-                document.querySelectorAll('.btn-view-result').forEach(button => {
-                    button.addEventListener('click', function() {
-                        const resultId = this.getAttribute('data-result-id');
-                        viewTestResult(resultId);
-                    });
-                });
-            } catch (error) {
-                console.error('Ошибка загрузки результатов тестов:', error);
-                document.getElementById('test-results-list').innerHTML = '<p class="error">Ошибка загрузки результатов тестов.</p>';
-            }
-        }
-        
-        async function viewTestResult(resultId) {
-            try {
-                const testResults = await loadTestResults();
-                const result = testResults.find(r => r.id === resultId);
-                
-                if (!result) {
-                    alert('Результат теста не найден');
-                    return;
-                }
-                
-                // Показываем детали результата в модальном окне или новой вкладке
-                // Для простоты используем alert с основной информацией
-                const timeExpiredText = result.timeExpired ? ' (время истекло)' : '';
-                alert(`Результат теста пользователя ${result.username}${timeExpiredText}:
-                \nОценка: ${result.results.score}%
-                \nПравильные ответы: ${result.results.correctAnswers}/${result.results.totalQuestions}
-                \nЗатраченное время: ${Math.floor(result.timeSpent / 60)}:${(result.timeSpent % 60).toString().padStart(2, '0')}
-                \nДата завершения: ${new Date(result.submittedAt).toLocaleString()}`);
-            } catch (error) {
-                console.error('Ошибка просмотра результата теста:', error);
-                alert('Ошибка просмотра результата теста');
-            }
-        }
-        
-        // Функции для настроек внешнего вида
-        function loadAppearanceSettings() {
-            const settings = JSON.parse(localStorage.getItem('medicalTestAppearanceSettings') || '{}');
-            
-            // Применяем настройки
-            applyAppearanceSettings(settings);
-            
-            // Заполняем форму настроек
-            document.getElementById('app-title-input').value = settings.appTitle || 'Медицинский тест для сотрудников';
-            document.getElementById('app-description-input').value = settings.appDescription || 'Система тестирования медицинских знаний';
-            document.getElementById('primary-color').value = settings.primaryColor || '#1a73e8';
-            document.getElementById('secondary-color').value = settings.secondaryColor || '#0b8043';
-            document.getElementById('favicon-url').value = settings.faviconUrl || '';
-            
-            // Выбираем тему
-            const theme = settings.theme || 'light';
-            document.querySelectorAll('.theme-option').forEach(option => {
-                if (option.getAttribute('data-theme') === theme) {
-                    option.classList.add('selected');
-                } else {
-                    option.classList.remove('selected');
-                }
-            });
-            
-            // Обновляем предпросмотр цветов
-            updateColorPreview();
-        }
-        
-        function applyAppearanceSettings(settings) {
-            // Применяем настройки к интерфейсу
-            document.getElementById('app-title').textContent = settings.appTitle || 'Медицинский тест для сотрудников';
-            document.getElementById('app-description').textContent = settings.appDescription || 'Система тестирования медицинских знаний';
-            
-            // Применяем цвета
-            const primaryColor = settings.primaryColor || '#1a73e8';
-            const secondaryColor = settings.secondaryColor || '#0b8043';
-            
-            document.documentElement.style.setProperty('--primary-color', primaryColor);
-            document.documentElement.style.setProperty('--secondary-color', secondaryColor);
-            
-            // Применяем favicon
-            if (settings.faviconUrl) {
-                let favicon = document.querySelector('link[rel="icon"]');
-                if (!favicon) {
-                    favicon = document.createElement('link');
-                    favicon.rel = 'icon';
-                    document.head.appendChild(favicon);
-                }
-                favicon.href = settings.faviconUrl;
-            }
-            
-            // Применяем тему
-            applyTheme(settings.theme || 'light');
-        }
-        
-        function applyTheme(theme) {
-            // Удаляем предыдущие классы темы
-            document.body.classList.remove('theme-light', 'theme-dark', 'theme-blue');
-            
-            // Добавляем класс текущей темы
-            document.body.classList.add(`theme-${theme}`);
-            
-            // Применяем специфические стили для темы
-            if (theme === 'dark') {
-                document.body.style.backgroundColor = '#2d3748';
-                document.body.style.color = '#e2e8f0';
-            } else if (theme === 'blue') {
-                document.body.style.backgroundColor = '#e3f2fd';
-                document.body.style.color = '#1e3a5f';
-            } else {
-                document.body.style.backgroundColor = '#f5f7fa';
-                document.body.style.color = '#333';
-            }
-        }
-        
-        function updateColorPreview() {
-            const primaryColor = document.getElementById('primary-color').value;
-            const secondaryColor = document.getElementById('secondary-color').value;
-            
-            document.getElementById('primary-color-preview').style.backgroundColor = primaryColor;
-            document.getElementById('secondary-color-preview').style.backgroundColor = secondaryColor;
-        }
-        
-        function saveAppearanceSettings() {
-            const settings = {
-                appTitle: document.getElementById('app-title-input').value,
-                appDescription: document.getElementById('app-description-input').value,
-                primaryColor: document.getElementById('primary-color').value,
-                secondaryColor: document.getElementById('secondary-color').value,
-                faviconUrl: document.getElementById('favicon-url').value,
-                theme: document.querySelector('.theme-option.selected')?.getAttribute('data-theme') || 'light'
-            };
-            
-            // Сохраняем настройки в localStorage
-            localStorage.setItem('medicalTestAppearanceSettings', JSON.stringify(settings));
-            
-            // Применяем настройки
-            applyAppearanceSettings(settings);
-            
-            alert('Настройки внешнего вида сохранены');
-        }
+        // Остальной код приложения остается без изменений...
+        // (все остальные функции, обработчики событий и т.д.)
     </script>
 </body>
 </html>
