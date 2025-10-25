@@ -655,6 +655,7 @@
             
             <div class="card test-section" id="test-section">
                 <div class="timer" id="timer">Общее время: 30:00</div>
+                <div class="question-timer" id="question-timer">Время на вопрос: 60 сек.</div>
                 <div class="question-counter" id="question-counter">Вопрос 1 из 3</div>
                 
                 <h2>Медицинский тест</h2>
@@ -669,7 +670,7 @@
                     <button class="btn" id="next-question">Следующий вопрос</button>
                 </div>
                 
-                <button class="btn btn-block" id="submit-test" style="margin-top: 20px;" disabled>Завершить тест</button>
+                <button class="btn btn-block" id="submit-test" style="margin-top: 20px; display: none;">Завершить тест</button>
             </div>
             
             <div class="card test-section" id="results-section">
@@ -1330,6 +1331,7 @@
         const questionCounter = document.getElementById('question-counter');
         const questionsContainer = document.getElementById('questions-container');
         const timerElement = document.getElementById('timer');
+        const questionTimerElement = document.getElementById('question-timer');
 
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', function() {
@@ -1569,6 +1571,7 @@
                 updateQuestionCounter();
                 displayQuestions();
                 updateNavigationButtons();
+                startQuestionTimer(); // Запускаем таймер для нового вопроса
             }
         }
 
@@ -1578,6 +1581,7 @@
                 updateQuestionCounter();
                 displayQuestions();
                 updateNavigationButtons();
+                startQuestionTimer(); // Запускаем таймер для нового вопроса
             }
         }
 
@@ -1593,8 +1597,11 @@
             const isLastQuestion = currentQuestionIndex === currentQuestionSet.questions.length - 1;
             nextQuestionBtn.textContent = isLastQuestion ? 'Завершить тест' : 'Следующий вопрос';
             
-            // Показываем/скрываем кнопку завершения теста
-            submitTestBtn.style.display = isLastQuestion ? 'none' : 'block';
+            // Исправлено: показываем кнопку завершения теста только на последнем вопросе
+            submitTestBtn.style.display = isLastQuestion ? 'block' : 'none';
+            
+            // Обновляем обработчик для кнопки "Следующий вопрос/Завершить тест"
+            nextQuestionBtn.onclick = isLastQuestion ? submitTest : showNextQuestion;
         }
 
         function updateSubmitButton() {
@@ -1616,28 +1623,13 @@
                 
                 if (totalTimeRemaining <= 0) {
                     clearInterval(timerInterval);
+                    clearInterval(questionTimerInterval);
                     submitTest();
                 }
             }, 1000);
             
-            // Таймер для текущего вопроса
-            const questionTime = currentQuestionSet.questions[currentQuestionIndex].time || 60;
-            questionTimeRemaining = questionTime;
-            
-            questionTimerInterval = setInterval(() => {
-                questionTimeRemaining--;
-                
-                if (questionTimeRemaining <= 0) {
-                    clearInterval(questionTimerInterval);
-                    // Автоматический переход к следующему вопросу
-                    if (currentQuestionIndex < currentQuestionSet.questions.length - 1) {
-                        showNextQuestion();
-                        startQuestionTimer();
-                    } else {
-                        submitTest();
-                    }
-                }
-            }, 1000);
+            // Запускаем таймер для текущего вопроса
+            startQuestionTimer();
         }
 
         function startQuestionTimer() {
@@ -1646,15 +1638,17 @@
             const questionTime = currentQuestionSet.questions[currentQuestionIndex].time || 60;
             questionTimeRemaining = questionTime;
             
+            updateQuestionTimerDisplay();
+            
             questionTimerInterval = setInterval(() => {
                 questionTimeRemaining--;
+                updateQuestionTimerDisplay();
                 
                 if (questionTimeRemaining <= 0) {
                     clearInterval(questionTimerInterval);
                     // Автоматический переход к следующему вопросу
                     if (currentQuestionIndex < currentQuestionSet.questions.length - 1) {
                         showNextQuestion();
-                        startQuestionTimer();
                     } else {
                         submitTest();
                     }
@@ -1669,6 +1663,16 @@
             
             if (totalTimeRemaining < 300) { // 5 минут
                 timerElement.classList.add('warning');
+            }
+        }
+
+        function updateQuestionTimerDisplay() {
+            questionTimerElement.textContent = `Время на вопрос: ${questionTimeRemaining} сек.`;
+            
+            if (questionTimeRemaining < 10) {
+                questionTimerElement.classList.add('warning');
+            } else {
+                questionTimerElement.classList.remove('warning');
             }
         }
 
