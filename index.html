@@ -477,14 +477,20 @@
             font-weight: 600;
         }
         
-        .role-field {
-            background-color: #8B0000; /* Тёмно-красный вместо голубого */
+        /* ИЗМЕНЕННЫЕ СТИЛИ ДЛЯ НОВЫХ РОЛЕЙ */
+        .role-doctor {
+            background-color: #d93025; /* Красный для Полевого Врача */
             color: white;
         }
         
-        .role-medical {
-            background-color: #0b8043;
+        .role-medic {
+            background-color: #1a73e8; /* Синий для Полевого Фельдшера */
             color: white;
+        }
+        
+        .role-sanitary {
+            background-color: #f9ab00; /* Желтый для Полевого Санитара */
+            color: black;
         }
         
         .user-stats {
@@ -810,8 +816,10 @@
                             <div class="form-group">
                                 <label for="edit-user-role">Роль</label>
                                 <select id="edit-user-role">
-                                    <option value="field">Полевой Отдел</option>
-                                    <option value="medical">Медицинский Сотрудник</option>
+                                    <!-- ИЗМЕНЕННЫЕ РОЛИ -->
+                                    <option value="doctor">Полевой Врач</option>
+                                    <option value="medic">Полевой Фельдшер</option>
+                                    <option value="sanitary">Полевой Санитар</option>
                                 </select>
                             </div>
                             
@@ -2015,16 +2023,20 @@
                     const userItem = document.createElement('div');
                     userItem.className = 'user-item';
                     
-                    // Определяем отображаемое название роли
+                    // Определяем отображаемое название роли и соответствующий класс
                     let roleDisplayName = '';
                     let roleClass = '';
                     
-                    if (user.role === 'field') {
-                        roleDisplayName = 'Полевой Отдел';
-                        roleClass = 'role-field';
-                    } else if (user.role === 'medical') {
-                        roleDisplayName = 'Медицинский Сотрудник';
-                        roleClass = 'role-medical';
+                    // ИЗМЕНЕННЫЕ РОЛИ
+                    if (user.role === 'doctor') {
+                        roleDisplayName = 'Полевой Врач';
+                        roleClass = 'role-doctor';
+                    } else if (user.role === 'medic') {
+                        roleDisplayName = 'Полевой Фельдшер';
+                        roleClass = 'role-medic';
+                    } else if (user.role === 'sanitary') {
+                        roleDisplayName = 'Полевой Санитар';
+                        roleClass = 'role-sanitary';
                     } else {
                         roleDisplayName = user.role;
                         roleClass = 'role-user';
@@ -2096,7 +2108,7 @@
                 const newUser = {
                     login: login,
                     password: password,
-                    role: 'field' // По умолчанию "Полевой Отдел"
+                    role: 'doctor' // По умолчанию "Полевой Врач"
                 };
                 
                 await saveUser(newUser);
