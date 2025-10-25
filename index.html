@@ -992,6 +992,9 @@
                 firebaseConnected = true;
                 console.log("✅ Firebase подключен");
                 updateFirebaseStatus(true);
+                
+                // Создаем администратора по умолчанию при первом запуске
+                createDefaultAdmin();
             } else {
                 console.log("⚠️ Firebase не настроен, используется localStorage");
                 updateFirebaseStatus(false);
@@ -999,6 +1002,27 @@
         } catch (error) {
             console.error("❌ Ошибка Firebase:", error);
             updateFirebaseStatus(false);
+        }
+
+        // Создание администратора по умолчанию
+        async function createDefaultAdmin() {
+            try {
+                const users = await loadUsers();
+                const adminExists = users.some(user => user.role === 'admin');
+                
+                if (!adminExists) {
+                    const defaultAdmin = {
+                        login: 'admin',
+                        password: 'admin123',
+                        role: 'admin'
+                    };
+                    
+                    await saveUser(defaultAdmin);
+                    console.log('✅ Администратор по умолчанию создан');
+                }
+            } catch (error) {
+                console.error('❌ Ошибка создания администратора по умолчанию:', error);
+            }
         }
 
         function updateFirebaseStatus(connected) {
@@ -1443,6 +1467,8 @@
                 adminPanel.style.display = 'block';
                 adminLogin.classList.remove('hidden');
                 adminContent.classList.add('hidden');
+                // Скрываем кнопку администратора при входе в админ-панель
+                adminToggle.style.display = 'none';
             });
 
             // Новая кнопка возврата из админ-панели
@@ -1450,12 +1476,16 @@
                 adminPanel.style.display = 'none';
                 userPanel.style.display = 'block';
                 showLoginSection();
+                // Показываем кнопку администратора при возврате
+                adminToggle.style.display = 'block';
             });
 
             userModeBtn.addEventListener('click', function() {
                 adminPanel.style.display = 'none';
                 userPanel.style.display = 'block';
                 showLoginSection();
+                // Показываем кнопку администратора при возврате
+                adminToggle.style.display = 'block';
             });
 
             // Вход администратора
@@ -1463,13 +1493,7 @@
                 const username = document.getElementById('admin-username').value;
                 const password = document.getElementById('admin-password').value;
                 
-                if (username === 'admin' && password === 'admin123') {
-                    adminLogin.classList.add('hidden');
-                    adminContent.classList.remove('hidden');
-                    loadAdminData();
-                } else {
-                    document.getElementById('admin-login-error').classList.remove('hidden');
-                }
+                authenticateAdmin(username, password);
             });
 
             adminLogoutBtn.addEventListener('click', function() {
@@ -1478,6 +1502,8 @@
                 document.getElementById('admin-username').value = '';
                 document.getElementById('admin-password').value = '';
                 document.getElementById('admin-login-error').classList.add('hidden');
+                // Показываем кнопку администратора при выходе
+                adminToggle.style.display = 'block';
             });
 
             // Вход пользователя
@@ -1492,6 +1518,8 @@
                 currentUser = null;
                 localStorage.removeItem('currentMedicalTestUser');
                 showLoginSection();
+                // Показываем кнопку администратора при выходе
+                adminToggle.style.display = 'block';
             });
 
             // Управление тестом
@@ -1543,6 +1571,25 @@
 
             // Сохранение настроек
             document.getElementById('save-settings').addEventListener('click', saveSystemSettings);
+        }
+
+        // Аутентификация администратора
+        async function authenticateAdmin(username, password) {
+            try {
+                const users = await loadUsers();
+                const admin = users.find(u => u.login === username && u.password === password && u.role === 'admin');
+                
+                if (admin) {
+                    adminLogin.classList.add('hidden');
+                    adminContent.classList.remove('hidden');
+                    document.getElementById('admin-login-error').classList.add('hidden');
+                } else {
+                    document.getElementById('admin-login-error').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('❌ Ошибка аутентификации администратора:', error);
+                document.getElementById('admin-login-error').classList.remove('hidden');
+            }
         }
 
         // Аутентификация пользователя
