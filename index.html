@@ -140,6 +140,11 @@
             background-color: #e09a00;
         }
         
+        .btn-sm {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
         .test-section {
             display: none;
         }
@@ -301,6 +306,18 @@
             padding: 8px;
             border-radius: 4px;
             border: 1px solid #ddd;
+            margin-left: 10px;
+        }
+        
+        .time-setting {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .time-setting input {
+            width: 100px;
         }
         
         .tabs {
@@ -496,6 +513,35 @@
             border-bottom: none;
         }
         
+        .question-set-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .question-set-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .question-set-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .question-set-info {
+            margin-bottom: 10px;
+        }
+        
+        .question-count {
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
         @media (max-width: 600px) {
             .container {
                 padding: 10px;
@@ -532,6 +578,17 @@
             }
             
             .user-actions {
+                margin-top: 10px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .question-set-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .question-set-actions {
                 margin-top: 10px;
                 width: 100%;
                 justify-content: space-between;
@@ -670,27 +727,26 @@
                 <div class="tab-content" id="questions-tab">
                     <div class="card">
                         <h2>Управление вопросами</h2>
-                        <p>Создавайте наборы вопросов для тестирования.</p>
+                        <p>Создавайте и редактируйте наборы вопросов для тестирования.</p>
                         
                         <div class="form-group">
-                            <label for="question-set-name">Название набора вопросов</label>
-                            <input type="text" id="question-set-name" placeholder="Введите название набора">
-                            <button class="btn" id="add-question-set" style="margin-top: 10px;">Создать новый набор</button>
+                            <h3>Создать новый набор вопросов</h3>
+                            <div style="display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end;">
+                                <div>
+                                    <label>Название набора вопросов</label>
+                                    <input type="text" id="question-set-name" placeholder="Введите название набора">
+                                </div>
+                                <div>
+                                    <button class="btn btn-success" id="add-question-set">Создать набор</button>
+                                </div>
+                            </div>
                         </div>
                         
                         <div class="form-group">
-                            <label for="question-sets">Выберите набор вопросов</label>
-                            <select id="question-sets">
-                                <option value="">-- Выберите набор --</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <button class="btn" id="add-question">Добавить вопрос в набор</button>
-                        </div>
-                        
-                        <div id="questions-list">
-                            <!-- Список вопросов будет добавлен динамически -->
+                            <h3>Существующие наборы вопросов</h3>
+                            <div id="question-sets-list">
+                                <!-- Список наборов вопросов будет добавлен динамически -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -787,1017 +843,274 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Элементы DOM
-            const userPanel = document.getElementById('user-panel');
-            const adminPanel = document.getElementById('admin-panel');
-            const adminToggle = document.getElementById('admin-toggle');
-            const userModeBtn = document.getElementById('user-mode');
-            
-            // Элементы пользовательского входа
-            const loginSection = document.getElementById('login-section');
-            const testSection = document.getElementById('test-section');
-            const resultsSection = document.getElementById('results-section');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const loginBtn = document.getElementById('login-btn');
-            const loginError = document.getElementById('login-error');
-            const currentUserSpan = document.getElementById('current-user');
-            const logoutBtn = document.getElementById('logout-btn');
-            
-            // Элементы теста
-            const submitTestBtn = document.getElementById('submit-test');
-            const restartTestBtn = document.getElementById('restart-test');
-            const questionsContainer = document.getElementById('questions-container');
-            const resultMessage = document.getElementById('result-message');
-            const scoreElement = document.getElementById('score');
-            const timerElement = document.getElementById('timer');
-            const questionCounter = document.getElementById('question-counter');
-            const prevQuestionBtn = document.getElementById('prev-question');
-            const nextQuestionBtn = document.getElementById('next-question');
-            const resultsSummary = document.getElementById('results-summary');
-            const resultsDetails = document.getElementById('results-details');
-            
-            // Элементы админ-панели
-            const adminLogin = document.getElementById('admin-login');
-            const adminContent = document.getElementById('admin-content');
-            const adminUsername = document.getElementById('admin-username');
-            const adminPassword = document.getElementById('admin-password');
-            const adminLoginBtn = document.getElementById('admin-login-btn');
-            const adminLoginError = document.getElementById('admin-login-error');
-            const adminLogoutBtn = document.getElementById('admin-logout');
-            
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            // Элементы управления пользователями
-            const newUserLogin = document.getElementById('new-user-login');
-            const newUserPassword = document.getElementById('new-user-password');
-            const addUserBtn = document.getElementById('add-user');
-            const usersList = document.getElementById('users-list');
-            const userAddSuccess = document.getElementById('user-add-success');
-            const userAddError = document.getElementById('user-add-error');
-            
-            // Элементы управления вопросами
-            const questionSetName = document.getElementById('question-set-name');
-            const addQuestionSetBtn = document.getElementById('add-question-set');
-            const questionSetsSelect = document.getElementById('question-sets');
-            const addQuestionBtn = document.getElementById('add-question');
-            const questionsList = document.getElementById('questions-list');
-            
-            // Элементы назначения тестов
-            const assignUserSelect = document.getElementById('assign-user');
-            const assignQuestionSetSelect = document.getElementById('assign-question-set');
-            const assignTestBtn = document.getElementById('assign-test');
-            const assignmentsList = document.getElementById('assignments-list');
-            
-            // Элементы настроек
-            const totalTimeInput = document.getElementById('total-time');
-            const defaultTimeInput = document.getElementById('default-time');
-            const saveSettingsBtn = document.getElementById('save-settings');
-            
-            // Данные приложения
-            let currentUser = null;
-            let userAnswers = [];
-            let totalTime = 30 * 60;
-            let timerInterval;
-            let currentQuestionIndex = 0;
-            let questionTimers = [];
-            let currentQuestionTimer;
-            let currentQuestionSet = null;
-            let questions = [];
+            // [ПРЕДЫДУЩИЙ КОД ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ ДО ФУНКЦИЙ РЕНДЕРИНГА]
 
-            // Учетные данные администратора по умолчанию
-            const adminCredentials = {
-                username: "admin",
-                password: "admin123"
-            };
-
-            // Firebase функции
-            async function loadUsers() {
-                try {
-                    if (!db) {
-                        return getLocalUsers();
-                    }
-
-                    const snapshot = await db.collection('users').get();
-                    const users = [];
-                    
-                    snapshot.forEach(doc => {
-                        users.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    return users;
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки пользователей:', error);
-                    return getLocalUsers();
-                }
-            }
-
-            async function saveUser(user) {
-                try {
-                    if (!db) {
-                        saveUserToLocal(user);
-                        return user;
-                    }
-
-                    if (user.id) {
-                        await db.collection('users').doc(user.id).update(user);
-                    } else {
-                        const docRef = await db.collection('users').add(user);
-                        user.id = docRef.id;
-                    }
-                    
-                    saveUserToLocal(user);
-                    return user;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения пользователя:', error);
-                    saveUserToLocal(user);
-                    throw error;
-                }
-            }
-
-            async function loadQuestionSets() {
-                try {
-                    if (!db) {
-                        return getLocalQuestionSets();
-                    }
-
-                    const snapshot = await db.collection('questionSets').get();
-                    const questionSets = [];
-                    
-                    snapshot.forEach(doc => {
-                        questionSets.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    return questionSets;
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки наборов вопросов:', error);
-                    return getLocalQuestionSets();
-                }
-            }
-
-            async function saveQuestionSet(questionSet) {
-                try {
-                    if (!db) {
-                        saveQuestionSetToLocal(questionSet);
-                        return questionSet;
-                    }
-
-                    if (questionSet.id) {
-                        await db.collection('questionSets').doc(questionSet.id).update(questionSet);
-                    } else {
-                        const docRef = await db.collection('questionSets').add(questionSet);
-                        questionSet.id = docRef.id;
-                    }
-                    
-                    saveQuestionSetToLocal(questionSet);
-                    return questionSet;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения набора вопросов:', error);
-                    saveQuestionSetToLocal(questionSet);
-                    throw error;
-                }
-            }
-
-            async function loadAssignments() {
-                try {
-                    if (!db) {
-                        return getLocalAssignments();
-                    }
-
-                    const snapshot = await db.collection('assignments').get();
-                    const assignments = [];
-                    
-                    snapshot.forEach(doc => {
-                        assignments.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    return assignments;
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки назначений:', error);
-                    return getLocalAssignments();
-                }
-            }
-
-            async function saveAssignment(assignment) {
-                try {
-                    if (!db) {
-                        saveAssignmentToLocal(assignment);
-                        return assignment;
-                    }
-
-                    if (assignment.id) {
-                        await db.collection('assignments').doc(assignment.id).update(assignment);
-                    } else {
-                        const docRef = await db.collection('assignments').add(assignment);
-                        assignment.id = docRef.id;
-                    }
-                    
-                    saveAssignmentToLocal(assignment);
-                    return assignment;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения назначения:', error);
-                    saveAssignmentToLocal(assignment);
-                    throw error;
-                }
-            }
-
-            async function loadSettings() {
-                try {
-                    if (!db) {
-                        return getLocalSettings();
-                    }
-
-                    const doc = await db.collection('settings').doc('main').get();
-                    if (doc.exists) {
-                        return doc.data();
-                    } else {
-                        const defaultSettings = getDefaultSettings();
-                        await db.collection('settings').doc('main').set(defaultSettings);
-                        return defaultSettings;
-                    }
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки настроек:', error);
-                    return getLocalSettings();
-                }
-            }
-
-            async function saveSettings(settings) {
-                try {
-                    if (!db) {
-                        saveSettingsToLocal(settings);
-                        return settings;
-                    }
-
-                    await db.collection('settings').doc('main').set(settings);
-                    saveSettingsToLocal(settings);
-                    return settings;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения настроек:', error);
-                    saveSettingsToLocal(settings);
-                    throw error;
-                }
-            }
-
-            // Локальные функции (fallback)
-            function getLocalUsers() {
-                return JSON.parse(localStorage.getItem('medicalTestUsers')) || [adminCredentials];
-            }
-
-            function saveUserToLocal(user) {
-                const users = getLocalUsers();
-                const existingIndex = users.findIndex(u => u.id === user.id);
+            // Функции рендеринга для админ-панели - ОБНОВЛЕННЫЕ
+            function renderQuestionSetsList(questionSets) {
+                const questionSetsList = document.getElementById('question-sets-list');
+                questionSetsList.innerHTML = '';
                 
-                if (existingIndex >= 0) {
-                    users[existingIndex] = user;
-                } else {
-                    users.push(user);
-                }
-                
-                localStorage.setItem('medicalTestUsers', JSON.stringify(users));
-            }
-
-            function getLocalQuestionSets() {
-                return JSON.parse(localStorage.getItem('medicalTestQuestionSets')) || [];
-            }
-
-            function saveQuestionSetToLocal(questionSet) {
-                const questionSets = getLocalQuestionSets();
-                const existingIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
-                
-                if (existingIndex >= 0) {
-                    questionSets[existingIndex] = questionSet;
-                } else {
-                    questionSets.push(questionSet);
-                }
-                
-                localStorage.setItem('medicalTestQuestionSets', JSON.stringify(questionSets));
-            }
-
-            function getLocalAssignments() {
-                return JSON.parse(localStorage.getItem('medicalTestAssignments')) || [];
-            }
-
-            function saveAssignmentToLocal(assignment) {
-                const assignments = getLocalAssignments();
-                const existingIndex = assignments.findIndex(a => a.id === assignment.id);
-                
-                if (existingIndex >= 0) {
-                    assignments[existingIndex] = assignment;
-                } else {
-                    assignments.push(assignment);
-                }
-                
-                localStorage.setItem('medicalTestAssignments', JSON.stringify(assignments));
-            }
-
-            function getLocalSettings() {
-                return JSON.parse(localStorage.getItem('medicalTestSettings')) || getDefaultSettings();
-            }
-
-            function saveSettingsToLocal(settings) {
-                localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
-            }
-
-            function getDefaultSettings() {
-                return {
-                    totalTime: 30,
-                    defaultTime: 60
-                };
-            }
-
-            function getDefaultQuestions() {
-                return [
-                    {
-                        id: 'default1',
-                        question: "Каков нормальный показатель артериального давления у взрослого человека?",
-                        options: ["120/80 мм рт.ст.", "140/90 мм рт.ст.", "100/60 мм рт.ст.", "130/85 мм рт.ст."],
-                        correct: 0,
-                        time: 60
-                    },
-                    {
-                        id: 'default2',
-                        question: "Какой витамин вырабатывается в коже под воздействием солнечного света?",
-                        options: ["Витамин А", "Витамин С", "Витамин D", "Витамин Е"],
-                        correct: 2,
-                        time: 45
-                    },
-                    {
-                        id: 'default3',
-                        question: "Какой орган отвечает за фильтрацию крови и выработку мочи?",
-                        options: ["Печень", "Сердце", "Почки", "Легкие"],
-                        correct: 2,
-                        time: 75
-                    }
-                ];
-            }
-
-            // ОСНОВНЫЕ ОБРАБОТЧИКИ СОБЫТИЙ
-            function setupEventListeners() {
-                console.log("🔄 Настраиваю обработчики событий...");
-                
-                // Переключение между режимами
-                adminToggle.addEventListener('click', function() {
-                    userPanel.style.display = 'none';
-                    adminPanel.style.display = 'block';
-                    adminLogin.classList.remove('hidden');
-                    adminContent.classList.add('hidden');
-                });
-
-                userModeBtn.addEventListener('click', function() {
-                    adminPanel.style.display = 'none';
-                    userPanel.style.display = 'block';
-                    resetLoginForm();
-                });
-
-                // Вход пользователя
-                loginBtn.addEventListener('click', handleUserLogin);
-                passwordInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') handleUserLogin();
-                });
-
-                // Выход пользователя
-                logoutBtn.addEventListener('click', function() {
-                    currentUser = null;
-                    resultsSection.classList.add('test-section');
-                    loginSection.classList.remove('hidden');
-                    resetLoginForm();
-                });
-
-                // Вход в админ-панель
-                adminLoginBtn.addEventListener('click', handleAdminLogin);
-                adminPassword.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') handleAdminLogin();
-                });
-
-                // Выход из админ-панели
-                adminLogoutBtn.addEventListener('click', function() {
-                    adminLogin.classList.remove('hidden');
-                    adminContent.classList.add('hidden');
-                    adminUsername.value = '';
-                    adminPassword.value = '';
-                });
-
-                // Завершение теста
-                submitTestBtn.addEventListener('click', () => submitTest());
-
-                // Перезапуск теста
-                restartTestBtn.addEventListener('click', function() {
-                    resultsSection.classList.add('test-section');
-                    testSection.classList.remove('test-section');
-                    initTest();
-                });
-
-                // Навигация по вопросам
-                nextQuestionBtn.addEventListener('click', nextQuestion);
-                prevQuestionBtn.addEventListener('click', prevQuestion);
-
-                console.log("✅ Обработчики событий настроены");
-            }
-
-            async function handleUserLogin() {
-                const username = usernameInput.value.trim();
-                const password = passwordInput.value.trim();
-                
-                if (!username || !password) {
-                    showLoginError("Введите логин и пароль");
+                if (questionSets.length === 0) {
+                    questionSetsList.innerHTML = '<p>Нет созданных наборов вопросов</p>';
                     return;
                 }
-
-                try {
-                    const users = await loadUsers();
-                    const user = users.find(u => u.username === username && u.password === password);
-                    
-                    if (user) {
-                        currentUser = user;
-                        currentUserSpan.textContent = user.username;
-                        loginError.classList.add('hidden');
-                        loginSection.classList.add('hidden');
-                        testSection.classList.remove('test-section');
-                        initTest();
-                    } else {
-                        showLoginError("Неверный логин или пароль");
-                    }
-                } catch (error) {
-                    showLoginError("Ошибка при входе в систему");
-                    console.error('Ошибка входа:', error);
-                }
-            }
-
-            async function handleAdminLogin() {
-                const username = adminUsername.value.trim();
-                const password = adminPassword.value.trim();
                 
-                if (username === adminCredentials.username && password === adminCredentials.password) {
-                    adminLoginError.classList.add('hidden');
-                    adminLogin.classList.add('hidden');
-                    adminContent.classList.remove('hidden');
-                    initAdminPanel();
-                } else {
-                    adminLoginError.classList.remove('hidden');
-                }
-            }
-
-            function showLoginError(message) {
-                loginError.textContent = message;
-                loginError.classList.remove('hidden');
-            }
-
-            function resetLoginForm() {
-                usernameInput.value = '';
-                passwordInput.value = '';
-                loginError.classList.add('hidden');
-            }
-
-            // Инициализация админ-панели
-            async function initAdminPanel() {
-                try {
-                    await loadAdminData();
-                    setupAdminEventListeners();
-                } catch (error) {
-                    console.error('❌ Ошибка инициализации админ-панели:', error);
-                }
-            }
-
-            async function loadAdminData() {
-                const [users, questionSets, assignments, settings] = await Promise.all([
-                    loadUsers(),
-                    loadQuestionSets(),
-                    loadAssignments(),
-                    loadSettings()
-                ]);
-
-                // Настройки
-                totalTime = settings.totalTime * 60;
-                totalTimeInput.value = settings.totalTime;
-                defaultTimeInput.value = settings.defaultTime;
-
-                // Пользователи
-                renderUsersList(users);
-                renderUserSelect(users);
-
-                // Наборы вопросов
-                renderQuestionSets(questionSets);
-                renderQuestionSetSelect(questionSets);
-                renderAssignmentQuestionSetSelect(questionSets);
-
-                // Назначения
-                renderAssignmentsList(assignments, users, questionSets);
-            }
-
-            function setupAdminEventListeners() {
-                // Вкладки
-                tabs.forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        const tabId = this.getAttribute('data-tab');
-                        tabs.forEach(t => t.classList.remove('active'));
-                        this.classList.add('active');
-                        tabContents.forEach(content => {
-                            content.classList.remove('active');
-                            if (content.id === `${tabId}-tab`) {
-                                content.classList.add('active');
-                            }
-                        });
-                    });
-                });
-
-                // Управление пользователями
-                addUserBtn.addEventListener('click', handleAddUser);
-
-                // Управление вопросами
-                addQuestionSetBtn.addEventListener('click', handleAddQuestionSet);
-                questionSetsSelect.addEventListener('change', handleQuestionSetChange);
-                addQuestionBtn.addEventListener('click', handleAddQuestion);
-
-                // Назначение тестов
-                assignTestBtn.addEventListener('click', handleAssignTest);
-
-                // Настройки
-                saveSettingsBtn.addEventListener('click', handleSaveSettings);
-            }
-
-            async function handleAddUser() {
-                const login = newUserLogin.value.trim();
-                const password = newUserPassword.value.trim();
-                
-                if (!login || !password) {
-                    showUserAddError("Введите логин и пароль");
-                    return;
-                }
-
-                try {
-                    const users = await loadUsers();
-                    const existingUser = users.find(u => u.username === login);
-                    
-                    if (existingUser) {
-                        showUserAddError("Пользователь с таким логином уже существует");
-                        return;
-                    }
-
-                    const newUser = {
-                        username: login,
-                        password: password,
-                        role: 'user',
-                        createdAt: new Date().toISOString()
-                    };
-
-                    await saveUser(newUser);
-                    
-                    userAddSuccess.classList.remove('hidden');
-                    userAddError.classList.add('hidden');
-                    newUserLogin.value = '';
-                    newUserPassword.value = '';
-                    
-                    // Обновляем список пользователей
-                    const updatedUsers = await loadUsers();
-                    renderUsersList(updatedUsers);
-                    renderUserSelect(updatedUsers);
-                    
-                    setTimeout(() => {
-                        userAddSuccess.classList.add('hidden');
-                    }, 3000);
-                    
-                } catch (error) {
-                    showUserAddError("Ошибка при создании пользователя");
-                    console.error('Ошибка создания пользователя:', error);
-                }
-            }
-
-            async function handleAddQuestionSet() {
-                const name = questionSetName.value.trim();
-                
-                if (!name) {
-                    alert("Введите название набора вопросов");
-                    return;
-                }
-
-                try {
-                    const questionSets = await loadQuestionSets();
-                    const existingSet = questionSets.find(qs => qs.name === name);
-                    
-                    if (existingSet) {
-                        alert("Набор с таким названием уже существует");
-                        return;
-                    }
-
-                    const newQuestionSet = {
-                        name: name,
-                        questions: [],
-                        createdAt: new Date().toISOString()
-                    };
-
-                    await saveQuestionSet(newQuestionSet);
-                    questionSetName.value = '';
-                    
-                    // Обновляем список наборов
-                    const updatedQuestionSets = await loadQuestionSets();
-                    renderQuestionSets(updatedQuestionSets);
-                    renderQuestionSetSelect(updatedQuestionSets);
-                    renderAssignmentQuestionSetSelect(updatedQuestionSets);
-                    
-                    alert("Набор вопросов успешно создан");
-                    
-                } catch (error) {
-                    alert("Ошибка при создании набора вопросов");
-                    console.error('Ошибка создания набора:', error);
-                }
-            }
-
-            async function handleQuestionSetChange() {
-                const questionSetId = questionSetsSelect.value;
-                
-                if (!questionSetId) {
-                    questionsList.innerHTML = '';
-                    return;
-                }
-
-                try {
-                    const questionSets = await loadQuestionSets();
-                    const selectedSet = questionSets.find(qs => qs.id === questionSetId);
-                    
-                    if (selectedSet) {
-                        renderQuestionsList(selectedSet.questions, selectedSet.id);
-                    }
-                } catch (error) {
-                    console.error('Ошибка загрузки набора вопросов:', error);
-                }
-            }
-
-            async function handleAddQuestion() {
-                const questionSetId = questionSetsSelect.value;
-                
-                if (!questionSetId) {
-                    alert("Сначала выберите набор вопросов");
-                    return;
-                }
-
-                // Здесь должна быть логика добавления нового вопроса
-                // Для простоты добавим вопрос по умолчанию
-                try {
-                    const questionSets = await loadQuestionSets();
-                    const selectedSet = questionSets.find(qs => qs.id === questionSetId);
-                    
-                    if (selectedSet) {
-                        const newQuestion = {
-                            id: 'q_' + Date.now(),
-                            question: "Новый вопрос",
-                            options: ["Вариант 1", "Вариант 2", "Вариант 3", "Вариант 4"],
-                            correct: 0,
-                            time: parseInt(defaultTimeInput.value) || 60
-                        };
-                        
-                        selectedSet.questions.push(newQuestion);
-                        await saveQuestionSet(selectedSet);
-                        
-                        renderQuestionsList(selectedSet.questions, selectedSet.id);
-                        alert("Вопрос добавлен в набор");
-                    }
-                } catch (error) {
-                    alert("Ошибка при добавлении вопроса");
-                    console.error('Ошибка добавления вопроса:', error);
-                }
-            }
-
-            async function handleAssignTest() {
-                const userId = assignUserSelect.value;
-                const questionSetId = assignQuestionSetSelect.value;
-                
-                if (!userId || !questionSetId) {
-                    alert("Выберите пользователя и набор вопросов");
-                    return;
-                }
-
-                try {
-                    const [users, questionSets] = await Promise.all([
-                        loadUsers(),
-                        loadQuestionSets()
-                    ]);
-                    
-                    const user = users.find(u => u.id === userId);
-                    const questionSet = questionSets.find(qs => qs.id === questionSetId);
-                    
-                    if (!user || !questionSet) {
-                        alert("Ошибка: пользователь или набор вопросов не найден");
-                        return;
-                    }
-
-                    const assignment = {
-                        userId: userId,
-                        userName: user.username,
-                        questionSetId: questionSetId,
-                        questionSetName: questionSet.name,
-                        assignedAt: new Date().toISOString(),
-                        completed: false
-                    };
-
-                    await saveAssignment(assignment);
-                    
-                    // Обновляем список назначений
-                    const assignments = await loadAssignments();
-                    renderAssignmentsList(assignments, users, questionSets);
-                    
-                    alert(`Тест назначен пользователю ${user.username}`);
-                    
-                } catch (error) {
-                    alert("Ошибка при назначении теста");
-                    console.error('Ошибка назначения теста:', error);
-                }
-            }
-
-            async function handleSaveSettings() {
-                const totalTimeMinutes = parseInt(totalTimeInput.value);
-                const defaultTimeSeconds = parseInt(defaultTimeInput.value);
-                
-                if (!totalTimeMinutes || !defaultTimeSeconds) {
-                    alert("Введите корректные значения времени");
-                    return;
-                }
-
-                try {
-                    const settings = {
-                        totalTime: totalTimeMinutes,
-                        defaultTime: defaultTimeSeconds
-                    };
-
-                    await saveSettings(settings);
-                    totalTime = totalTimeMinutes * 60;
-                    
-                    alert("Настройки успешно сохранены");
-                    
-                } catch (error) {
-                    alert("Ошибка при сохранении настроек");
-                    console.error('Ошибка сохранения настроек:', error);
-                }
-            }
-
-            function showUserAddError(message) {
-                userAddError.textContent = message;
-                userAddError.classList.remove('hidden');
-                userAddSuccess.classList.add('hidden');
-            }
-
-            // Функции рендеринга для админ-панели
-            function renderUsersList(users) {
-                usersList.innerHTML = '';
-                
-                users.forEach(user => {
-                    const userItem = document.createElement('div');
-                    userItem.className = 'user-item';
-                    
-                    userItem.innerHTML = `
-                        <div class="user-header">
+                questionSets.forEach(questionSet => {
+                    const questionSetItem = document.createElement('div');
+                    questionSetItem.className = 'question-set-item';
+                    questionSetItem.innerHTML = `
+                        <div class="question-set-header">
                             <div>
-                                <h3>${user.username}</h3>
-                                <span class="user-role ${user.role === 'admin' ? 'role-admin' : 'role-user'}">
-                                    ${user.role === 'admin' ? 'Администратор' : 'Пользователь'}
-                                </span>
+                                <h3>${questionSet.name}</h3>
+                                <div class="question-count">Вопросов: ${questionSet.questions ? questionSet.questions.length : 0}</div>
                             </div>
-                            <div class="user-actions">
-                                ${user.role !== 'admin' ? `
-                                    <button class="btn btn-danger delete-user" data-id="${user.id}">Удалить</button>
-                                ` : ''}
+                            <div class="question-set-actions">
+                                <button class="btn btn-warning edit-question-set" data-id="${questionSet.id}">Редактировать</button>
+                                <button class="btn btn-danger delete-question-set" data-id="${questionSet.id}">Удалить</button>
                             </div>
                         </div>
-                        <div class="user-info">
-                            <div class="user-stats">
-                                Создан: ${new Date(user.createdAt).toLocaleDateString()}
-                            </div>
+                        <div class="question-set-info">
+                            <small>Создан: ${new Date(questionSet.createdAt).toLocaleDateString()}</small>
                         </div>
                     `;
                     
-                    usersList.appendChild(userItem);
+                    questionSetsList.appendChild(questionSetItem);
                 });
 
-                // Обработчики для кнопок удаления
-                document.querySelectorAll('.delete-user').forEach(btn => {
-                    btn.addEventListener('click', async function() {
-                        const userId = this.getAttribute('data-id');
-                        if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-                            // Логика удаления пользователя
-                            try {
-                                const users = await loadUsers();
-                                const updatedUsers = users.filter(u => u.id !== userId);
-                                // Сохраняем обновленный список
-                                localStorage.setItem('medicalTestUsers', JSON.stringify(updatedUsers));
-                                renderUsersList(updatedUsers);
-                                renderUserSelect(updatedUsers);
-                            } catch (error) {
-                                console.error('Ошибка удаления пользователя:', error);
-                            }
-                        }
-                    });
-                });
-            }
-
-            function renderUserSelect(users) {
-                assignUserSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
-                
-                users.filter(user => user.role === 'user').forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = user.username;
-                    assignUserSelect.appendChild(option);
-                });
-            }
-
-            function renderQuestionSets(questionSets) {
-                // Для простоты показываем только список
-                // В реальном приложении здесь должен быть полноценный интерфейс
-            }
-
-            function renderQuestionSetSelect(questionSets) {
-                questionSetsSelect.innerHTML = '<option value="">-- Выберите набор --</option>';
-                
-                questionSets.forEach(qs => {
-                    const option = document.createElement('option');
-                    option.value = qs.id;
-                    option.textContent = qs.name;
-                    questionSetsSelect.appendChild(option);
-                });
-            }
-
-            function renderAssignmentQuestionSetSelect(questionSets) {
-                assignQuestionSetSelect.innerHTML = '<option value="">-- Выберите набор --</option>';
-                
-                questionSets.forEach(qs => {
-                    const option = document.createElement('option');
-                    option.value = qs.id;
-                    option.textContent = qs.name;
-                    assignQuestionSetSelect.appendChild(option);
-                });
-            }
-
-            function renderQuestionsList(questions, questionSetId) {
-                questionsList.innerHTML = '';
-                
-                if (!questions || questions.length === 0) {
-                    questionsList.innerHTML = '<p>В этом наборе пока нет вопросов</p>';
-                    return;
-                }
-                
-                questions.forEach((question, index) => {
-                    const questionItem = document.createElement('div');
-                    questionItem.className = 'question-item';
-                    questionItem.innerHTML = `
-                        <div class="question-header">
-                            <h3>Вопрос ${index + 1} (Время: ${question.time} сек.)</h3>
-                            <div class="question-actions">
-                                <button class="btn btn-secondary edit-question" data-id="${question.id}">Редактировать</button>
-                                <button class="btn btn-danger delete-question" data-id="${question.id}">Удалить</button>
-                            </div>
-                        </div>
-                        <p>${question.question}</p>
-                        <div class="options">
-                            ${question.options.map((option, optIndex) => `
-                                <div>${optIndex + 1}. ${option} ${optIndex === question.correct ? '(правильный)' : ''}</div>
-                            `).join('')}
-                        </div>
-                    `;
-                    
-                    questionsList.appendChild(questionItem);
-                });
-
-                // Обработчики для кнопок редактирования и удаления
-                document.querySelectorAll('.edit-question').forEach(btn => {
+                // Обработчики для кнопок редактирования наборов
+                document.querySelectorAll('.edit-question-set').forEach(btn => {
                     btn.addEventListener('click', function() {
-                        const questionId = this.getAttribute('data-id');
-                        // Логика редактирования вопроса
-                        alert('Редактирование вопроса (функциональность в разработке)');
+                        const questionSetId = this.getAttribute('data-id');
+                        openQuestionSetEditor(questionSetId);
                     });
                 });
-                
-                document.querySelectorAll('.delete-question').forEach(btn => {
+
+                // Обработчики для кнопок удаления наборов
+                document.querySelectorAll('.delete-question-set').forEach(btn => {
                     btn.addEventListener('click', async function() {
-                        const questionId = this.getAttribute('data-id');
-                        if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
-                            // Логика удаления вопроса
+                        const questionSetId = this.getAttribute('data-id');
+                        if (confirm('Вы уверены, что хотите удалить этот набор вопросов?')) {
                             try {
                                 const questionSets = await loadQuestionSets();
-                                const selectedSet = questionSets.find(qs => qs.id === questionSetId);
+                                const updatedQuestionSets = questionSets.filter(qs => qs.id !== questionSetId);
+                                localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedQuestionSets));
                                 
-                                if (selectedSet) {
-                                    selectedSet.questions = selectedSet.questions.filter(q => q.id !== questionId);
-                                    await saveQuestionSet(selectedSet);
-                                    renderQuestionsList(selectedSet.questions, questionSetId);
-                                }
+                                // Обновляем списки
+                                renderQuestionSetsList(updatedQuestionSets);
+                                renderAssignmentQuestionSetSelect(updatedQuestionSets);
+                                
+                                alert("Набор вопросов удален");
                             } catch (error) {
-                                console.error('Ошибка удаления вопроса:', error);
+                                console.error('Ошибка удаления набора:', error);
+                                alert("Ошибка при удалении набора вопросов");
                             }
                         }
                     });
                 });
             }
 
-            function renderAssignmentsList(assignments, users, questionSets) {
-                assignmentsList.innerHTML = '';
-                
-                if (assignments.length === 0) {
-                    assignmentsList.innerHTML = '<p>Нет назначенных тестов</p>';
-                    return;
-                }
-                
-                assignments.forEach(assignment => {
-                    const assignmentItem = document.createElement('div');
-                    assignmentItem.className = 'assignment-item';
+            // НОВАЯ ФУНКЦИЯ: Редактор набора вопросов
+            async function openQuestionSetEditor(questionSetId) {
+                try {
+                    const questionSets = await loadQuestionSets();
+                    const questionSet = questionSets.find(qs => qs.id === questionSetId);
                     
-                    assignmentItem.innerHTML = `
-                        <div>
-                            <strong>${assignment.userName}</strong> - ${assignment.questionSetName}
-                        </div>
-                        <div>
-                            <small>Назначен: ${new Date(assignment.assignedAt).toLocaleDateString()}</small>
-                            <button class="btn btn-danger btn-sm delete-assignment" data-id="${assignment.id}">Удалить</button>
+                    if (!questionSet) {
+                        alert("Набор вопросов не найден");
+                        return;
+                    }
+
+                    // Создаем модальное окно редактора
+                    const editorModal = document.createElement('div');
+                    editorModal.style.position = 'fixed';
+                    editorModal.style.top = '0';
+                    editorModal.style.left = '0';
+                    editorModal.style.width = '100%';
+                    editorModal.style.height = '100%';
+                    editorModal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                    editorModal.style.display = 'flex';
+                    editorModal.style.justifyContent = 'center';
+                    editorModal.style.alignItems = 'center';
+                    editorModal.style.zIndex = '1000';
+                    
+                    editorModal.innerHTML = `
+                        <div class="card" style="max-width: 800px; max-height: 90vh; overflow-y: auto; margin: 20px;">
+                            <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 20px;">
+                                <h2>Редактирование набора: ${questionSet.name}</h2>
+                                <button class="btn btn-danger close-editor">Закрыть</button>
+                            </div>
+                            
+                            <div class="form-group">
+                                <h3>Добавить новый вопрос</h3>
+                                <div class="card" style="background-color: #f8f9fa; padding: 20px;">
+                                    <div class="form-group">
+                                        <label>Текст вопроса</label>
+                                        <textarea id="new-question-text" placeholder="Введите текст вопроса" style="height: 80px;"></textarea>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label>Варианты ответов</label>
+                                        <div id="new-question-options">
+                                            <div class="option-input">
+                                                <input type="text" class="new-option" placeholder="Вариант 1" value="">
+                                            </div>
+                                            <div class="option-input">
+                                                <input type="text" class="new-option" placeholder="Вариант 2" value="">
+                                            </div>
+                                            <div class="option-input">
+                                                <input type="text" class="new-option" placeholder="Вариант 3" value="">
+                                            </div>
+                                            <div class="option-input">
+                                                <input type="text" class="new-option" placeholder="Вариант 4" value="">
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm btn-secondary" id="add-option" style="margin-top: 10px;">+ Добавить вариант</button>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <div class="correct-option">
+                                            <label>Правильный ответ:</label>
+                                            <select id="new-question-correct">
+                                                <option value="0">Вариант 1</option>
+                                                <option value="1">Вариант 2</option>
+                                                <option value="2">Вариант 3</option>
+                                                <option value="3">Вариант 4</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <div class="time-setting">
+                                            <label>Время на вопрос (секунды):</label>
+                                            <input type="number" id="new-question-time" min="10" value="60">
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-success" id="save-new-question">Добавить вопрос в набор</button>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <h3>Вопросы в наборе (${questionSet.questions ? questionSet.questions.length : 0})</h3>
+                                <div id="editor-questions-list">
+                                    <!-- Вопросы будут отображены здесь -->
+                                </div>
+                            </div>
                         </div>
                     `;
                     
-                    assignmentsList.appendChild(assignmentItem);
-                });
-
-                // Обработчики для кнопок удаления назначений
-                document.querySelectorAll('.delete-assignment').forEach(btn => {
-                    btn.addEventListener('click', async function() {
-                        const assignmentId = this.getAttribute('data-id');
-                        if (confirm('Вы уверены, что хотите удалить это назначение?')) {
-                            try {
-                                const assignments = await loadAssignments();
-                                const updatedAssignments = assignments.filter(a => a.id !== assignmentId);
-                                localStorage.setItem('medicalTestAssignments', JSON.stringify(updatedAssignments));
-                                renderAssignmentsList(updatedAssignments, users, questionSets);
-                            } catch (error) {
-                                console.error('Ошибка удаления назначения:', error);
-                            }
-                        }
-                    });
-                });
-            }
-
-            // Инициализация теста для пользователя
-            async function initTest() {
-                try {
-                    // Загружаем назначенные тесты для пользователя
-                    const assignments = await loadAssignments();
-                    const userAssignments = assignments.filter(a => a.userId === currentUser.id && !a.completed);
+                    document.body.appendChild(editorModal);
                     
-                    if (userAssignments.length === 0) {
-                        alert("Вам не назначено ни одного теста. Обратитесь к администратору.");
-                        testSection.classList.add('test-section');
-                        loginSection.classList.remove('hidden');
-                        return;
-                    }
-
-                    // Берем первый назначенный тест
-                    const assignment = userAssignments[0];
-                    const questionSets = await loadQuestionSets();
-                    currentQuestionSet = questionSets.find(qs => qs.id === assignment.questionSetId);
+                    // Инициализируем редактор
+                    initQuestionSetEditor(questionSet, editorModal);
                     
-                    if (!currentQuestionSet || !currentQuestionSet.questions || currentQuestionSet.questions.length === 0) {
-                        alert("Ошибка: набор вопросов не найден или пуст");
-                        return;
-                    }
-
-                    questions = currentQuestionSet.questions;
-                    
-                    questionsContainer.innerHTML = '';
-                    userAnswers = [];
-                    currentQuestionIndex = 0;
-                    questionTimers = [];
-                    
-                    questions.forEach(question => {
-                        questionTimers.push({
-                            timeLeft: question.time,
-                            timer: null
-                        });
-                    });
-                    
-                    showQuestion(currentQuestionIndex);
-                    startTotalTimer();
                 } catch (error) {
-                    console.error('Error initializing test:', error);
-                    alert("Ошибка при загрузке теста");
+                    console.error('Ошибка открытия редактора:', error);
+                    alert("Ошибка при открытии редактора вопросов");
                 }
             }
 
-            // [ОСТАВШИЕСЯ ФУНКЦИИ ДЛЯ ТЕСТА ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ]
-            // showQuestion, startTotalTimer, startQuestionTimer, updateTimerDisplay,
-            // updateQuestionTimerDisplay, nextQuestion, prevQuestion, timeExpired,
-            // formatTime, showDetailedResults, submitTest
+            // Инициализация редактора набора вопросов
+            function initQuestionSetEditor(questionSet, editorModal) {
+                // Отображаем существующие вопросы
+                renderEditorQuestionsList(questionSet.questions || [], questionSet.id);
+                
+                // Обработчик закрытия редактора
+                editorModal.querySelector('.close-editor').addEventListener('click', function() {
+                    document.body.removeChild(editorModal);
+                });
+                
+                // Обработчик добавления варианта ответа
+                editorModal.querySelector('#add-option').addEventListener('click', function() {
+                    const optionsContainer = editorModal.querySelector('#new-question-options');
+                    const optionCount = optionsContainer.children.length;
+                    const optionInput = document.createElement('div');
+                    optionInput.className = 'option-input';
+                    optionInput.innerHTML = `
+                        <input type="text" class="new-option" placeholder="Вариант ${optionCount + 1}" value="">
+                        <button class="btn btn-sm btn-danger remove-option">×</button>
+                    `;
+                    optionsContainer.appendChild(optionInput);
+                    
+                    // Обновляем селект правильного ответа
+                    updateCorrectOptionsSelect(editorModal);
+                    
+                    // Обработчик удаления варианта
+                    optionInput.querySelector('.remove-option').addEventListener('click', function() {
+                        optionsContainer.removeChild(optionInput);
+                        updateCorrectOptionsSelect(editorModal);
+                    });
+                });
+                
+                // Обработчик сохранения нового вопроса
+                editorModal.querySelector('#save-new-question').addEventListener('click', async function() {
+                    await saveNewQuestion(questionSet, editorModal);
+                });
+                
+                // Обработчики удаления вариантов по умолчанию
+                editorModal.querySelectorAll('.remove-option').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const optionInput = this.parentElement;
+                        const optionsContainer = editorModal.querySelector('#new-question-options');
+                        optionsContainer.removeChild(optionInput);
+                        updateCorrectOptionsSelect(editorModal);
+                    });
+                });
+            }
 
-            // ЗАПУСК ПРИЛОЖЕНИЯ
-            setupEventListeners();
-            console.log("🚀 Приложение запущено");
+            // Обновление селекта правильных ответов
+            function updateCorrectOptionsSelect(editorModal) {
+                const optionsContainer = editorModal.querySelector('#new-question-options');
+                const correctSelect = editorModal.querySelector('#new-question-correct');
+                const optionCount = optionsContainer.children.length;
+                
+                correctSelect.innerHTML = '';
+                for (let i = 0; i < optionCount; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `Вариант ${i + 1}`;
+                    correctSelect.appendChild(option);
+                }
+            }
 
-            // Инициализируем начальное состояние
-            resetLoginForm();
-        });
-    </script>
-</body>
-</html>
+            // Сохранение нового вопроса
+            async function saveNewQuestion(questionSet, editorModal) {
+                const questionText = editorModal.querySelector('#new-question-text').value.trim();
+                const questionTime = parseInt(editorModal.querySelector('#new-question-time').value);
+                const correctAnswer = parseInt(editorModal.querySelector('#new-question-correct').value);
+                
+                // Собираем варианты ответов
+                const optionInputs = editorModal.querySelectorAll('.new-option');
+                const options = Array.from(optionInputs).map(input => input.value.trim()).filter(opt => opt !== '');
+                
+                if (!questionText) {
+                    alert("Введите текст вопроса");
+                    return;
+                }
+                
+                if (options.length < 2) {
+                    alert("Добавьте хотя бы 2 варианта ответа");
+                    return;
+                }
+                
+                if (correctAnswer >= options.length) {
+                    alert("Выберите правильный вариант ответа");
+                    return;
+                }
+                
+                if (!questionTime || questionTime < 10) {
+                    alert("Укажите корректное время на вопрос (минимум 10 секунд)");
+                    return;
+                }
+                
+                try {
+                    const newQuestion = {
+                        id: 'q_' + Date.now(),
+                        question: questionText,
+                        options: options,
+                        correct: correctAnswer,
+                        time: questionTime
+                    };
+                    
+                    if (!questionSet.questions) {
+                        questionSet.questions = [];
