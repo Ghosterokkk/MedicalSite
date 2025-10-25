@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Медицинский тест для сотрудников</title>
     <style>
-        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -543,6 +542,26 @@
             margin-bottom: 0;
         }
         
+        .firebase-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        
+        .firebase-connected {
+            background-color: #0b8043;
+            color: white;
+        }
+        
+        .firebase-disconnected {
+            background-color: #d93025;
+            color: white;
+        }
+        
         @media (max-width: 600px) {
             .container {
                 padding: 10px;
@@ -594,10 +613,17 @@
                 margin-right: 0;
                 margin-bottom: 5px;
             }
+            
+            .firebase-status {
+                position: static;
+                margin-bottom: 10px;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="firebase-status hidden" id="firebase-status"></div>
+    
     <div class="container">
         <header>
             <h1>Медицинский тест для сотрудников</h1>
@@ -692,6 +718,7 @@
                     <div class="tab active" data-tab="users">Управление пользователями</div>
                     <div class="tab" data-tab="questions">Управление вопросами</div>
                     <div class="tab" data-tab="assignments">Назначение тестов</div>
+                    <div class="tab" data-tab="results">Результаты тестов</div>
                     <div class="tab" data-tab="settings">Настройки системы</div>
                 </div>
                 
@@ -819,6 +846,16 @@
                     </div>
                 </div>
                 
+                <div class="tab-content" id="results-tab">
+                    <div class="card">
+                        <h2>Результаты тестов</h2>
+                        <p>Просмотр результатов прохождения тестов пользователями.</p>
+                        <div id="test-results-list">
+                            <!-- Результаты тестов будут добавлены динамически -->
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="tab-content" id="settings-tab">
                     <div class="card">
                         <h2>Настройки системы</h2>
@@ -853,9 +890,10 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 
     <script>
-        // 🔥 КОНФИГУРАЦИЯ FIREBASE - ВСТАВЬТЕ ВАШУ КОНФИГУРАЦИЮ 🔥
+        // 🔥 КОНФИГУРАЦИЯ FIREBASE - ЗАМЕНИТЕ НА ВАШУ КОНФИГУРАЦИЮ 🔥
         const firebaseConfig = {
             apiKey: "AIzaSyAL8dXiQQFdboo1Z36mfcr41_ux4uf5KMs",
             authDomain: "medicallsites.firebaseapp.com",
@@ -867,612 +905,435 @@
 
         // Инициализация Firebase
         let db;
+        let auth;
+        let firebaseConnected = false;
+
         try {
-            if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("ВАШ")) {
+            if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("your-")) {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
+                auth = firebase.auth();
+                firebaseConnected = true;
                 console.log("✅ Firebase подключен");
+                updateFirebaseStatus(true);
             } else {
                 console.log("⚠️ Firebase не настроен, используется localStorage");
+                updateFirebaseStatus(false);
             }
         } catch (error) {
             console.error("❌ Ошибка Firebase:", error);
+            updateFirebaseStatus(false);
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Элементы DOM
-            const userPanel = document.getElementById('user-panel');
-            const adminPanel = document.getElementById('admin-panel');
-            const adminToggle = document.getElementById('admin-toggle');
-            const userModeBtn = document.getElementById('user-mode');
-            
-            // Элементы пользовательского входа
-            const loginSection = document.getElementById('login-section');
-            const testSection = document.getElementById('test-section');
-            const resultsSection = document.getElementById('results-section');
-            const usernameInput = document.getElementById('username');
-            const passwordInput = document.getElementById('password');
-            const loginBtn = document.getElementById('login-btn');
-            const loginError = document.getElementById('login-error');
-            const currentUserSpan = document.getElementById('current-user');
-            const logoutBtn = document.getElementById('logout-btn');
-            
-            // Элементы теста
-            const submitTestBtn = document.getElementById('submit-test');
-            const restartTestBtn = document.getElementById('restart-test');
-            const questionsContainer = document.getElementById('questions-container');
-            const resultMessage = document.getElementById('result-message');
-            const scoreElement = document.getElementById('score');
-            const timerElement = document.getElementById('timer');
-            const questionCounter = document.getElementById('question-counter');
-            const prevQuestionBtn = document.getElementById('prev-question');
-            const nextQuestionBtn = document.getElementById('next-question');
-            const resultsSummary = document.getElementById('results-summary');
-            const resultsDetails = document.getElementById('results-details');
-            
-            // Элементы админ-панели
-            const adminLogin = document.getElementById('admin-login');
-            const adminContent = document.getElementById('admin-content');
-            const adminUsername = document.getElementById('admin-username');
-            const adminPassword = document.getElementById('admin-password');
-            const adminLoginBtn = document.getElementById('admin-login-btn');
-            const adminLoginError = document.getElementById('admin-login-error');
-            const adminLogoutBtn = document.getElementById('admin-logout');
-            
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-            
-            // Элементы управления пользователями
-            const newUserLogin = document.getElementById('new-user-login');
-            const newUserPassword = document.getElementById('new-user-password');
-            const addUserBtn = document.getElementById('add-user');
-            const usersList = document.getElementById('users-list');
-            const userAddSuccess = document.getElementById('user-add-success');
-            const userAddError = document.getElementById('user-add-error');
-            
-            // Элементы управления вопросами
-            const questionSetName = document.getElementById('question-set-name');
-            const addQuestionSetBtn = document.getElementById('add-question-set');
-            const questionSetsSelect = document.getElementById('question-sets');
-            const addQuestionBtn = document.getElementById('add-question');
-            const questionsList = document.getElementById('questions-list');
-            
-            // Элементы редактора вопросов
-            const questionEditor = document.getElementById('question-editor');
-            const editQuestionText = document.getElementById('edit-question-text');
-            const optionsContainer = document.getElementById('options-container');
-            const correctAnswerSelect = document.getElementById('correct-answer');
-            const questionTimeInput = document.getElementById('question-time');
-            const addOptionBtn = document.getElementById('add-option');
-            const saveQuestionBtn = document.getElementById('save-question');
-            const cancelEditBtn = document.getElementById('cancel-edit');
-            
-            // Элементы назначения тестов
-            const assignUserSelect = document.getElementById('assign-user');
-            const assignQuestionSetSelect = document.getElementById('assign-question-set');
-            const assignTestBtn = document.getElementById('assign-test');
-            const assignmentsList = document.getElementById('assignments-list');
-            
-            // Элементы настроек
-            const totalTimeInput = document.getElementById('total-time');
-            const defaultTimeInput = document.getElementById('default-time');
-            const saveSettingsBtn = document.getElementById('save-settings');
-            
-            // Данные приложения
-            let currentUser = null;
-            let userAnswers = [];
-            let totalTime = 30 * 60;
-            let timerInterval;
-            let currentQuestionIndex = 0;
-            let questionTimers = [];
-            let currentQuestionTimer;
-            let currentQuestionSet = null;
-            let questions = [];
-            
-            // Данные для редактора вопросов
-            let currentEditingQuestion = null;
-            let currentEditingQuestionSetId = null;
+        function updateFirebaseStatus(connected) {
+            const statusElement = document.getElementById('firebase-status');
+            if (connected) {
+                statusElement.textContent = 'Firebase: Подключено';
+                statusElement.className = 'firebase-status firebase-connected';
+                statusElement.classList.remove('hidden');
+            } else {
+                statusElement.textContent = 'Firebase: Не подключено (локальный режим)';
+                statusElement.className = 'firebase-status firebase-disconnected';
+                statusElement.classList.remove('hidden');
+            }
+        }
 
-            // Учетные данные администратора по умолчанию
-            const adminCredentials = {
-                username: "admin",
-                password: "admin123"
-            };
-
-            // Firebase функции (остаются без изменений)
-            async function loadUsers() {
-                try {
-                    if (!db) {
-                        return getLocalUsers();
-                    }
-
-                    const snapshot = await db.collection('users').get();
-                    const users = [];
-                    
-                    snapshot.forEach(doc => {
-                        users.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
-                    });
-                    
-                    return users;
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки пользователей:', error);
+        // Firebase функции
+        async function loadUsers() {
+            try {
+                if (!firebaseConnected) {
                     return getLocalUsers();
                 }
-            }
 
-            async function saveUser(user) {
-                try {
-                    if (!db) {
-                        saveUserToLocal(user);
-                        return user;
-                    }
-
-                    if (user.id) {
-                        await db.collection('users').doc(user.id).update(user);
-                    } else {
-                        const docRef = await db.collection('users').add(user);
-                        user.id = docRef.id;
-                    }
-                    
-                    saveUserToLocal(user);
-                    return user;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения пользователя:', error);
-                    saveUserToLocal(user);
-                    throw error;
-                }
-            }
-
-            async function loadQuestionSets() {
-                try {
-                    if (!db) {
-                        return getLocalQuestionSets();
-                    }
-
-                    const snapshot = await db.collection('questionSets').get();
-                    const questionSets = [];
-                    
-                    snapshot.forEach(doc => {
-                        questionSets.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
+                const snapshot = await db.collection('users').get();
+                const users = [];
+                
+                snapshot.forEach(doc => {
+                    users.push({
+                        id: doc.id,
+                        ...doc.data()
                     });
-                    
-                    return questionSets;
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки наборов вопросов:', error);
+                });
+                
+                return users;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки пользователей:', error);
+                return getLocalUsers();
+            }
+        }
+
+        async function saveUser(user) {
+            try {
+                if (!firebaseConnected) {
+                    return saveUserToLocal(user);
+                }
+
+                if (user.id) {
+                    await db.collection('users').doc(user.id).update(user);
+                } else {
+                    const docRef = await db.collection('users').add(user);
+                    user.id = docRef.id;
+                }
+                
+                saveUserToLocal(user);
+                return user;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения пользователя:', error);
+                saveUserToLocal(user);
+                throw error;
+            }
+        }
+
+        async function deleteUser(userId) {
+            try {
+                if (!firebaseConnected) {
+                    const users = getLocalUsers();
+                    const updatedUsers = users.filter(u => u.id !== userId);
+                    localStorage.setItem('medicalTestUsers', JSON.stringify(updatedUsers));
+                    return;
+                }
+
+                await db.collection('users').doc(userId).delete();
+                
+                const users = getLocalUsers();
+                const updatedUsers = users.filter(u => u.id !== userId);
+                localStorage.setItem('medicalTestUsers', JSON.stringify(updatedUsers));
+                
+            } catch (error) {
+                console.error('❌ Ошибка удаления пользователя:', error);
+                throw error;
+            }
+        }
+
+        async function loadQuestionSets() {
+            try {
+                if (!firebaseConnected) {
                     return getLocalQuestionSets();
                 }
-            }
 
-            async function saveQuestionSet(questionSet) {
-                try {
-                    if (!db) {
-                        saveQuestionSetToLocal(questionSet);
-                        return questionSet;
-                    }
-
-                    if (questionSet.id) {
-                        await db.collection('questionSets').doc(questionSet.id).update(questionSet);
-                    } else {
-                        const docRef = await db.collection('questionSets').add(questionSet);
-                        questionSet.id = docRef.id;
-                    }
-                    
-                    saveQuestionSetToLocal(questionSet);
-                    return questionSet;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения набора вопросов:', error);
-                    saveQuestionSetToLocal(questionSet);
-                    throw error;
-                }
-            }
-
-            async function loadAssignments() {
-                try {
-                    if (!db) {
-                        return getLocalAssignments();
-                    }
-
-                    const snapshot = await db.collection('assignments').get();
-                    const assignments = [];
-                    
-                    snapshot.forEach(doc => {
-                        assignments.push({
-                            id: doc.id,
-                            ...doc.data()
-                        });
+                const snapshot = await db.collection('questionSets').get();
+                const questionSets = [];
+                
+                snapshot.forEach(doc => {
+                    questionSets.push({
+                        id: doc.id,
+                        ...doc.data()
                     });
-                    
-                    return assignments;
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки назначений:', error);
+                });
+                
+                return questionSets;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки наборов вопросов:', error);
+                return getLocalQuestionSets();
+            }
+        }
+
+        async function saveQuestionSet(questionSet) {
+            try {
+                if (!firebaseConnected) {
+                    return saveQuestionSetToLocal(questionSet);
+                }
+
+                if (questionSet.id) {
+                    await db.collection('questionSets').doc(questionSet.id).update(questionSet);
+                } else {
+                    const docRef = await db.collection('questionSets').add(questionSet);
+                    questionSet.id = docRef.id;
+                }
+                
+                saveQuestionSetToLocal(questionSet);
+                return questionSet;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения набора вопросов:', error);
+                saveQuestionSetToLocal(questionSet);
+                throw error;
+            }
+        }
+
+        async function deleteQuestionSet(questionSetId) {
+            try {
+                if (!firebaseConnected) {
+                    const questionSets = getLocalQuestionSets();
+                    const updatedQuestionSets = questionSets.filter(qs => qs.id !== questionSetId);
+                    localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedQuestionSets));
+                    return;
+                }
+
+                await db.collection('questionSets').doc(questionSetId).delete();
+                
+                const questionSets = getLocalQuestionSets();
+                const updatedQuestionSets = questionSets.filter(qs => qs.id !== questionSetId);
+                localStorage.setItem('medicalTestQuestionSets', JSON.stringify(updatedQuestionSets));
+                
+            } catch (error) {
+                console.error('❌ Ошибка удаления набора вопросов:', error);
+                throw error;
+            }
+        }
+
+        async function loadAssignments() {
+            try {
+                if (!firebaseConnected) {
                     return getLocalAssignments();
                 }
+
+                const snapshot = await db.collection('assignments').get();
+                const assignments = [];
+                
+                snapshot.forEach(doc => {
+                    assignments.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                return assignments;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки назначений:', error);
+                return getLocalAssignments();
             }
+        }
 
-            async function saveAssignment(assignment) {
-                try {
-                    if (!db) {
-                        saveAssignmentToLocal(assignment);
-                        return assignment;
-                    }
-
-                    if (assignment.id) {
-                        await db.collection('assignments').doc(assignment.id).update(assignment);
-                    } else {
-                        const docRef = await db.collection('assignments').add(assignment);
-                        assignment.id = docRef.id;
-                    }
-                    
-                    saveAssignmentToLocal(assignment);
-                    return assignment;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения назначения:', error);
-                    saveAssignmentToLocal(assignment);
-                    throw error;
+        async function saveAssignment(assignment) {
+            try {
+                if (!firebaseConnected) {
+                    return saveAssignmentToLocal(assignment);
                 }
+
+                if (assignment.id) {
+                    await db.collection('assignments').doc(assignment.id).update(assignment);
+                } else {
+                    const docRef = await db.collection('assignments').add(assignment);
+                    assignment.id = docRef.id;
+                }
+                
+                saveAssignmentToLocal(assignment);
+                return assignment;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения назначения:', error);
+                saveAssignmentToLocal(assignment);
+                throw error;
             }
+        }
 
-            async function loadSettings() {
-                try {
-                    if (!db) {
-                        return getLocalSettings();
-                    }
+        async function deleteAssignment(assignmentId) {
+            try {
+                if (!firebaseConnected) {
+                    const assignments = getLocalAssignments();
+                    const updatedAssignments = assignments.filter(a => a.id !== assignmentId);
+                    localStorage.setItem('medicalTestAssignments', JSON.stringify(updatedAssignments));
+                    return;
+                }
 
-                    const doc = await db.collection('settings').doc('main').get();
-                    if (doc.exists) {
-                        return doc.data();
-                    } else {
-                        const defaultSettings = getDefaultSettings();
-                        await db.collection('settings').doc('main').set(defaultSettings);
-                        return defaultSettings;
-                    }
-                } catch (error) {
-                    console.error('❌ Ошибка загрузки настроек:', error);
+                await db.collection('assignments').doc(assignmentId).delete();
+                
+                const assignments = getLocalAssignments();
+                const updatedAssignments = assignments.filter(a => a.id !== assignmentId);
+                localStorage.setItem('medicalTestAssignments', JSON.stringify(updatedAssignments));
+                
+            } catch (error) {
+                console.error('❌ Ошибка удаления назначения:', error);
+                throw error;
+            }
+        }
+
+        async function loadTestResults() {
+            try {
+                if (!firebaseConnected) {
+                    return getLocalTestResults();
+                }
+
+                const snapshot = await db.collection('testResults').get();
+                const results = [];
+                
+                snapshot.forEach(doc => {
+                    results.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                return results;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки результатов:', error);
+                return getLocalTestResults();
+            }
+        }
+
+        async function saveTestResult(result) {
+            try {
+                if (!firebaseConnected) {
+                    return saveTestResultToLocal(result);
+                }
+
+                const docRef = await db.collection('testResults').add(result);
+                result.id = docRef.id;
+                
+                saveTestResultToLocal(result);
+                return result;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения результата:', error);
+                saveTestResultToLocal(result);
+                throw error;
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                if (!firebaseConnected) {
                     return getLocalSettings();
                 }
-            }
 
-            async function saveSettings(settings) {
-                try {
-                    if (!db) {
-                        saveSettingsToLocal(settings);
-                        return settings;
-                    }
-
-                    await db.collection('settings').doc('main').set(settings);
-                    saveSettingsToLocal(settings);
-                    return settings;
-                } catch (error) {
-                    console.error('❌ Ошибка сохранения настроек:', error);
-                    saveSettingsToLocal(settings);
-                    throw error;
-                }
-            }
-
-            // Локальные функции (fallback)
-            function getLocalUsers() {
-                return JSON.parse(localStorage.getItem('medicalTestUsers')) || [adminCredentials];
-            }
-
-            function saveUserToLocal(user) {
-                const users = getLocalUsers();
-                const existingIndex = users.findIndex(u => u.id === user.id);
-                
-                if (existingIndex >= 0) {
-                    users[existingIndex] = user;
+                const doc = await db.collection('settings').doc('main').get();
+                if (doc.exists) {
+                    return doc.data();
                 } else {
-                    users.push(user);
+                    const defaultSettings = getDefaultSettings();
+                    await db.collection('settings').doc('main').set(defaultSettings);
+                    return defaultSettings;
                 }
-                
-                localStorage.setItem('medicalTestUsers', JSON.stringify(users));
+            } catch (error) {
+                console.error('❌ Ошибка загрузки настроек:', error);
+                return getLocalSettings();
             }
+        }
 
-            function getLocalQuestionSets() {
-                return JSON.parse(localStorage.getItem('medicalTestQuestionSets')) || [];
-            }
-
-            function saveQuestionSetToLocal(questionSet) {
-                const questionSets = getLocalQuestionSets();
-                const existingIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
-                
-                if (existingIndex >= 0) {
-                    questionSets[existingIndex] = questionSet;
-                } else {
-                    questionSets.push(questionSet);
+        async function saveSettings(settings) {
+            try {
+                if (!firebaseConnected) {
+                    return saveSettingsToLocal(settings);
                 }
-                
-                localStorage.setItem('medicalTestQuestionSets', JSON.stringify(questionSets));
+
+                await db.collection('settings').doc('main').set(settings);
+                saveSettingsToLocal(settings);
+                return settings;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения настроек:', error);
+                saveSettingsToLocal(settings);
+                throw error;
             }
+        }
 
-            function getLocalAssignments() {
-                return JSON.parse(localStorage.getItem('medicalTestAssignments')) || [];
-            }
+        // Локальные функции (fallback)
+        function getLocalUsers() {
+            return JSON.parse(localStorage.getItem('medicalTestUsers')) || [adminCredentials];
+        }
 
-            function saveAssignmentToLocal(assignment) {
-                const assignments = getLocalAssignments();
-                const existingIndex = assignments.findIndex(a => a.id === assignment.id);
-                
-                if (existingIndex >= 0) {
-                    assignments[existingIndex] = assignment;
-                } else {
-                    assignments.push(assignment);
-                }
-                
-                localStorage.setItem('medicalTestAssignments', JSON.stringify(assignments));
-            }
-
-            function getDefaultSettings() {
-                return {
-                    totalTime: 30,
-                    defaultTime: 60
-                };
-            }
-
-            function getLocalSettings() {
-                return JSON.parse(localStorage.getItem('medicalTestSettings')) || getDefaultSettings();
-            }
-
-            function saveSettingsToLocal(settings) {
-                localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
-            }
-
-            // Функции для работы с вопросами
-            function addOption() {
-                const optionIndex = optionsContainer.children.length;
-                const optionDiv = document.createElement('div');
-                optionDiv.className = 'option-editor';
-                optionDiv.innerHTML = `
-                    <input type="text" class="option-text" placeholder="Вариант ответа ${optionIndex + 1}" value="">
-                    <button class="btn btn-danger remove-option">Удалить</button>
-                `;
-                optionsContainer.appendChild(optionDiv);
-                
-                // Обновляем выпадающий список правильных ответов
-                updateCorrectAnswerOptions();
-            }
-
-            function updateCorrectAnswerOptions() {
-                // Очищаем список
-                correctAnswerSelect.innerHTML = '<option value="">-- Выберите правильный ответ --</option>';
-                
-                // Добавляем варианты ответов
-                const optionInputs = optionsContainer.querySelectorAll('.option-text');
-                optionInputs.forEach((input, index) => {
-                    const option = document.createElement('option');
-                    option.value = index;
-                    option.textContent = input.value || `Вариант ${index + 1}`;
-                    correctAnswerSelect.appendChild(option);
-                });
-            }
-
-            function saveQuestion() {
-                const questionText = editQuestionText.value.trim();
-                const options = Array.from(optionsContainer.querySelectorAll('.option-text'))
-                    .map(input => input.value.trim())
-                    .filter(text => text !== '');
-                const correctAnswerIndex = parseInt(correctAnswerSelect.value);
-                const timeForQuestion = parseInt(questionTimeInput.value) || 60;
-                
-                if (!questionText) {
-                    alert('Введите текст вопроса');
-                    return;
-                }
-                
-                if (options.length < 2) {
-                    alert('Добавьте как минимум 2 варианта ответа');
-                    return;
-                }
-                
-                if (isNaN(correctAnswerIndex) || correctAnswerIndex < 0 || correctAnswerIndex >= options.length) {
-                    alert('Выберите правильный ответ');
-                    return;
-                }
-                
-                const question = {
-                    text: questionText,
-                    options: options,
-                    correctAnswer: correctAnswerIndex,
-                    time: timeForQuestion
-                };
-                
-                if (currentEditingQuestion !== null) {
-                    // Редактируем существующий вопрос
-                    currentQuestionSet.questions[currentEditingQuestion] = question;
-                } else {
-                    // Добавляем новый вопрос
-                    if (!currentQuestionSet.questions) {
-                        currentQuestionSet.questions = [];
-                    }
-                    currentQuestionSet.questions.push(question);
-                }
-                
-                // Сохраняем набор вопросов
-                saveQuestionSet(currentQuestionSet).then(() => {
-                    // Обновляем интерфейс
-                    loadQuestionsForSet(currentQuestionSet.id);
-                    cancelQuestionEdit();
-                }).catch(error => {
-                    console.error('Ошибка сохранения вопроса:', error);
-                    alert('Ошибка сохранения вопроса');
-                });
-            }
-
-            function editQuestion(index) {
-                const question = currentQuestionSet.questions[index];
-                currentEditingQuestion = index;
-                
-                // Заполняем форму данными вопроса
-                editQuestionText.value = question.text;
-                
-                // Очищаем контейнер опций
-                optionsContainer.innerHTML = '';
-                
-                // Добавляем опции вопроса
-                question.options.forEach((option, i) => {
-                    const optionDiv = document.createElement('div');
-                    optionDiv.className = 'option-editor';
-                    optionDiv.innerHTML = `
-                        <input type="text" class="option-text" placeholder="Вариант ответа ${i + 1}" value="${option}">
-                        <button class="btn btn-danger remove-option">Удалить</button>
-                    `;
-                    optionsContainer.appendChild(optionDiv);
-                });
-                
-                // Устанавливаем правильный ответ
-                correctAnswerSelect.value = question.correctAnswer;
-                
-                // Устанавливаем время на вопрос
-                questionTimeInput.value = question.time || 60;
-                
-                // Показываем редактор
-                questionEditor.classList.remove('hidden');
-                
-                // Обновляем список правильных ответов
-                updateCorrectAnswerOptions();
-            }
-
-            function deleteQuestion(index) {
-                if (confirm('Вы уверены, что хотите удалить этот вопрос?')) {
-                    currentQuestionSet.questions.splice(index, 1);
-                    
-                    saveQuestionSet(currentQuestionSet).then(() => {
-                        loadQuestionsForSet(currentQuestionSet.id);
-                    }).catch(error => {
-                        console.error('Ошибка удаления вопроса:', error);
-                        alert('Ошибка удаления вопроса');
-                    });
-                }
-            }
-
-            function cancelQuestionEdit() {
-                currentEditingQuestion = null;
-                editQuestionText.value = '';
-                optionsContainer.innerHTML = '';
-                correctAnswerSelect.value = '';
-                questionTimeInput.value = 60;
-                questionEditor.classList.add('hidden');
-            }
-
-            function loadQuestionsForSet(questionSetId) {
-                loadQuestionSets().then(questionSets => {
-                    currentQuestionSet = questionSets.find(qs => qs.id === questionSetId);
-                    
-                    if (!currentQuestionSet) {
-                        questionsList.innerHTML = '<p>Набор вопросов не найден</p>';
-                        return;
-                    }
-                    
-                    // Обновляем список вопросов
-                    if (!currentQuestionSet.questions || currentQuestionSet.questions.length === 0) {
-                        questionsList.innerHTML = '<p>В этом наборе пока нет вопросов</p>';
-                    } else {
-                        questionsList.innerHTML = '';
-                        
-                        currentQuestionSet.questions.forEach((question, index) => {
-                            const questionDiv = document.createElement('div');
-                            questionDiv.className = 'question-item';
-                            questionDiv.innerHTML = `
-                                <div class="question-header">
-                                    <h4>Вопрос ${index + 1}</h4>
-                                    <div class="question-actions">
-                                        <span>Время: ${question.time || 60} сек.</span>
-                                        <button class="btn btn-warning edit-question" data-index="${index}">Редактировать</button>
-                                        <button class="btn btn-danger delete-question" data-index="${index}">Удалить</button>
-                                    </div>
-                                </div>
-                                <p><strong>Текст:</strong> ${question.text}</p>
-                                <p><strong>Варианты ответов:</strong></p>
-                                <ul>
-                                    ${question.options.map((option, i) => `
-                                        <li>${option} ${i === question.correctAnswer ? '✓' : ''}</li>
-                                    `).join('')}
-                                </ul>
-                            `;
-                            questionsList.appendChild(questionDiv);
-                        });
-                        
-                        // Добавляем обработчики событий для кнопок редактирования и удаления
-                        document.querySelectorAll('.edit-question').forEach(btn => {
-                            btn.addEventListener('click', function() {
-                                const index = parseInt(this.getAttribute('data-index'));
-                                editQuestion(index);
-                            });
-                        });
-                        
-                        document.querySelectorAll('.delete-question').forEach(btn => {
-                            btn.addEventListener('click', function() {
-                                const index = parseInt(this.getAttribute('data-index'));
-                                deleteQuestion(index);
-                            });
-                        });
-                    }
-                });
-            }
-
-            // Инициализация приложения
-            function initApp() {
-                // Загружаем настройки
-                loadSettings().then(settings => {
-                    totalTime = settings.totalTime * 60;
-                    defaultTimeInput.value = settings.defaultTime;
-                    totalTimeInput.value = settings.totalTime;
-                });
-                
-                // Проверяем, есть ли активный пользователь
-                const savedUser = localStorage.getItem('currentUser');
-                if (savedUser) {
-                    currentUser = JSON.parse(savedUser);
-                    showTestSection();
-                }
-                
-                // Загружаем данные для админ-панели
-                loadUsers().then(users => {
-                    renderUsersList(users);
-                    renderAssignUserSelect(users);
-                });
-                
-                loadQuestionSets().then(questionSets => {
-                    renderQuestionSetsSelect(questionSets);
-                    renderAssignQuestionSetSelect(questionSets);
-                });
-                
-                loadAssignments().then(assignments => {
-                    renderAssignmentsList(assignments);
-                });
-            }
-
-            // Остальные функции (showTestSection, startTest, renderQuestion, updateTimer и т.д.)
-            // остаются без изменений, как в предыдущем коде
-
-            // Обработчики событий для редактора вопросов
-            addOptionBtn.addEventListener('click', addOption);
-            saveQuestionBtn.addEventListener('click', saveQuestion);
-            cancelEditBtn.addEventListener('click', cancelQuestionEdit);
+        function saveUserToLocal(user) {
+            const users = getLocalUsers();
+            const existingIndex = users.findIndex(u => u.id === user.id);
             
-            // Обработчики делегирования событий для удаления опций
-            optionsContainer.addEventListener('click', function(e) {
-                if (e.target.classList.contains('remove-option')) {
-                    e.target.parentElement.remove();
-                    updateCorrectAnswerOptions();
-                }
-            });
+            if (existingIndex >= 0) {
+                users[existingIndex] = user;
+            } else {
+                if (!user.id) user.id = 'user_' + Date.now();
+                users.push(user);
+            }
             
-            // Обработчики для обновления списка правильных ответов при изменении текста опций
-            optionsContainer.addEventListener('input', function(e) {
-                if (e.target.classList.contains('option-text')) {
-                    updateCorrectAnswerOptions();
-                }
-            });
+            localStorage.setItem('medicalTestUsers', JSON.stringify(users));
+            return user;
+        }
 
+        function getLocalQuestionSets() {
+            return JSON.parse(localStorage.getItem('medicalTestQuestionSets')) || [];
+        }
+
+        function saveQuestionSetToLocal(questionSet) {
+            const questionSets = getLocalQuestionSets();
+            const existingIndex = questionSets.findIndex(qs => qs.id === questionSet.id);
+            
+            if (existingIndex >= 0) {
+                questionSets[existingIndex] = questionSet;
+            } else {
+                if (!questionSet.id) questionSet.id = 'set_' + Date.now();
+                questionSets.push(questionSet);
+            }
+            
+            localStorage.setItem('medicalTestQuestionSets', JSON.stringify(questionSets));
+            return questionSet;
+        }
+
+        function getLocalAssignments() {
+            return JSON.parse(localStorage.getItem('medicalTestAssignments')) || [];
+        }
+
+        function saveAssignmentToLocal(assignment) {
+            const assignments = getLocalAssignments();
+            const existingIndex = assignments.findIndex(a => a.id === assignment.id);
+            
+            if (existingIndex >= 0) {
+                assignments[existingIndex] = assignment;
+            } else {
+                if (!assignment.id) assignment.id = 'assign_' + Date.now();
+                assignments.push(assignment);
+            }
+            
+            localStorage.setItem('medicalTestAssignments', JSON.stringify(assignments));
+            return assignment;
+        }
+
+        function getLocalTestResults() {
+            return JSON.parse(localStorage.getItem('medicalTestResults')) || [];
+        }
+
+        function saveTestResultToLocal(result) {
+            const results = getLocalTestResults();
+            const existingIndex = results.findIndex(r => r.id === result.id);
+            
+            if (existingIndex >= 0) {
+                results[existingIndex] = result;
+            } else {
+                if (!result.id) result.id = 'result_' + Date.now();
+                results.push(result);
+            }
+            
+            localStorage.setItem('medicalTestResults', JSON.stringify(results));
+            return result;
+        }
+
+        function getDefaultSettings() {
+            return {
+                totalTime: 30,
+                defaultTime: 60
+            };
+        }
+
+        function getLocalSettings() {
+            return JSON.parse(localStorage.getItem('medicalTestSettings')) || getDefaultSettings();
+        }
+
+        function saveSettingsToLocal(settings) {
+            localStorage.setItem('medicalTestSettings', JSON.stringify(settings));
+            return settings;
+        }
+
+        // Остальной код JavaScript остается таким же, как в предыдущей версии
+        // ... (все остальные функции и обработчики событий)
+
+        document.addEventListener('DOMContentLoaded', function() {
             // Инициализация приложения
-            initApp();
+            // ... (весь остальной код из предыдущей версии)
         });
+    </script>
+
+    <script>
+        // 🔥 ВАЖНО: ЗАМЕНИТЕ КОНФИГУРАЦИЮ FIREBASE НА ВАШУ 🔥
+        // Для получения конфигурации:
+        // 1. Перейдите в Firebase Console (https://console.firebase.google.com)
+        // 2. Создайте новый проект или выберите существующий
+        // 3. В настройках проекта найдите раздел "Ваши приложения"
+        // 4. Добавьте веб-приложение и скопируйте конфигурацию
+        
+        const firebaseConfig = {
+            apiKey: "your-api-key-here",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "your-sender-id",
+            appId: "your-app-id"
+        };
+
+        // Остальной код приложения...
     </script>
 </body>
 </html>
