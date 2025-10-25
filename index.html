@@ -477,12 +477,12 @@
             font-weight: 600;
         }
         
-        .role-admin {
+        .role-field {
             background-color: #8B0000; /* Тёмно-красный вместо голубого */
             color: white;
         }
         
-        .role-user {
+        .role-medical {
             background-color: #0b8043;
             color: white;
         }
@@ -810,8 +810,8 @@
                             <div class="form-group">
                                 <label for="edit-user-role">Роль</label>
                                 <select id="edit-user-role">
-                                    <option value="user">Пользователь</option>
-                                    <option value="admin">Администратор</option>
+                                    <option value="field">Полевой Отдел</option>
+                                    <option value="medical">Медицинский Сотрудник</option>
                                 </select>
                             </div>
                             
@@ -2003,20 +2003,38 @@
                 const usersList = document.getElementById('users-list');
                 usersList.innerHTML = '';
                 
-                if (users.length === 0) {
+                // Фильтруем пользователей, оставляем только не-администраторов
+                const regularUsers = users.filter(user => user.role !== 'admin');
+                
+                if (regularUsers.length === 0) {
                     usersList.innerHTML = '<p>Пользователи не найдены</p>';
                     return;
                 }
                 
-                users.forEach(user => {
+                regularUsers.forEach(user => {
                     const userItem = document.createElement('div');
                     userItem.className = 'user-item';
+                    
+                    // Определяем отображаемое название роли
+                    let roleDisplayName = '';
+                    let roleClass = '';
+                    
+                    if (user.role === 'field') {
+                        roleDisplayName = 'Полевой Отдел';
+                        roleClass = 'role-field';
+                    } else if (user.role === 'medical') {
+                        roleDisplayName = 'Медицинский Сотрудник';
+                        roleClass = 'role-medical';
+                    } else {
+                        roleDisplayName = user.role;
+                        roleClass = 'role-user';
+                    }
                     
                     userItem.innerHTML = `
                         <div class="user-header">
                             <div>
                                 <strong>${user.login}</strong>
-                                <span class="user-role ${user.role === 'admin' ? 'role-admin' : 'role-user'}">${user.role === 'admin' ? 'Администратор' : 'Пользователь'}</span>
+                                <span class="user-role ${roleClass}">${roleDisplayName}</span>
                             </div>
                             <div class="user-actions">
                                 <button class="btn btn-warning edit-user" data-id="${user.id}">Редактировать</button>
@@ -2078,7 +2096,7 @@
                 const newUser = {
                     login: login,
                     password: password,
-                    role: 'user'
+                    role: 'field' // По умолчанию "Полевой Отдел"
                 };
                 
                 await saveUser(newUser);
@@ -2198,13 +2216,14 @@
             userSelect.innerHTML = '<option value="">-- Выберите пользователя --</option>';
             
             loadUsers().then(users => {
-                users.forEach(user => {
-                    if (user.role === 'user') {
-                        const option = document.createElement('option');
-                        option.value = user.id;
-                        option.textContent = user.login;
-                        userSelect.appendChild(option);
-                    }
+                // Показываем только не-администраторов
+                const regularUsers = users.filter(user => user.role !== 'admin');
+                
+                regularUsers.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.login;
+                    userSelect.appendChild(option);
                 });
             });
         }
