@@ -2095,8 +2095,11 @@
         async function loadQuestions() {
             const questionSetId = document.getElementById('question-sets').value;
             
+            // Очистить список вопросов, если выбран пустой вариант
             if (!questionSetId) {
                 document.getElementById('question-editor').classList.add('hidden');
+                document.getElementById('questions-list').innerHTML = '<h3>Список наборов вопросов</h3><p>Выберите набор вопросов для просмотра</p>';
+                currentEditingQuestionSet = null;
                 return;
             }
             
