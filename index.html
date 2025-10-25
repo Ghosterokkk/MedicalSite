@@ -853,7 +853,7 @@
                         <h2>Результаты тестов</h2>
                         <p>Просмотр результатов прохождения тестов пользователями.</p>
                         <div id="test-results-list">
-                            <!-- Результаты тестов будут добавлены динамически -->
+                            <!-- Результаты тестов будут добавленны динамически -->
                         </div>
                     </div>
                 </div>
@@ -1638,9 +1638,15 @@
                 
                 if (questionTime <= 0) {
                     clearInterval(questionTimerInterval);
-                    // Автоматически перейти к следующему вопросу
+                    // Автоматически перейти к следующему вопросу или завершить тест
                     if (currentQuestionIndex < currentQuestionSet.questions.length - 1) {
+                        // Сохранить пустой ответ для текущего вопроса
+                        saveAnswer(currentQuestionIndex, null);
                         nextQuestion();
+                    } else {
+                        // Это последний вопрос - завершить тест
+                        saveAnswer(currentQuestionIndex, null);
+                        submitTest();
                     }
                 }
             }, 1000);
@@ -1650,6 +1656,14 @@
             // Остановить все таймеры
             clearInterval(timerInterval);
             clearInterval(questionTimerInterval);
+            
+            // Сохранить ответы для всех неотвеченных вопросов
+            for (let i = 0; i < currentQuestionSet.questions.length; i++) {
+                const existingAnswer = userAnswers.find(a => a.questionIndex === i);
+                if (!existingAnswer) {
+                    saveAnswer(i, null);
+                }
+            }
             
             // Показать сообщение о завершении времени
             const testSection = document.getElementById('test-section');
