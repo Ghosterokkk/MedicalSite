@@ -652,6 +652,63 @@
             color: #6c757d;
             border: 1px solid #6c757d;
         }
+
+        /* Новые стили для выбора теста */
+        .test-selection {
+            text-align: center;
+        }
+        
+        .test-option {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .test-option:hover {
+            border-color: #8B0000;
+            background-color: #f9f9f9;
+        }
+        
+        .test-option.selected {
+            border-color: #8B0000;
+            background-color: #ffe6e6;
+        }
+        
+        .test-option h3 {
+            color: #8B0000;
+            margin-bottom: 10px;
+        }
+        
+        .test-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        /* Стили для фильтров в админ-панели */
+        .filters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .filter-group {
+            margin-bottom: 0;
+        }
+        
+        .filter-group label {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
         
         @media (max-width: 600px) {
             .container {
@@ -709,6 +766,10 @@
                 position: static;
                 margin-bottom: 10px;
             }
+            
+            .filters {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -742,6 +803,21 @@
                 <div class="error hidden" id="no-assignment-error">Для вашего аккаунта не назначен тест. Обратитесь к администратору.</div>
                 
                 <button class="btn btn-block" id="login-btn">Войти</button>
+            </div>
+            
+            <!-- Новый раздел для выбора теста -->
+            <div class="card test-section" id="test-selection-section">
+                <div class="test-selection">
+                    <h2>Выбор теста</h2>
+                    <p>Выберите один из назначенных вам тестов для прохождения</p>
+                    
+                    <div id="available-tests">
+                        <!-- Доступные тесты будут добавлены динамически -->
+                    </div>
+                    
+                    <button class="btn btn-block" id="start-selected-test" style="margin-top: 20px; display: none;">Начать выбранный тест</button>
+                    <button class="btn btn-secondary" id="back-to-login" style="margin-top: 10px;">Выйти</button>
+                </div>
             </div>
             
             <div class="card test-section" id="test-section">
@@ -787,8 +863,7 @@
         
         <!-- Админ-панель -->
         <div class="admin-panel" id="admin-panel">
-            <!-- Кнопка возврата в режим пользователя -->
-            <button class="btn back-btn" id="back-to-user">← Вернуться к входу в систему</button>
+            <!-- Кнопка возврата в режим пользователя УДАЛЕНА -->
             
             <div class="card" id="admin-login">
                 <h2>Вход для администратора</h2>
@@ -964,6 +1039,33 @@
                     <div class="card">
                         <h2>Назначение тестов</h2>
                         <p>Назначайте конкретные наборы вопросов пользователям.</p>
+                        
+                        <!-- Фильтры для назначений -->
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="filter-unit">Фильтр по подразделению</label>
+                                <select id="filter-unit">
+                                    <option value="">Все подразделения</option>
+                                    <option value="none">Нету</option>
+                                    <option value="st">СТ</option>
+                                    <option value="212">212</option>
+                                    <option value="501">501</option>
+                                    <option value="41">41</option>
+                                    <option value="cg">CG</option>
+                                    <option value="attached">Прикомандированный</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="filter-role">Фильтр по роли</label>
+                                <select id="filter-role">
+                                    <option value="">Все роли</option>
+                                    <option value="doctor">Полевой Врач</option>
+                                    <option value="medic">Полевой Фельдшер</option>
+                                    <option value="sanitary">Полевой Санитар</option>
+                                </select>
+                            </div>
+                        </div>
                         
                         <div class="form-group">
                             <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 10px; align-items: end;">
@@ -1492,22 +1594,25 @@
         let timerInterval;
         let questionTimerInterval;
         let remainingQuestionTime = 0;
+        let selectedAssignment = null;
 
         // DOM элементы
         const userPanel = document.getElementById('user-panel');
         const adminPanel = document.getElementById('admin-panel');
         const adminToggle = document.getElementById('admin-toggle');
-        const backToUserBtn = document.getElementById('back-to-user');
         const userModeBtn = document.getElementById('user-mode');
         const adminLogin = document.getElementById('admin-login');
         const adminContent = document.getElementById('admin-content');
         const adminLoginBtn = document.getElementById('admin-login-btn');
         const adminLogoutBtn = document.getElementById('admin-logout');
         const loginSection = document.getElementById('login-section');
+        const testSelectionSection = document.getElementById('test-selection-section');
         const testSection = document.getElementById('test-section');
         const resultsSection = document.getElementById('results-section');
         const loginBtn = document.getElementById('login-btn');
         const logoutBtn = document.getElementById('logout-btn');
+        const backToLoginBtn = document.getElementById('back-to-login');
+        const startSelectedTestBtn = document.getElementById('start-selected-test');
         const submitTestBtn = document.getElementById('submit-test');
         const restartTestBtn = document.getElementById('restart-test');
         const nextQuestionBtn = document.getElementById('next-question');
@@ -1515,6 +1620,7 @@
         const questionTimerElement = document.getElementById('question-timer');
         const questionCounterElement = document.getElementById('question-counter');
         const questionsContainer = document.getElementById('questions-container');
+        const availableTestsContainer = document.getElementById('available-tests');
         const currentUserElement = document.getElementById('current-user');
         const currentUnitElement = document.getElementById('current-unit');
         const scoreElement = document.getElementById('score');
@@ -1549,13 +1655,6 @@
                 adminLogin.classList.remove('hidden');
                 adminContent.classList.add('hidden');
                 adminToggle.style.display = 'none';
-            });
-
-            backToUserBtn.addEventListener('click', function() {
-                adminPanel.style.display = 'none';
-                userPanel.style.display = 'block';
-                showLoginSection();
-                adminToggle.style.display = 'block';
             });
 
             userModeBtn.addEventListener('click', function() {
@@ -1593,9 +1692,23 @@
                 adminToggle.style.display = 'block';
             });
 
+            backToLoginBtn.addEventListener('click', function() {
+                showLoginSection();
+            });
+
+            startSelectedTestBtn.addEventListener('click', function() {
+                if (selectedAssignment) {
+                    startSelectedTest();
+                }
+            });
+
             nextQuestionBtn.addEventListener('click', nextQuestion);
             submitTestBtn.addEventListener('click', submitTest);
             restartTestBtn.addEventListener('click', restartTest);
+
+            // Обработчики для фильтров в админ-панели
+            document.getElementById('filter-unit').addEventListener('change', loadAssignmentsList);
+            document.getElementById('filter-role').addEventListener('change', loadAssignmentsList);
 
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
@@ -1661,21 +1774,14 @@
                 const user = users.find(u => u.login === username && u.password === password);
                 
                 if (user) {
-                    const assignments = await loadAssignments();
-                    const userAssignment = assignments.find(a => a.userId === user.id);
+                    currentUser = user;
+                    localStorage.setItem('currentMedicalTestUser', JSON.stringify(user));
+                    document.getElementById('login-error').classList.add('hidden');
+                    document.getElementById('no-assignment-error').classList.add('hidden');
                     
-                    if (userAssignment) {
-                        currentUser = user;
-                        localStorage.setItem('currentMedicalTestUser', JSON.stringify(user));
-                        showTestSection();
-                        document.getElementById('login-error').classList.add('hidden');
-                        document.getElementById('no-assignment-error').classList.add('hidden');
-                    } else {
-                        document.getElementById('login-error').classList.add('hidden');
-                        document.getElementById('no-assignment-error').classList.remove('hidden');
-                        document.getElementById('password').value = '';
-                        return;
-                    }
+                    // Загружаем назначенные тесты
+                    await loadUserAssignments();
+                    
                 } else {
                     document.getElementById('login-error').classList.remove('hidden');
                     document.getElementById('no-assignment-error').classList.add('hidden');
@@ -1687,9 +1793,97 @@
             }
         }
 
+        // Загрузка назначений пользователя
+        async function loadUserAssignments() {
+            try {
+                const assignments = await loadAssignments();
+                const userAssignments = assignments.filter(a => a.userId === currentUser.id);
+                
+                if (userAssignments.length === 0) {
+                    document.getElementById('no-assignment-error').classList.remove('hidden');
+                    document.getElementById('login-error').classList.add('hidden');
+                    return;
+                }
+                
+                const questionSets = await loadQuestionSets();
+                const availableTests = [];
+                
+                for (const assignment of userAssignments) {
+                    const questionSet = questionSets.find(qs => qs.id === assignment.questionSetId);
+                    if (questionSet) {
+                        availableTests.push({
+                            assignment: assignment,
+                            questionSet: questionSet
+                        });
+                    }
+                }
+                
+                if (availableTests.length > 0) {
+                    showTestSelection(availableTests);
+                } else {
+                    document.getElementById('no-assignment-error').classList.remove('hidden');
+                }
+                
+            } catch (error) {
+                console.error('❌ Ошибка загрузки назначений:', error);
+                document.getElementById('no-assignment-error').classList.remove('hidden');
+            }
+        }
+
+        // Отображение выбора теста
+        function showTestSelection(availableTests) {
+            availableTestsContainer.innerHTML = '';
+            selectedAssignment = null;
+            startSelectedTestBtn.style.display = 'none';
+            
+            if (availableTests.length === 0) {
+                availableTestsContainer.innerHTML = '<p>Нет доступных тестов</p>';
+                return;
+            }
+            
+            availableTests.forEach((test, index) => {
+                const testOption = document.createElement('div');
+                testOption.className = 'test-option';
+                testOption.setAttribute('data-index', index);
+                
+                testOption.innerHTML = `
+                    <h3>${test.questionSet.name}</h3>
+                    <p>${test.questionSet.questions ? test.questionSet.questions.length : 0} вопросов</p>
+                    <div class="test-info">
+                        <span>Время: ${test.questionSet.totalTime || 30} мин.</span>
+                        <span>Назначен: ${new Date(test.assignment.assignedAt).toLocaleDateString('ru-RU')}</span>
+                    </div>
+                `;
+                
+                testOption.addEventListener('click', function() {
+                    document.querySelectorAll('.test-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                    selectedAssignment = test;
+                    startSelectedTestBtn.style.display = 'block';
+                });
+                
+                availableTestsContainer.appendChild(testOption);
+            });
+            
+            showTestSelectionSection();
+        }
+
+        // Запуск выбранного теста
+        function startSelectedTest() {
+            if (!selectedAssignment) return;
+            
+            currentQuestionSet = selectedAssignment.questionSet;
+            totalTime = (currentQuestionSet.totalTime || 30) * 60;
+            startTest();
+            showTestSection();
+        }
+
         // Отображение разделов
         function showLoginSection() {
             loginSection.style.display = 'block';
+            testSelectionSection.style.display = 'none';
             testSection.style.display = 'none';
             resultsSection.style.display = 'none';
             document.getElementById('username').value = '';
@@ -1699,47 +1893,28 @@
             adminToggle.style.display = 'block';
         }
 
+        function showTestSelectionSection() {
+            loginSection.style.display = 'none';
+            testSelectionSection.style.display = 'block';
+            testSection.style.display = 'none';
+            resultsSection.style.display = 'none';
+            adminToggle.style.display = 'none';
+        }
+
         function showTestSection() {
             loginSection.style.display = 'none';
+            testSelectionSection.style.display = 'none';
             testSection.style.display = 'block';
             resultsSection.style.display = 'none';
             adminToggle.style.display = 'none';
-            loadUserAssignment();
         }
 
         function showResultsSection() {
             loginSection.style.display = 'none';
+            testSelectionSection.style.display = 'none';
             testSection.style.display = 'none';
             resultsSection.style.display = 'block';
             adminToggle.style.display = 'block';
-        }
-
-        // Загрузка назначения пользователя
-        async function loadUserAssignment() {
-            try {
-                const assignments = await loadAssignments();
-                const userAssignment = assignments.find(a => a.userId === currentUser.id);
-                
-                if (userAssignment) {
-                    const questionSets = await loadQuestionSets();
-                    currentQuestionSet = questionSets.find(qs => qs.id === userAssignment.questionSetId);
-                    
-                    if (currentQuestionSet) {
-                        totalTime = (currentQuestionSet.totalTime || 30) * 60;
-                        startTest();
-                    } else {
-                        alert('Назначенный набор вопросов не найден');
-                        logoutUser();
-                    }
-                } else {
-                    alert('Для вас не назначен тест. Обратитесь к администратору.');
-                    logoutUser();
-                }
-            } catch (error) {
-                console.error('❌ Ошибка загрузки назначения:', error);
-                alert('Ошибка загрузки теста. Попробуйте позже.');
-                logoutUser();
-            }
         }
 
         // Выход пользователя
@@ -1938,8 +2113,10 @@
                 userId: currentUser.id,
                 userName: currentUser.login,
                 userUnit: currentUser.unit || 'none',
+                userRole: currentUser.role,
                 questionSetId: currentQuestionSet.id,
                 questionSetName: currentQuestionSet.name,
+                assignmentId: selectedAssignment ? selectedAssignment.assignment.id : null,
                 answers: [],
                 score: 0,
                 correctAnswers: 0,
@@ -2038,7 +2215,7 @@
 
         // Перезапуск теста
         function restartTest() {
-            showTestSection();
+            showTestSelectionSection();
         }
 
         // Админ-функции
@@ -2275,10 +2452,20 @@
                 regularUsers.forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.id;
-                    option.textContent = `${user.login} (${getUnitDisplayName(user.unit || 'none')})`;
+                    option.textContent = `${user.login} (${getUnitDisplayName(user.unit || 'none')}, ${getRoleDisplayName(user.role)})`;
                     userSelect.appendChild(option);
                 });
             });
+        }
+
+        // Функция для получения отображаемого названия роли
+        function getRoleDisplayName(role) {
+            const roleNames = {
+                'doctor': 'Полевой Врач',
+                'medic': 'Полевой Фельдшер',
+                'sanitary': 'Полевой Санитар'
+            };
+            return roleNames[role] || role;
         }
 
         // Управление наборами вопросов
@@ -2712,12 +2899,34 @@
                 const assignmentsList = document.getElementById('assignments-list');
                 assignmentsList.innerHTML = '';
                 
-                if (assignments.length === 0) {
+                // Применяем фильтры
+                const filterUnit = document.getElementById('filter-unit').value;
+                const filterRole = document.getElementById('filter-role').value;
+                
+                let filteredAssignments = assignments;
+                
+                if (filterUnit) {
+                    const users = await loadUsers();
+                    filteredAssignments = filteredAssignments.filter(assignment => {
+                        const user = users.find(u => u.id === assignment.userId);
+                        return user && user.unit === filterUnit;
+                    });
+                }
+                
+                if (filterRole) {
+                    const users = await loadUsers();
+                    filteredAssignments = filteredAssignments.filter(assignment => {
+                        const user = users.find(u => u.id === assignment.userId);
+                        return user && user.role === filterRole;
+                    });
+                }
+                
+                if (filteredAssignments.length === 0) {
                     assignmentsList.innerHTML = '<p>Назначения не найдены</p>';
                     return;
                 }
                 
-                for (const assignment of assignments) {
+                for (const assignment of filteredAssignments) {
                     const users = await loadUsers();
                     const questionSets = await loadQuestionSets();
                     
@@ -2729,7 +2938,7 @@
                     
                     assignmentItem.innerHTML = `
                         <div>
-                            <strong>${user ? user.login : 'Неизвестный пользователь'} (${user ? getUnitDisplayName(user.unit || 'none') : 'Неизвестно'})</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
+                            <strong>${user ? user.login : 'Неизвестный пользователь'} (${user ? getUnitDisplayName(user.unit || 'none') : 'Неизвестно'}, ${user ? getRoleDisplayName(user.role) : 'Неизвестно'})</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
                         </div>
                         <div>
                             <button class="btn btn-danger delete-assignment" data-id="${assignment.id}">Удалить</button>
@@ -2831,7 +3040,7 @@
                     resultItem.innerHTML = `
                         <div class="result-header">
                             <div>
-                                <strong>${user ? user.login : 'Неизвестный пользователь'} (${user ? getUnitDisplayName(user.unit || 'none') : 'Неизвестно'})</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
+                                <strong>${user ? user.login : 'Неизвестный пользователь'} (${user ? getUnitDisplayName(user.unit || 'none') : 'Неизвестно'}, ${user ? getRoleDisplayName(user.role) : 'Неизвестно'})</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
                             </div>
                             <div class="result-score">${result.score}/${result.totalQuestions} (${result.percentage}%)</div>
                         </div>
@@ -2873,6 +3082,7 @@
                     <h3>Детали результата теста</h3>
                     <p><strong>Пользователь:</strong> ${result.userName}</p>
                     <p><strong>Подразделение:</strong> ${getUnitDisplayName(result.userUnit || 'none')}</p>
+                    <p><strong>Роль:</strong> ${getRoleDisplayName(result.userRole)}</p>
                     <p><strong>Набор вопросов:</strong> ${result.questionSetName}</p>
                     <p><strong>Результат:</strong> ${result.score}/${result.totalQuestions} (${result.percentage}%)</p>
                     <p><strong>Дата прохождения:</strong> ${new Date(result.timestamp).toLocaleString('ru-RU')}</p>
