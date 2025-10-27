@@ -6,7 +6,6 @@
     <title>Медицинский тест для сотрудников</title>
     <link rel="icon" type="image/png" href="Med.png">
     <style>
-        /* Стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -607,7 +606,6 @@
             font-weight: 600;
         }
 
-        /* Новые стили для подразделений с обновленными цветами */
         .user-unit {
             display: inline-block;
             padding: 4px 8px;
@@ -618,33 +616,33 @@
         }
         
         .unit-st {
-            background-color: #6c757d; /* Серый */
+            background-color: #6c757d;
             color: white;
         }
         
         .unit-212 {
-            background-color: #fd7e14; /* Оранжевый */
+            background-color: #fd7e14;
             color: white;
         }
         
         .unit-501 {
-            background-color: #1e3a8a; /* Тёмно Синий */
+            background-color: #1e3a8a;
             color: white;
         }
         
         .unit-41 {
-            background-color: #166534; /* Тёмно Зеленый */
+            background-color: #166534;
             color: white;
         }
         
         .unit-cg {
-            background-color: #991b1b; /* Тёмно Красный */
+            background-color: #991b1b;
             color: white;
         }
         
         .unit-attached {
-            background-color: #fca5a5; /* Светло Красный */
-            color: #7f1d1d; /* Темный текст для контраста */
+            background-color: #fca5a5;
+            color: #7f1d1d;
         }
         
         .unit-none {
@@ -653,7 +651,6 @@
             border: 1px solid #6c757d;
         }
 
-        /* Новые стили для выбора теста */
         .test-selection {
             text-align: center;
         }
@@ -690,7 +687,6 @@
             color: #666;
         }
 
-        /* Стили для фильтров в админ-панели */
         .filters {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -805,14 +801,12 @@
                 <button class="btn btn-block" id="login-btn">Войти</button>
             </div>
             
-            <!-- Новый раздел для выбора теста -->
             <div class="card test-section" id="test-selection-section">
                 <div class="test-selection">
                     <h2>Выбор теста</h2>
                     <p>Выберите один из назначенных вам тестов для прохождения</p>
                     
                     <div id="available-tests">
-                        <!-- Доступные тесты будут добавлены динамически -->
                     </div>
                     
                     <button class="btn btn-block" id="start-selected-test" style="margin-top: 20px; display: none;">Начать выбранный тест</button>
@@ -829,7 +823,6 @@
                 <p>Ответьте на все вопросы. После завершения вы увидите результаты.</p>
                 
                 <div id="questions-container">
-                    <!-- Вопросы будут добавлены динамически -->
                 </div>
                 
                 <div class="question-navigation">
@@ -848,11 +841,9 @@
                     <p>Подразделение: <span id="current-unit"></span></p>
                     
                     <div class="results-summary" id="results-summary">
-                        <!-- Сводка результатов будет добавлена динамически -->
                     </div>
                     
                     <div class="results-details" id="results-details">
-                        <!-- Детали результатов будут добавлены динамически -->
                     </div>
                     
                     <button class="btn hidden" id="restart-test">Пройти тест снова</button>
@@ -863,7 +854,10 @@
         
         <!-- Админ-панель -->
         <div class="admin-panel" id="admin-panel">
-            <!-- Кнопка возврата в режим пользователя УДАЛЕНА -->
+            <!-- Кнопка возврата к пользовательскому режиму - СКРЫТА ПРИ АВТОРИЗАЦИИ АДМИНИСТРАТОРА -->
+            <div class="card hidden" style="margin-bottom: 20px;" id="back-to-user-container">
+                <button class="btn btn-secondary btn-block" id="back-to-user-login">← Вернуться к входу пользователей</button>
+            </div>
             
             <div class="card" id="admin-login">
                 <h2>Вход для администратора</h2>
@@ -917,7 +911,6 @@
                             <div class="error hidden" id="user-add-error"></div>
                         </div>
 
-                        <!-- Редактор пользователей -->
                         <div class="user-editor hidden" id="user-editor">
                             <h3>Редактирование пользователя</h3>
                             
@@ -940,7 +933,6 @@
                                 </select>
                             </div>
                             
-                            <!-- Новое поле для подразделения -->
                             <div class="form-group">
                                 <label for="edit-user-unit">Подразделение</label>
                                 <select id="edit-user-unit">
@@ -961,7 +953,6 @@
                         </div>
                         
                         <div id="users-list">
-                            <!-- Список пользователей будет добавлен динамически -->
                         </div>
                     </div>
                 </div>
@@ -990,7 +981,6 @@
                             </select>
                         </div>
                         
-                        <!-- Редактор вопросов -->
                         <div class="question-editor hidden" id="question-editor">
                             <h3>Редактирование вопроса</h3>
                             
@@ -1002,7 +992,6 @@
                             <div class="form-group">
                                 <label>Варианты ответов</label>
                                 <div id="options-container">
-                                    <!-- Варианты ответов будут добавлены динамически -->
                                 </div>
                                 <button class="btn btn-secondary" id="add-option">Добавить вариант</button>
                             </div>
@@ -1030,7 +1019,6 @@
                         </div>
                         
                         <div id="questions-list">
-                            <!-- Список вопросов будет добавлен динамически -->
                         </div>
                     </div>
                 </div>
@@ -1040,7 +1028,6 @@
                         <h2>Назначение тестов</h2>
                         <p>Назначайте конкретные наборы вопросов пользователям.</p>
                         
-                        <!-- Фильтры для назначений -->
                         <div class="filters">
                             <div class="filter-group">
                                 <label for="filter-unit">Фильтр по подразделению</label>
@@ -1088,7 +1075,6 @@
                         </div>
                         
                         <div id="assignments-list">
-                            <!-- Список назначений будет добавлен динамически -->
                         </div>
                     </div>
                 </div>
@@ -1098,7 +1084,6 @@
                         <h2>Результаты тестов</h2>
                         <p>Просмотр результатов прохождения тестов пользователями.</p>
                         <div id="test-results-list">
-                            <!-- Результаты тестов будут добавленны динамически -->
                         </div>
                     </div>
                 </div>
@@ -1150,7 +1135,8 @@
         let firebaseConnected = false;
 
         try {
-            if (firebaseConfig.apiKey && !firebaseConfig.apiKey.includes("your-")) {
+            // Проверяем, доступен ли Firebase
+            if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
                 auth = firebase.auth();
@@ -1180,7 +1166,7 @@
                         login: 'admin',
                         password: 'admin123',
                         role: 'admin',
-                        unit: 'none' // Администратор тоже имеет подразделение
+                        unit: 'none'
                     };
                     
                     await saveUser(defaultAdmin);
@@ -1627,6 +1613,8 @@
         const resultMessageElement = document.getElementById('result-message');
         const resultsSummaryElement = document.getElementById('results-summary');
         const resultsDetailsElement = document.getElementById('results-details');
+        const backToUserLoginBtn = document.getElementById('back-to-user-login');
+        const backToUserContainer = document.getElementById('back-to-user-container');
 
         // Инициализация приложения
         document.addEventListener('DOMContentLoaded', function() {
@@ -1655,6 +1643,15 @@
                 adminLogin.classList.remove('hidden');
                 adminContent.classList.add('hidden');
                 adminToggle.style.display = 'none';
+                // Показываем кнопку возврата при входе в админ-панель
+                backToUserContainer.classList.remove('hidden');
+            });
+
+            backToUserLoginBtn.addEventListener('click', function() {
+                adminPanel.style.display = 'none';
+                userPanel.style.display = 'block';
+                showLoginSection();
+                adminToggle.style.display = 'block';
             });
 
             userModeBtn.addEventListener('click', function() {
@@ -1677,6 +1674,8 @@
                 document.getElementById('admin-password').value = '';
                 document.getElementById('admin-login-error').classList.add('hidden');
                 adminToggle.style.display = 'block';
+                // Показываем кнопку возврата при выходе из админ-аккаунта
+                backToUserContainer.classList.remove('hidden');
             });
 
             loginBtn.addEventListener('click', function() {
@@ -1706,7 +1705,6 @@
             submitTestBtn.addEventListener('click', submitTest);
             restartTestBtn.addEventListener('click', restartTest);
 
-            // Обработчики для фильтров в админ-панели
             document.getElementById('filter-unit').addEventListener('change', loadAssignmentsList);
             document.getElementById('filter-role').addEventListener('change', loadAssignmentsList);
 
@@ -1758,6 +1756,8 @@
                     adminLogin.classList.add('hidden');
                     adminContent.classList.remove('hidden');
                     document.getElementById('admin-login-error').classList.add('hidden');
+                    // СКРЫВАЕМ кнопку "Вернуться к входу пользователей" при успешной авторизации администратора
+                    backToUserContainer.classList.add('hidden');
                 } else {
                     document.getElementById('admin-login-error').classList.remove('hidden');
                 }
@@ -1779,7 +1779,6 @@
                     document.getElementById('login-error').classList.add('hidden');
                     document.getElementById('no-assignment-error').classList.add('hidden');
                     
-                    // Загружаем назначенные тесты
                     await loadUserAssignments();
                     
                 } else {
@@ -2261,7 +2260,6 @@
                         roleClass = 'role-user';
                     }
                     
-                    // Получаем отображаемое имя и класс для подразделения
                     const unitDisplayName = getUnitDisplayName(user.unit || 'none');
                     const unitClass = getUnitClass(user.unit || 'none');
                     
@@ -2285,7 +2283,6 @@
                     usersList.appendChild(userItem);
                 });
                 
-                // Добавляем обработчики событий делегированием
                 usersList.addEventListener('click', function(e) {
                     if (e.target.classList.contains('edit-user')) {
                         const userId = e.target.getAttribute('data-id');
@@ -2328,7 +2325,7 @@
                     login: login,
                     password: password,
                     role: 'doctor',
-                    unit: 'none' // По умолчанию "Нету"
+                    unit: 'none'
                 };
                 
                 await saveUser(newUser);
@@ -2458,7 +2455,6 @@
             });
         }
 
-        // Функция для получения отображаемого названия роли
         function getRoleDisplayName(role) {
             const roleNames = {
                 'doctor': 'Полевой Врач',
@@ -2558,7 +2554,6 @@
             const questionsList = document.getElementById('questions-list');
             questionsList.innerHTML = '';
             
-            // Отображаем информацию о наборе с кнопкой удаления
             const setInfo = document.createElement('div');
             setInfo.className = 'question-item';
             setInfo.innerHTML = `
@@ -2615,16 +2610,13 @@
                 questionsList.appendChild(questionItem);
             });
             
-            // Используем делегирование событий для обработки кликов
             questionsList.addEventListener('click', function(e) {
-                // Обработка кнопки удаления набора
                 if (e.target.classList.contains('delete-question-set')) {
                     const questionSetId = e.target.getAttribute('data-set-id');
                     deleteQuestionSetById(questionSetId);
                     return;
                 }
                 
-                // Обработка кнопки редактирования вопроса
                 if (e.target.classList.contains('edit-question')) {
                     const questionSetId = e.target.getAttribute('data-set-id');
                     const questionIndex = parseInt(e.target.getAttribute('data-index'));
@@ -2632,7 +2624,6 @@
                     return;
                 }
                 
-                // Обработка кнопки удаления вопроса
                 if (e.target.classList.contains('delete-question')) {
                     const questionSetId = e.target.getAttribute('data-set-id');
                     const questionIndex = parseInt(e.target.getAttribute('data-index'));
@@ -2642,14 +2633,12 @@
             });
         }
 
-        // Функция для удаления набора вопросов
         async function deleteQuestionSetById(questionSetId) {
             if (!confirm('Вы уверены, что хотите удалить этот набор вопросов? Это действие нельзя отменить.')) {
                 return;
             }
             
             try {
-                // Удаляем все назначения, связанные с этим набором вопросов
                 const assignments = await loadAssignments();
                 const assignmentsToDelete = assignments.filter(a => a.questionSetId === questionSetId);
                 
@@ -2657,16 +2646,13 @@
                     await deleteAssignment(assignment.id);
                 }
                 
-                // Удаляем сам набор вопросов
                 await deleteQuestionSet(questionSetId);
                 
-                // Очищаем форму и скрываем редактор
                 document.getElementById('question-sets').value = '';
                 document.getElementById('questions-list').innerHTML = '';
                 document.getElementById('question-editor').classList.add('hidden');
                 document.getElementById('add-question').style.display = 'none';
                 
-                // Перезагружаем списки
                 await loadQuestionSetsList();
                 await loadAssignmentsList();
                 
@@ -2899,7 +2885,6 @@
                 const assignmentsList = document.getElementById('assignments-list');
                 assignmentsList.innerHTML = '';
                 
-                // Применяем фильтры
                 const filterUnit = document.getElementById('filter-unit').value;
                 const filterRole = document.getElementById('filter-role').value;
                 
