@@ -606,6 +606,52 @@
             color: #0b8043;
             font-weight: 600;
         }
+
+        /* Новые стили для подразделений с обновленными цветами */
+        .user-unit {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .unit-st {
+            background-color: #6c757d; /* Серый */
+            color: white;
+        }
+        
+        .unit-212 {
+            background-color: #fd7e14; /* Оранжевый */
+            color: white;
+        }
+        
+        .unit-501 {
+            background-color: #1e3a8a; /* Тёмно Синий */
+            color: white;
+        }
+        
+        .unit-41 {
+            background-color: #166534; /* Тёмно Зеленый */
+            color: white;
+        }
+        
+        .unit-cg {
+            background-color: #991b1b; /* Тёмно Красный */
+            color: white;
+        }
+        
+        .unit-attached {
+            background-color: #fca5a5; /* Светло Красный */
+            color: #7f1d1d; /* Темный текст для контраста */
+        }
+        
+        .unit-none {
+            background-color: transparent;
+            color: #6c757d;
+            border: 1px solid #6c757d;
+        }
         
         @media (max-width: 600px) {
             .container {
@@ -723,6 +769,7 @@
                     <p class="message" id="result-message"></p>
                     <div class="score" id="score"></div>
                     <p>Пользователь: <span id="current-user"></span></p>
+                    <p>Подразделение: <span id="current-unit"></span></p>
                     
                     <div class="results-summary" id="results-summary">
                         <!-- Сводка результатов будет добавлена динамически -->
@@ -815,6 +862,20 @@
                                     <option value="doctor">Полевой Врач</option>
                                     <option value="medic">Полевой Фельдшер</option>
                                     <option value="sanitary">Полевой Санитар</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Новое поле для подразделения -->
+                            <div class="form-group">
+                                <label for="edit-user-unit">Подразделение</label>
+                                <select id="edit-user-unit">
+                                    <option value="none">Нету</option>
+                                    <option value="st">СТ</option>
+                                    <option value="212">212</option>
+                                    <option value="501">501</option>
+                                    <option value="41">41</option>
+                                    <option value="cg">CG</option>
+                                    <option value="attached">Прикомандированный</option>
                                 </select>
                             </div>
                             
@@ -1016,7 +1077,8 @@
                     const defaultAdmin = {
                         login: 'admin',
                         password: 'admin123',
-                        role: 'admin'
+                        role: 'admin',
+                        unit: 'none' // Администратор тоже имеет подразделение
                     };
                     
                     await saveUser(defaultAdmin);
@@ -1392,6 +1454,34 @@
             }
         }
 
+        // Функция для получения отображаемого названия подразделения
+        function getUnitDisplayName(unit) {
+            const unitNames = {
+                'none': 'Нету',
+                'st': 'СТ',
+                '212': '212',
+                '501': '501',
+                '41': '41',
+                'cg': 'CG',
+                'attached': 'Прикомандированный'
+            };
+            return unitNames[unit] || 'Неизвестно';
+        }
+
+        // Функция для получения CSS класса подразделения
+        function getUnitClass(unit) {
+            const unitClasses = {
+                'none': 'unit-none',
+                'st': 'unit-st',
+                '212': 'unit-212',
+                '501': 'unit-501',
+                '41': 'unit-41',
+                'cg': 'unit-cg',
+                'attached': 'unit-attached'
+            };
+            return unitClasses[unit] || 'unit-none';
+        }
+
         // Основная логика приложения
         let currentUser = null;
         let currentQuestionSet = null;
@@ -1426,6 +1516,7 @@
         const questionCounterElement = document.getElementById('question-counter');
         const questionsContainer = document.getElementById('questions-container');
         const currentUserElement = document.getElementById('current-user');
+        const currentUnitElement = document.getElementById('current-unit');
         const scoreElement = document.getElementById('score');
         const resultMessageElement = document.getElementById('result-message');
         const resultsSummaryElement = document.getElementById('results-summary');
@@ -1846,6 +1937,7 @@
             const results = {
                 userId: currentUser.id,
                 userName: currentUser.login,
+                userUnit: currentUser.unit || 'none',
                 questionSetId: currentQuestionSet.id,
                 questionSetName: currentQuestionSet.name,
                 answers: [],
@@ -1883,6 +1975,7 @@
         // Отображение результатов
         function displayResults(results) {
             currentUserElement.textContent = currentUser.login;
+            currentUnitElement.textContent = getUnitDisplayName(currentUser.unit || 'none');
             scoreElement.textContent = `${results.score} из ${results.totalQuestions}`;
             
             if (results.percentage >= 80) {
@@ -1991,11 +2084,16 @@
                         roleClass = 'role-user';
                     }
                     
+                    // Получаем отображаемое имя и класс для подразделения
+                    const unitDisplayName = getUnitDisplayName(user.unit || 'none');
+                    const unitClass = getUnitClass(user.unit || 'none');
+                    
                     userItem.innerHTML = `
                         <div class="user-header">
                             <div>
                                 <strong>${user.login}</strong>
                                 <span class="user-role ${roleClass}">${roleDisplayName}</span>
+                                <span class="user-unit ${unitClass}">${unitDisplayName}</span>
                             </div>
                             <div class="user-actions">
                                 <button class="btn btn-warning edit-user" data-id="${user.id}">Редактировать</button>
@@ -2052,7 +2150,8 @@
                 const newUser = {
                     login: login,
                     password: password,
-                    role: 'doctor'
+                    role: 'doctor',
+                    unit: 'none' // По умолчанию "Нету"
                 };
                 
                 await saveUser(newUser);
@@ -2088,6 +2187,7 @@
                 document.getElementById('edit-user-login').value = user.login;
                 document.getElementById('edit-user-password').value = '';
                 document.getElementById('edit-user-role').value = user.role;
+                document.getElementById('edit-user-unit').value = user.unit || 'none';
                 
                 document.getElementById('user-editor').classList.remove('hidden');
                 document.getElementById('save-user').setAttribute('data-id', userId);
@@ -2103,6 +2203,7 @@
             const login = document.getElementById('edit-user-login').value;
             const password = document.getElementById('edit-user-password').value;
             const role = document.getElementById('edit-user-role').value;
+            const unit = document.getElementById('edit-user-unit').value;
             
             if (!login) {
                 alert('Заполните поле логина');
@@ -2127,7 +2228,8 @@
                 const updatedUser = {
                     ...users[userIndex],
                     login: login,
-                    role: role
+                    role: role,
+                    unit: unit
                 };
                 
                 if (password) {
@@ -2173,7 +2275,7 @@
                 regularUsers.forEach(user => {
                     const option = document.createElement('option');
                     option.value = user.id;
-                    option.textContent = user.login;
+                    option.textContent = `${user.login} (${getUnitDisplayName(user.unit || 'none')})`;
                     userSelect.appendChild(option);
                 });
             });
@@ -2627,7 +2729,7 @@
                     
                     assignmentItem.innerHTML = `
                         <div>
-                            <strong>${user ? user.login : 'Неизвестный пользователь'}</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
+                            <strong>${user ? user.login : 'Неизвестный пользователь'} (${user ? getUnitDisplayName(user.unit || 'none') : 'Неизвестно'})</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
                         </div>
                         <div>
                             <button class="btn btn-danger delete-assignment" data-id="${assignment.id}">Удалить</button>
@@ -2729,7 +2831,7 @@
                     resultItem.innerHTML = `
                         <div class="result-header">
                             <div>
-                                <strong>${user ? user.login : 'Неизвестный пользователь'}</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
+                                <strong>${user ? user.login : 'Неизвестный пользователь'} (${user ? getUnitDisplayName(user.unit || 'none') : 'Неизвестно'})</strong> - ${questionSet ? `${questionSet.name} (${questionSet.totalTime || 30} мин)` : 'Неизвестный набор'}
                             </div>
                             <div class="result-score">${result.score}/${result.totalQuestions} (${result.percentage}%)</div>
                         </div>
@@ -2770,6 +2872,7 @@
                 let detailsHtml = `
                     <h3>Детали результата теста</h3>
                     <p><strong>Пользователь:</strong> ${result.userName}</p>
+                    <p><strong>Подразделение:</strong> ${getUnitDisplayName(result.userUnit || 'none')}</p>
                     <p><strong>Набор вопросов:</strong> ${result.questionSetName}</p>
                     <p><strong>Результат:</strong> ${result.score}/${result.totalQuestions} (${result.percentage}%)</p>
                     <p><strong>Дата прохождения:</strong> ${new Date(result.timestamp).toLocaleString('ru-RU')}</p>
