@@ -705,6 +705,50 @@
             font-size: 14px;
             margin-bottom: 5px;
         }
+
+        .user-answers-list {
+            margin-top: 20px;
+        }
+        
+        .user-answer-item {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .user-answer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .user-answer-details {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #ddd;
+        }
+        
+        .answer-question {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: white;
+            border-radius: 4px;
+        }
+        
+        .answer-question.correct {
+            border-left: 4px solid #0b8043;
+        }
+        
+        .answer-question.incorrect {
+            border-left: 4px solid #d93025;
+        }
+        
+        .answer-question.unanswered {
+            border-left: 4px solid #5f6368;
+        }
         
         @media (max-width: 600px) {
             .container {
@@ -765,6 +809,11 @@
             
             .filters {
                 grid-template-columns: 1fr;
+            }
+            
+            .user-answer-header {
+                flex-direction: column;
+                align-items: flex-start;
             }
         }
     </style>
@@ -854,7 +903,6 @@
         
         <!-- Админ-панель -->
         <div class="admin-panel" id="admin-panel">
-            <!-- Кнопка возврата к пользовательскому режиму - СКРЫТА ПРИ АВТОРИЗАЦИИ АДМИНИСТРАТОРА -->
             <div class="card hidden" style="margin-bottom: 20px;" id="back-to-user-container">
                 <button class="btn btn-secondary btn-block" id="back-to-user-login">← Вернуться к входу пользователей</button>
             </div>
@@ -883,8 +931,7 @@
                     <div class="tab active" data-tab="users">Управление пользователями</div>
                     <div class="tab" data-tab="questions">Управление вопросами</div>
                     <div class="tab" data-tab="assignments">Назначение тестов</div>
-                    <div class="tab" data-tab="results">Результаты тестов</div>
-                    <div class="tab" data-tab="settings">Настройки системы</div>
+                    <div class="tab" data-tab="user-answers">Результаты ответов пользователей</div>
                 </div>
                 
                 <div class="tab-content active" id="users-tab">
@@ -1087,6 +1134,49 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="tab-content" id="user-answers-tab">
+                    <div class="card">
+                        <h2>Ответы от пользователей</h2>
+                        <p>Просмотр всех ответов пользователей на тесты.</p>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <label for="filter-answers-unit">Фильтр по подразделению</label>
+                                <select id="filter-answers-unit">
+                                    <option value="">Все подразделения</option>
+                                    <option value="none">Нету</option>
+                                    <option value="st">СТ</option>
+                                    <option value="212">212</option>
+                                    <option value="501">501</option>
+                                    <option value="41">41</option>
+                                    <option value="cg">CG</option>
+                                    <option value="attached">Прикомандированный</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="filter-answers-role">Фильтр по роли</label>
+                                <select id="filter-answers-role">
+                                    <option value="">Все роли</option>
+                                    <option value="doctor">Полевой Врач</option>
+                                    <option value="medic">Полевой Фельдшер</option>
+                                    <option value="sanitary">Полевой Санитар</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="filter-answers-test">Фильтр по тесту</label>
+                                <select id="filter-answers-test">
+                                    <option value="">Все тесты</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="user-answers-list" id="user-answers-list">
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="tab-content" id="settings-tab">
                     <div class="card">
@@ -1121,12 +1211,12 @@
     <script>
         // 🔥 КОНФИГУРАЦИЯ FIREBASE
         const firebaseConfig = {
-            apiKey: "AIzaSyAL8dXiQQFdboo1Z36mfcr41_ux4uf5KMs",
-            authDomain: "medicallsites.firebaseapp.com",
-            projectId: "medicallsites",
-            storageBucket: "medicallsites.firebasestorage.app",
-            messagingSenderId: "1089776801097",
-            appId: "1:1089776801097:web:34e3c634e63ae21280f698"
+            apiKey: "AIzaSyBYJhWIl_ODTKNwQ8p4JuvDXuqKTYEbWU4",
+            authDomain: "testingmk-c7c07.firebaseapp.com",
+            projectId: "testingmk-c7c07",
+            storageBucket: "testingmk-c7c07.firebasestorage.app",
+            messagingSenderId: "425991665299",
+            appId: "1:425991665299:web:825931edb1e3d773873f66"
         };
 
         // Инициализация Firebase
@@ -1135,7 +1225,6 @@
         let firebaseConnected = false;
 
         try {
-            // Проверяем, доступен ли Firebase
             if (typeof firebase !== 'undefined' && firebaseConfig.apiKey) {
                 firebase.initializeApp(firebaseConfig);
                 db = firebase.firestore();
@@ -1144,7 +1233,6 @@
                 console.log("✅ Firebase подключен");
                 updateFirebaseStatus(true);
                 
-                // Создаем администратора по умолчанию при первом запуске
                 createDefaultAdmin();
             } else {
                 console.log("⚠️ Firebase не настроен, используется localStorage");
@@ -1155,7 +1243,6 @@
             updateFirebaseStatus(false);
         }
 
-        // Создание администратора по умолчанию
         async function createDefaultAdmin() {
             try {
                 const users = await loadUsers();
@@ -1542,6 +1629,68 @@
             }
         }
 
+        // Функции для работы с ответами пользователей
+        async function loadUserAnswers() {
+            try {
+                if (!firebaseConnected) {
+                    return getLocalUserAnswers();
+                }
+
+                const snapshot = await db.collection('userAnswers').get();
+                const userAnswers = [];
+                
+                snapshot.forEach(doc => {
+                    userAnswers.push({
+                        id: doc.id,
+                        ...doc.data()
+                    });
+                });
+                
+                return userAnswers;
+            } catch (error) {
+                console.error('❌ Ошибка загрузки ответов пользователей:', error);
+                return getLocalUserAnswers();
+            }
+        }
+
+        async function saveUserAnswer(userAnswer) {
+            try {
+                if (!firebaseConnected) {
+                    return saveUserAnswerToLocal(userAnswer);
+                }
+
+                const docRef = await db.collection('userAnswers').add(userAnswer);
+                userAnswer.id = docRef.id;
+                
+                saveUserAnswerToLocal(userAnswer);
+                return userAnswer;
+            } catch (error) {
+                console.error('❌ Ошибка сохранения ответа пользователя:', error);
+                saveUserAnswerToLocal(userAnswer);
+                throw error;
+            }
+        }
+
+        function getLocalUserAnswers() {
+            try {
+                const userAnswers = localStorage.getItem('medicalTestUserAnswers');
+                return userAnswers ? JSON.parse(userAnswers) : [];
+            } catch (error) {
+                console.error('❌ Ошибка получения ответов пользователей из localStorage:', error);
+                return [];
+            }
+        }
+
+        function saveUserAnswerToLocal(userAnswer) {
+            try {
+                const userAnswers = getLocalUserAnswers();
+                userAnswers.push(userAnswer);
+                localStorage.setItem('medicalTestUserAnswers', JSON.stringify(userAnswers));
+            } catch (error) {
+                console.error('❌ Ошибка сохранения ответа пользователя в localStorage:', error);
+            }
+        }
+
         // Функция для получения отображаемого названия подразделения
         function getUnitDisplayName(unit) {
             const unitNames = {
@@ -1643,7 +1792,6 @@
                 adminLogin.classList.remove('hidden');
                 adminContent.classList.add('hidden');
                 adminToggle.style.display = 'none';
-                // Показываем кнопку возврата при входе в админ-панель
                 backToUserContainer.classList.remove('hidden');
             });
 
@@ -1674,7 +1822,6 @@
                 document.getElementById('admin-password').value = '';
                 document.getElementById('admin-login-error').classList.add('hidden');
                 adminToggle.style.display = 'block';
-                // Показываем кнопку возврата при выходе из админ-аккаунта
                 backToUserContainer.classList.remove('hidden');
             });
 
@@ -1708,6 +1855,10 @@
             document.getElementById('filter-unit').addEventListener('change', loadAssignmentsList);
             document.getElementById('filter-role').addEventListener('change', loadAssignmentsList);
 
+            document.getElementById('filter-answers-unit').addEventListener('change', loadUserAnswersList);
+            document.getElementById('filter-answers-role').addEventListener('change', loadUserAnswersList);
+            document.getElementById('filter-answers-test').addEventListener('change', loadUserAnswersList);
+
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', function() {
                     const tabId = this.getAttribute('data-tab');
@@ -1726,6 +1877,8 @@
                         loadAssignmentsList();
                     } else if (tabId === 'results') {
                         loadTestResultsList();
+                    } else if (tabId === 'user-answers') {
+                        loadUserAnswersList();
                     }
                 });
             });
@@ -1756,7 +1909,6 @@
                     adminLogin.classList.add('hidden');
                     adminContent.classList.remove('hidden');
                     document.getElementById('admin-login-error').classList.add('hidden');
-                    // СКРЫВАЕМ кнопку "Вернуться к входу пользователей" при успешной авторизации администратора
                     backToUserContainer.classList.add('hidden');
                 } else {
                     document.getElementById('admin-login-error').classList.remove('hidden');
@@ -2090,6 +2242,7 @@
             
             const results = calculateResults();
             saveTestResult(results);
+            saveUserAnswers(results);
             displayResults(results);
             showResultsSection();
         }
@@ -2146,6 +2299,46 @@
             results.percentage = Math.round((correctAnswers / totalQuestions) * 100);
             
             return results;
+        }
+
+        // Сохранение ответов пользователя
+        async function saveUserAnswers(results) {
+            try {
+                const userAnswer = {
+                    userId: currentUser.id,
+                    userName: currentUser.login,
+                    userUnit: currentUser.unit || 'none',
+                    userRole: currentUser.role,
+                    questionSetId: currentQuestionSet.id,
+                    questionSetName: currentQuestionSet.name,
+                    answers: results.answers,
+                    timestamp: new Date().toISOString(),
+                    mskTime: getMoscowTime()
+                };
+                
+                await saveUserAnswer(userAnswer);
+                console.log('✅ Ответы пользователя сохранены');
+            } catch (error) {
+                console.error('❌ Ошибка сохранения ответов пользователя:', error);
+            }
+        }
+
+        // Получение московского времени
+        function getMoscowTime() {
+            const now = new Date();
+            const mskOffset = 3 * 60; // MSK UTC+3 в минутах
+            const localOffset = now.getTimezoneOffset();
+            const mskTime = new Date(now.getTime() + (mskOffset + localOffset) * 60000);
+            
+            return mskTime.toLocaleString('ru-RU', {
+                timeZone: 'Europe/Moscow',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
         }
 
         // Отображение результатов
@@ -2223,6 +2416,7 @@
             await loadQuestionSetsList();
             await loadAssignmentsList();
             await loadTestResultsList();
+            await loadUserAnswersList();
         }
 
         // Управление пользователями
@@ -2479,6 +2673,7 @@
                 });
                 
                 updateQuestionSetSelect();
+                updateAnswersTestSelect();
                 
             } catch (error) {
                 console.error('❌ Ошибка загрузки списка наборов вопросов:', error);
@@ -2878,6 +3073,20 @@
             });
         }
 
+        function updateAnswersTestSelect() {
+            const testSelect = document.getElementById('filter-answers-test');
+            testSelect.innerHTML = '<option value="">Все тесты</option>';
+            
+            loadQuestionSets().then(questionSets => {
+                questionSets.forEach(qs => {
+                    const option = document.createElement('option');
+                    option.value = qs.id;
+                    option.textContent = qs.name;
+                    testSelect.appendChild(option);
+                });
+            });
+        }
+
         // Назначение тестов
         async function loadAssignmentsList() {
             try {
@@ -3095,6 +3304,83 @@
             }
         }
 
+        // Ответы пользователей
+        async function loadUserAnswersList() {
+            try {
+                const userAnswers = await loadUserAnswers();
+                const userAnswersList = document.getElementById('user-answers-list');
+                userAnswersList.innerHTML = '';
+                
+                const filterUnit = document.getElementById('filter-answers-unit').value;
+                const filterRole = document.getElementById('filter-answers-role').value;
+                const filterTest = document.getElementById('filter-answers-test').value;
+                
+                let filteredAnswers = userAnswers;
+                
+                if (filterUnit) {
+                    filteredAnswers = filteredAnswers.filter(answer => answer.userUnit === filterUnit);
+                }
+                
+                if (filterRole) {
+                    filteredAnswers = filteredAnswers.filter(answer => answer.userRole === filterRole);
+                }
+                
+                if (filterTest) {
+                    filteredAnswers = filteredAnswers.filter(answer => answer.questionSetId === filterTest);
+                }
+                
+                if (filteredAnswers.length === 0) {
+                    userAnswersList.innerHTML = '<p>Ответы пользователей не найдены</p>';
+                    return;
+                }
+                
+                filteredAnswers.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                for (const answer of filteredAnswers) {
+                    const answerItem = document.createElement('div');
+                    answerItem.className = 'user-answer-item';
+                    
+                    const date = new Date(answer.timestamp).toLocaleString('ru-RU');
+                    
+                    answerItem.innerHTML = `
+                        <div class="user-answer-header">
+                            <div>
+                                <strong>${answer.userName}</strong>
+                                <span class="user-role ${'role-' + answer.userRole}">${getRoleDisplayName(answer.userRole)}</span>
+                                <span class="user-unit ${getUnitClass(answer.userUnit)}">${getUnitDisplayName(answer.userUnit)}</span>
+                            </div>
+                            <div class="user-answer-info">
+                                <div><strong>Тест:</strong> ${answer.questionSetName}</div>
+                                <div><strong>Время прохождения:</strong> ${answer.MSKTime || date}</div>
+                            </div>
+                        </div>
+                        <div class="user-answer-details">
+                            <h4>Ответы на вопросы:</h4>
+                    `;
+                    
+                    answer.answers.forEach((userAnswer, index) => {
+                        const answerClass = userAnswer.isCorrect ? 'correct' : (userAnswer.isAnswered ? 'incorrect' : 'unanswered');
+                        
+                        answerItem.innerHTML += `
+                            <div class="answer-question ${answerClass}">
+                                <div><strong>Вопрос ${index + 1}:</strong> ${userAnswer.question}</div>
+                                <div><strong>Ответ пользователя:</strong> ${userAnswer.userAnswer}</div>
+                                ${!userAnswer.isCorrect ? `<div><strong>Правильный ответ:</strong> ${userAnswer.correctAnswer}</div>` : ''}
+                                <div><strong>Статус:</strong> ${userAnswer.isCorrect ? 'Правильно' : (userAnswer.isAnswered ? 'Неправильно' : 'Не отвечено')}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    answerItem.innerHTML += `</div>`;
+                    userAnswersList.appendChild(answerItem);
+                }
+                
+            } catch (error) {
+                console.error('❌ Ошибка загрузки ответов пользователей:', error);
+                userAnswersList.innerHTML = '<p>Ошибка при загрузке ответов пользователей</p>';
+            }
+        }
+
         // Сохранение результатов теста
         async function saveTestResult(results) {
             try {
@@ -3112,3 +3398,4 @@
     </script>
 </body>
 </html>
+```
