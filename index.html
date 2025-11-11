@@ -2022,12 +2022,22 @@
             showTestSelectionSection();
         }
 
-        // Запуск выбранного теста
+        // ЗАПУСК ВЫБРАННОГО ТЕСТА - ИСПРАВЛЕННАЯ ВЕРСИЯ
         function startSelectedTest() {
-            if (!selectedAssignment) return;
+            if (!selectedAssignment) {
+                alert('Пожалуйста, выберите тест для начала');
+                return;
+            }
+            
+            console.log('Запуск теста:', selectedAssignment);
             
             currentQuestionSet = selectedAssignment.questionSet;
             totalTime = (currentQuestionSet.totalTime || 30) * 60;
+            
+            // Сбрасываем состояние теста
+            currentQuestionIndex = 0;
+            userAnswers = [];
+            
             startTest();
             showTestSection();
         }
@@ -2184,7 +2194,7 @@
             });
             
             questionElement.appendChild(optionsContainer);
-            questionsContainer.appendChild(optionElement);
+            questionsContainer.appendChild(questionElement);
             
             if (userAnswers[currentQuestionIndex] !== undefined) {
                 const selectedOption = document.querySelector(`input[value="${userAnswers[currentQuestionIndex]}"]`);
