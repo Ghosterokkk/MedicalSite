@@ -1233,6 +1233,7 @@
                 console.log("✅ Firebase подключен");
                 updateFirebaseStatus(true);
                 
+                // Создаем администратора по умолчанию
                 createDefaultAdmin();
             } else {
                 console.log("⚠️ Firebase не настроен, используется localStorage");
@@ -1243,6 +1244,7 @@
             updateFirebaseStatus(false);
         }
 
+        // Функция для создания администратора по умолчанию
         async function createDefaultAdmin() {
             try {
                 const users = await loadUsers();
@@ -1253,7 +1255,8 @@
                         login: 'admin',
                         password: 'admin123',
                         role: 'admin',
-                        unit: 'none'
+                        unit: 'none',
+                        createdAt: new Date().toISOString()
                     };
                     
                     await saveUser(defaultAdmin);
@@ -1307,13 +1310,15 @@
                     return saveUserToLocal(user);
                 }
 
-                if (user.id) {
-                    await db.collection('users').doc(user.id).update(user);
-                } else {
+                // Если у пользователя нет ID, создаем нового
+                if (!user.id) {
                     const docRef = await db.collection('users').add(user);
                     user.id = docRef.id;
+                    return user;
                 }
                 
+                // Если ID есть, обновляем существующего пользователя
+                await db.collection('users').doc(user.id).set(user, { merge: true });
                 saveUserToLocal(user);
                 return user;
             } catch (error) {
@@ -1376,13 +1381,15 @@
                     return saveQuestionSetToLocal(questionSet);
                 }
 
-                if (questionSet.id) {
-                    await db.collection('questionSets').doc(questionSet.id).update(questionSet);
-                } else {
+                // Если у набора нет ID, создаем новый
+                if (!questionSet.id) {
                     const docRef = await db.collection('questionSets').add(questionSet);
                     questionSet.id = docRef.id;
+                    return questionSet;
                 }
                 
+                // Если ID есть, обновляем существующий набор
+                await db.collection('questionSets').doc(questionSet.id).set(questionSet, { merge: true });
                 saveQuestionSetToLocal(questionSet);
                 return questionSet;
             } catch (error) {
@@ -1442,13 +1449,15 @@
                     return saveAssignmentToLocal(assignment);
                 }
 
-                if (assignment.id) {
-                    await db.collection('assignments').doc(assignment.id).update(assignment);
-                } else {
+                // Если у назначения нет ID, создаем новое
+                if (!assignment.id) {
                     const docRef = await db.collection('assignments').add(assignment);
                     assignment.id = docRef.id;
+                    return assignment;
                 }
                 
+                // Если ID есть, обновляем существующее назначение
+                await db.collection('assignments').doc(assignment.id).set(assignment, { merge: true });
                 saveAssignmentToLocal(assignment);
                 return assignment;
             } catch (error) {
@@ -2561,7 +2570,8 @@
                     login: login,
                     password: password,
                     role: 'doctor',
-                    unit: 'none'
+                    unit: 'none',
+                    createdAt: new Date().toISOString()
                 };
                 
                 await saveUser(newUser);
